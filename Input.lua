@@ -135,12 +135,74 @@ end
 local LEFT_STICKS = { Left = true, Movement = true }
 local RIGHT_STICKS = { Right = true, Camera = true }
 
-function CK:SetupInput(f)
-    if f.EnableGamePadButton then
-        f:EnableGamePadButton(true)
-        f:SetScript("OnGamePadButtonDown", function(_, button) CK:OnPadButton(button) end)
-        f:SetScript("OnGamePadButtonUp", function(_, button) CK:OnPadButtonUp(button) end)
+---------------------------------------------------------------------------
+-- Buttons
+--
+-- Sending in /say, /yell or a public channel needs a hardware event: a button
+-- read through OnGamePadButtonDown does not count and the game blocks it.
+-- While the keyboard is open, each pad button is bound (override binding) to
+-- "click" a hidden button, which the game treats as a real click.
+-- In combat bindings can't change: fall back to reading the buttons directly.
+---------------------------------------------------------------------------
+local function bindingButtonName(key)
+    return "ControllerKeyboardPad" .. key
+end
+
+function CK:CreateBindingButtons()
+    for key in pairs(BUTTON_ACTIONS) do
+        local b = CreateFrame("Button", bindingButtonName(key), UIParent)
+        b:SetSize(1, 1)
+        b:RegisterForClicks("AnyDown", "AnyUp")
+        b:SetScript("OnClick", function(_, _, down)
+            if down == false then
+                CK:OnPadButtonUp(key)
+            else
+                CK:OnPadButton(key)
+            end
+        end)
     end
+end
+
+function CK:EnableButtons()
+    local f = self.frame
+    if self.db.settings.inputMode == "bind" and not InCombatLockdown() then
+        for key in pairs(BUTTON_ACTIONS) do
+            SetOverrideBindingClick(f, true, key, bindingButtonName(key))
+        end
+        self.bindingsActive = true
+        self.clearBindingsPending = false
+        if f.EnableGamePadButton then f:EnableGamePadButton(false) end
+    elseif f.EnableGamePadButton then
+        f:EnableGamePadButton(true)
+    end
+end
+
+function CK:DisableButtons()
+    local f = self.frame
+    if not f then return end
+    if f.EnableGamePadButton then f:EnableGamePadButton(false) end
+    if self.bindingsActive then
+        if InCombatLockdown() then
+            self.clearBindingsPending = true
+        else
+            ClearOverrideBindings(f)
+            self.bindingsActive = false
+        end
+    end
+end
+
+function CK:OnCombatEnded()
+    if self.clearBindingsPending and not self:IsOpen() then
+        ClearOverrideBindings(self.frame)
+        self.bindingsActive = false
+        self.clearBindingsPending = false
+    end
+end
+
+function CK:SetupInput(f)
+    self:CreateBindingButtons()
+    f:SetScript("OnGamePadButtonDown", function(_, button) CK:OnPadButton(button) end)
+    f:SetScript("OnGamePadButtonUp", function(_, button) CK:OnPadButtonUp(button) end)
     if f.EnableGamePadStick then
         f:EnableGamePadStick(true)
         f:SetScript("OnGamePadStick", function(_, stick, x, y)

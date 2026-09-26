@@ -93,6 +93,7 @@ local DEFAULTS = {
     numSuggestions = 5,
     scale = 1,
     invertY = false,
+    inputMode = "bind",   -- "bind": override bindings (hardware events), "frame": OnGamePadButtonDown
     debug = false,
 }
 

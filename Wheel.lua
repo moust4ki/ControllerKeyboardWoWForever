@@ -515,6 +515,7 @@ function CK:Open(eb)
     local state = self.state
     state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
     self.frame:Show()
+    self:EnableButtons()
     self:UpdateWheel()
     self:Refresh()
 end
@@ -522,6 +523,7 @@ end
 function CK:Close()
     if self.frame and self.frame:IsShown() then
         self.frame:Hide()
+        self:DisableButtons()
     end
     self.state.petal = nil
     self.state.aim = nil

@@ -112,6 +112,10 @@ local function slash(msg)
             if CK.frame then CK.frame:SetScale(v) end
         end
         CK:Print("scale: %.2f", s.scale)
+    elseif cmd == "input" then
+        s.inputMode = s.inputMode == "bind" and "frame" or "bind"
+        CK:Close()
+        CK:Print("input: %s", s.inputMode)
     elseif cmd == "invert" then
         s.invertY = not s.invertY
         CK:Print("invert: %s", onOff(s.invertY))
@@ -154,9 +158,12 @@ local events = CreateFrame("Frame")
 events:RegisterEvent("ADDON_LOADED")
 events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("PLAYER_LOGOUT")
+events:RegisterEvent("PLAYER_REGEN_ENABLED")
+events:RegisterEvent("ADDON_ACTION_BLOCKED")
+events:RegisterEvent("ADDON_ACTION_FORBIDDEN")
 pcall(events.RegisterEvent, events, "GAME_PAD_ACTIVE_CHANGED")
 
-events:SetScript("OnEvent", function(_, event, arg1)
+events:SetScript("OnEvent", function(_, event, arg1, arg2)
     if event == "ADDON_LOADED" and arg1 == ADDON then
         CK:InitDB()
     elseif event == "PLAYER_LOGIN" then
@@ -168,5 +175,11 @@ events:SetScript("OnEvent", function(_, event, arg1)
         CK.Predict:Prune()
     elseif event == "GAME_PAD_ACTIVE_CHANGED" then
         CK.gamepadActive = arg1
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        CK:OnCombatEnded()
+    elseif (event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN") and arg1 == ADDON then
+        -- Release the pad at once so the game's popup can be answered safely
+        CK:Close()
+        CK:Print("|cffff4040%s|r: %s", event, tostring(arg2))
     end
 end)
