@@ -116,7 +116,8 @@ touched, so switching never loses the chat focus.
 - input method (daisywheel / split keyboard), keyboard layout (AZERTY / QWERTY), stick dead
   zone, magnet, cursor line;
 - lock position, open automatically, only when the gamepad is active;
-- keyboard size, invert the sticks vertical axis, show / hide the mouse buttons row;
+- keyboard size: small (80 %), normal, large (125 %), extra large (150 %) — `/ck scale` for any
+  other value; invert the sticks vertical axis, show / hide the mouse buttons row;
 - font (Blizzard fonts: Friz Quadrata, Morpheus, Skurri, Arial Narrow, or the chat font);
 - button style (Xbox / PlayStation) and the game's button icons;
 - suggestion language (French, English, both), learning;

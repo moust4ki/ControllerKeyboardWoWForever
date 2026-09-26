@@ -150,8 +150,28 @@ function CK:RegisterOptions()
         s.showActions = v
         CK:ApplyLayout()
     end)
-    selector(L.OPT_SCALE, nil, function() return format("%d %%", s.scale * 100 + 0.5) end, function(d)
-        s.scale = math.min(1.5, math.max(0.5, math.floor((s.scale + d * 0.05) * 100 + 0.5) / 100))
+    -- 4 preset sizes (/ck scale still sets any value)
+    local SIZES = {
+        { scale = 0.8, name = L.SIZE_SMALL }, { scale = 1, name = L.SIZE_NORMAL },
+        { scale = 1.25, name = L.SIZE_LARGE }, { scale = 1.5, name = L.SIZE_XL },
+    }
+    local function sizeIndex()
+        local best, bestD = 2, math.huge
+        for i, size in ipairs(SIZES) do
+            local d = math.abs(size.scale - s.scale)
+            if d < bestD then best, bestD = i, d end
+        end
+        return best, bestD < 0.01
+    end
+    selector(L.OPT_SCALE, #SIZES, function()
+        local i, exact = sizeIndex()
+        if exact then return format("%s (%d %%)", SIZES[i].name, SIZES[i].scale * 100 + 0.5) end
+        return format("%d %%", s.scale * 100 + 0.5)
+    end, function(d)
+        local i, exact = sizeIndex()
+        -- From a custom value, the first step lands on the nearest preset
+        if exact then i = math.min(#SIZES, math.max(1, i + d)) end
+        s.scale = SIZES[i].scale
         if CK.frame then
             CK.frame:SetScale(s.scale)
             CK:PositionSendButton()

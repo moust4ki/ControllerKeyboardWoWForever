@@ -11,6 +11,7 @@
   hit. LT / RT type the left / right cursor's key, LB deletes, RB space, left stick click 123. Dead
   zone, magnet against flicker, a line from each center, edge keys reachable from 80 % tilt. Large
   keys (54 x 50 px, 600 px wide panel), every key clickable.
+- Keyboard size option with 4 presets: small (80 %), normal, large (125 %), extra large (150 %).
 - Options: input method, layout, dead zone, magnet, cursor lines. Commands: `/ck mode wheel|stick`,
   `/ck layout azerty|qwerty`. The options panel scrolls with the mouse wheel.
 
