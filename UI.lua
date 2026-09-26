@@ -223,7 +223,7 @@ function CK:BuildUI()
     f.channels = {}
     for i, ch in ipairs(CK.CHANNEL_LIST) do
         local b = CK.NewFrame("Button", nil, f)
-        place(b, f, 38 + 38 * (i - 1), 377, 36, 24)
+        place(b, f, 38 + 33 * (i - 1), 377, 32, 24)
         b:SetFrameLevel(cbar:GetFrameLevel() + 2)
         b.select = nineSlice(b, "ck_select", 128, 32, 10, 8, "ARTWORK")
         b.label = text(b, 12)

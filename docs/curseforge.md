@@ -20,7 +20,7 @@ the game's own button icons.
   - accents ignored while searching;
   - next word from your habits and common phrases;
   - suggestions as soon as the chat opens.
-- **Chat channel row**: `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`, switched with the D-pad or by hovering
+- **Chat channel row**: `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`, switched with the D-pad or by hovering
   with the mouse, without losing the chat focus.
 - **Slash command autocomplete**: `/` suggests `/reload`, `/p`, `/ra`, `/g`, `/w`, then your most used
   commands.
@@ -91,7 +91,7 @@ Friz Quadrata, icônes de boutons du jeu.
   - mot suivant d'après vos habitudes et des expressions courantes (« je » → suis, vais… ; « bonne » →
     nuit, soirée…) ;
   - propositions dès l'ouverture du chat, avant même de taper.
-- **Rangée de canaux** : `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`, à la croix ou au survol de la souris,
+- **Rangée de canaux** : `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`, à la croix ou au survol de la souris,
   sans perdre le focus du chat.
 - **Autocomplétion des commandes** : `/` propose `/reload`, `/p`, `/ra`, `/g`, `/w`, puis vos commandes
   les plus utilisées.

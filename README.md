@@ -42,7 +42,7 @@ actions there, "Not possible in combat") and comes back after combat if the chat
 | D-pad ← → | move in the active row: suggestion, or chat channel |
 | Right stick click | insert the suggestion |
 
-**A** sends the message (secure macro: `/s`, `/p`, `/g`, `/w`… following the chat channel).
+**A** sends the message (secure macro: `/s`, `/y`, `/p`, `/g`, `/w`… following the chat channel).
 **B** (back), **X** (channels), **Y** (tab settings), **Start** and **Select** stay with the game's
 gamepad UI.
 
@@ -54,7 +54,7 @@ gamepad UI closes the chat on the first click: the keyboard then stays open and 
 
 ## Chat channels
 
-A row under the wheel shows `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel colors. You have
+A row under the wheel shows `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel colors. You have
 to reach for it, so you never switch by mistake: press **D-pad ↓** to make it the active row, then
 **D-pad ← →** (or the right stick); **D-pad ↑** goes back to the suggestions. With the mouse, simply
 **hover** a channel (no click needed). The message is then sent there with A. Unavailable channels are greyed out and skipped (party / raid / guild you are

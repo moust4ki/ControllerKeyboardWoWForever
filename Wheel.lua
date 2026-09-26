@@ -289,6 +289,9 @@ CK.CHANNEL_LIST = {
     { key = "s", label = "/s", color = "SAY",
       available = function() return true end,
       attrs = function() return { chatType = "SAY" } end },
+    { key = "y", label = "/y", color = "YELL",
+      available = function() return true end,
+      attrs = function() return { chatType = "YELL" } end },
     { key = "p", label = "/p", color = "PARTY",
       available = inGroup,
       attrs = function() return { chatType = "PARTY" } end },
@@ -323,15 +326,22 @@ function CK:ChannelAvailable(i)
     return ch and ch.available(self) and true or false
 end
 
+local KEY_BY_CHATTYPE = { SAY = "s", YELL = "y", PARTY = "p", RAID = "ra", GUILD = "g", WHISPER = "w" }
+
 -- Index of the current channel in CHANNEL_LIST (nil for other channels)
 function CK:CurrentChannelIndex()
     local chatType = self:GetChatAttr("chatType") or "SAY"
-    if self:GetChatAttr("reply") then return 7 end
-    if chatType == "CHANNEL" then
-        return tonumber(self:GetChatAttr("channelTarget")) == 1 and 5 or nil
+    local key
+    if self:GetChatAttr("reply") then
+        key = "r"
+    elseif chatType == "CHANNEL" then
+        key = tostring(self:GetChatAttr("channelTarget"))
+    else
+        key = KEY_BY_CHATTYPE[chatType]
     end
-    local map = { SAY = 1, PARTY = 2, RAID = 3, GUILD = 4, WHISPER = 6 }
-    return map[chatType]
+    for i, ch in ipairs(CK.CHANNEL_LIST) do
+        if ch.key == key then return i end
+    end
 end
 
 function CK:SetChannel(i)

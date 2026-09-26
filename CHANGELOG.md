@@ -3,13 +3,13 @@
 ## 0.2.1
 
 - Option to hide the mouse buttons row (Shift, 123, Space, Delete, Send, X); the panel gets shorter.
-- Chat channel row under the wheel: `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`. D-pad ↓ / ↑ picks the
+- Chat channel row under the wheel: `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`. D-pad ↓ / ↑ picks the
   active row (channels or suggestions), D-pad ← → and the right stick move inside it; with the mouse,
   hover a channel (no click, so the chat keeps its focus). Unavailable channels are greyed out and
   skipped.
 - Fix: crashes and "action blocked" cascades in combat. The keyboard used to type into the game's chat
   box; that text was then read by WoW Forever's gamepad UI and tainted it. The message now lives in the
-  keyboard's own bar and is sent with A through a secure macro (`/s`, `/p`, `/g`, `/w`…); the game's
+  keyboard's own bar and is sent with A through a secure macro (`/s`, `/y`, `/p`, `/g`, `/w`…); the game's
   chat box is never written to. B still closes the chat.
 - The keyboard is now disabled in combat: the game blocks too many actions during a fight. Trying
   to open it shows "Not possible in combat"; the chat works as usual, and the keyboard comes back by
