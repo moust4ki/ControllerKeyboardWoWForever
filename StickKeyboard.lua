@@ -67,9 +67,13 @@ local HALVES = {
     right = { cx = MID_X + GRID_W / 4 },
 }
 local REACH_X, REACH_Y = GRID_W / 4 - EDGE_IN, GRID_H / 2 - EDGE_IN
--- Sticks rarely report a full 1.0, least of all diagonally: from this tilt on
--- the stick counts as pushed all the way
-local SATURATION = 0.8
+-- Per axis, from this tilt on the stick counts as pushed all the way: sticks
+-- rarely report a full 1.0, and a round stick pushed diagonally only reaches
+-- about 0.71 on each axis, which must still land on the corner keys
+local AXIS_SATURATION = 0.72
+-- Response curve exponent: 1 = linear, > 1 = gentle (precise near the center),
+-- < 1 = fast (reaches the edges sooner)
+local CURVES = { linear = 1, gentle = 1.6, fast = 0.7 }
 
 local MAGNET_PX = { none = 0, weak = 4, medium = 8, strong = 14 }
 
@@ -147,16 +151,12 @@ end
 ---------------------------------------------------------------------------
 -- Cursors
 ---------------------------------------------------------------------------
--- Disc -> square (inverse elliptical grid mapping): lets the round stick
--- reach the corners of the rectangular half
-local SQ2 = 2 * math.sqrt(2)
-local function discToSquare(u, v)
-    local u2, v2 = u * u, v * v
-    local x = 0.5 * math.sqrt(math.max(0, 2 + u2 - v2 + SQ2 * u)) - 0.5 * math.sqrt(math.max(0, 2 + u2 - v2 - SQ2 * u))
-    local y = 0.5 * math.sqrt(math.max(0, 2 - u2 + v2 + SQ2 * v)) - 0.5 * math.sqrt(math.max(0, 2 - u2 + v2 - SQ2 * v))
-    return math.max(-1, math.min(1, x)), math.max(-1, math.min(1, y))
+-- One axis: saturate, then apply the response curve (linear by default, so
+-- the cursor moves the same distance for each notch of tilt: no acceleration)
+local function axis(value, exponent)
+    local a = math.min(math.abs(value) / AXIS_SATURATION, 1) ^ exponent
+    return value < 0 and -a or a
 end
-M.discToSquare = discToSquare
 
 function M:MoveCursor(side, x, y)
     local c = self.cursors and self.cursors[side]
@@ -167,12 +167,15 @@ function M:MoveCursor(side, x, y)
         c.maxLen = len
         CK:Print("%s stick x=%.2f y=%.2f len=%.2f (max so far)", side, x, y, len)
     end
+    -- Radial dead zone, then each axis on its own (a square response suits the
+    -- rectangular keyboard and has none of the disc-to-square acceleration)
     local u, v = 0, 0
     if len > dead then
-        local scale = (math.min(len, SATURATION) - dead) / (SATURATION - dead) / len
+        local scale = (math.min(len, 1) - dead) / (1 - dead) / len
         u, v = x * scale, y * scale
     end
-    local sx, sy = discToSquare(u, v)
+    local exponent = CURVES[CK.db.settings.stickCurve] or 1
+    local sx, sy = axis(u, exponent), axis(v, exponent)
     c.cx, c.cy = c.homeX + sx * REACH_X, CENTER_Y - sy * REACH_Y
     self:Update()
 end

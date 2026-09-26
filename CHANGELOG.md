@@ -12,6 +12,8 @@
   zone, magnet against flicker, a line from each center, edge keys reachable from 80 % tilt. Large
   keys (54 x 50 px, 600 px wide panel), every key clickable.
 - Keyboard size option with 4 presets: small (80 %), normal, large (125 %), extra large (150 %).
+- Linear stick response on each axis (no acceleration toward the edges), with a "stick response"
+  option: linear, gentle (precise near the center) or fast.
 - Options: input method, layout, dead zone, magnet, cursor lines. Commands: `/ck mode wheel|stick`,
   `/ck layout azerty|qwerty`. The options panel scrolls with the mouse wheel.
 

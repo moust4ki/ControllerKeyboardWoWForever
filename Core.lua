@@ -42,6 +42,10 @@ if GetLocale() == "frFR" then
     L.OPT_LAYOUT = "Disposition (clavier 2 sticks)"
     L.OPT_DEADZONE = "Zone morte du stick"
     L.OPT_MAGNET = "Effet aimant"
+    L.OPT_CURVE = "Réponse du stick"
+    L.CURVE_LINEAR = "Linéaire"
+    L.CURVE_GENTLE = "Douce (précise au centre)"
+    L.CURVE_FAST = "Rapide"
     L.MAGNET_NONE = "Aucun"
     L.MAGNET_WEAK = "Faible"
     L.MAGNET_MEDIUM = "Moyen"
@@ -140,6 +144,10 @@ else
     L.OPT_LAYOUT = "Layout (split keyboard)"
     L.OPT_DEADZONE = "Stick dead zone"
     L.OPT_MAGNET = "Magnet"
+    L.OPT_CURVE = "Stick response"
+    L.CURVE_LINEAR = "Linear"
+    L.CURVE_GENTLE = "Gentle (precise near the center)"
+    L.CURVE_FAST = "Fast"
     L.MAGNET_NONE = "None"
     L.MAGNET_WEAK = "Weak"
     L.MAGNET_MEDIUM = "Medium"
@@ -228,6 +236,7 @@ local DEFAULTS = {
     inputMethod = "wheel",   -- "wheel" (daisywheel) or "stick" (split keyboard)
     kbLayout = GetLocale() == "frFR" and "azerty" or "qwerty",
     deadzone = 0.15,         -- split keyboard: sticks dead zone
+    stickCurve = "linear",   -- split keyboard: linear / gentle / fast
     magnet = "medium",       -- split keyboard: none / weak / medium / strong
     showLine = true,         -- split keyboard: lines from the centers to the cursors
     showActions = true,

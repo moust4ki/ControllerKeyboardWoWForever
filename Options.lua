@@ -198,6 +198,14 @@ function CK:RegisterOptions()
     selector(L.OPT_DEADZONE, nil, function() return format("%d %%", s.deadzone * 100 + 0.5) end, function(d)
         s.deadzone = math.min(0.40, math.max(0.05, math.floor((s.deadzone + d * 0.05) * 100 + 0.5) / 100))
     end)
+    local CURVES = {
+        { key = "linear", name = L.CURVE_LINEAR }, { key = "gentle", name = L.CURVE_GENTLE },
+        { key = "fast", name = L.CURVE_FAST },
+    }
+    selector(L.OPT_CURVE, #CURVES, function() return CURVES[indexOf(CURVES, s.stickCurve)].name end, function(d)
+        local i = (indexOf(CURVES, s.stickCurve) - 1 + d) % #CURVES + 1
+        s.stickCurve = CURVES[i].key
+    end)
     local MAGNETS = {
         { key = "none", name = L.MAGNET_NONE }, { key = "weak", name = L.MAGNET_WEAK },
         { key = "medium", name = L.MAGNET_MEDIUM }, { key = "strong", name = L.MAGNET_STRONG },

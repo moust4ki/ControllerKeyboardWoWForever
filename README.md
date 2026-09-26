@@ -114,7 +114,7 @@ touched, so switching never loses the chat focus.
 *Escape > Options > AddOns > Controller Keyboard*:
 
 - input method (daisywheel / split keyboard), keyboard layout (AZERTY / QWERTY), stick dead
-  zone, magnet, cursor line;
+  zone, stick response (linear, gentle, fast), magnet, cursor lines;
 - lock position, open automatically, only when the gamepad is active;
 - keyboard size: small (80 %), normal, large (125 %), extra large (150 %) — `/ck scale` for any
   other value; invert the sticks vertical axis, show / hide the mouse buttons row;
