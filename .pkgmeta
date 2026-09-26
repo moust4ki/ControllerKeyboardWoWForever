@@ -1,0 +1,13 @@
+package-as: ControllerKeyboard
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
+ignore:
+  - design
+  - tools
+  - docs
+  - dist
+  - .claude
+  - .gitignore

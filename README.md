@@ -117,6 +117,13 @@ OpenSubtitles) :
 python tools/build_dict.py fr
 ```
 
+Package CurseForge / release (`dist/ControllerKeyboard-<version>.zip`, description dans
+`docs/curseforge.md`) :
+
+```bash
+python tools/package.py
+```
+
 ## Licence
 
 Code sous licence MIT (voir `LICENSE`). `Dict_frFR.lua` et `Dict_enUS.lua` sont dérivés de
