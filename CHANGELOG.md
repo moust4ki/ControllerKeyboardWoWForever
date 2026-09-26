@@ -1,26 +1,35 @@
 # Changelog
 
-## 0.2.1
+## 0.3.0
 
-- `/w` is always available: pick the recipient first (suggested names or A to confirm what you
-  typed, names with a space work), then type the message. Deleting on an empty message goes back to
-  the name.
-- Option to hide the mouse buttons row (Shift, 123, Space, Delete, Send, X); the panel gets shorter.
+### New
+
 - Chat channel row under the wheel: `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`. D-pad ↓ / ↑ picks the
   active row (channels or suggestions), D-pad ← → and the right stick move inside it; with the mouse,
   hover a channel (no click, so the chat keeps its focus). Unavailable channels are greyed out and
   skipped.
-- Fix: crashes and "action blocked" cascades in combat. The keyboard used to type into the game's chat
-  box; that text was then read by WoW Forever's gamepad UI and tainted it. The message now lives in the
-  keyboard's own bar and is sent with A through a secure macro (`/s`, `/y`, `/p`, `/g`, `/w`…); the game's
-  chat box is never written to. B still closes the chat.
-- The keyboard is now disabled in combat: the game blocks too many actions during a fight. Trying
-  to open it shows "Not possible in combat"; the chat works as usual, and the keyboard comes back by
-  itself after combat if the chat is still open.
-- Suggestions default to the client's language: French on a French client, English otherwise
-  (both 12,000-word dictionaries are included; change it in the options).
-- Fix: the keyboard could be blocked from opening ("ControllerKeyboardFrame:Show()").
-- Fix: LB / RB / LT / RT could stay captured by the addon until the end of combat.
+- `/w` always available: pick the recipient first (suggested names from recent correspondents,
+  group, friends and guild, or A to confirm what you typed; names with a space work), then type the
+  message. Deleting on an empty message goes back to the name.
+- Option to hide the mouse buttons row (Shift, 123, Space, Delete, Send, X); the panel gets shorter.
+- Suggestions default to the client's language: French on a French client, English otherwise (both
+  12,000-word dictionaries are included; change it in the options).
+
+### Changes
+
+- The message now lives in the keyboard's own bar and A sends it (secure macro, or a direct whisper);
+  the game's chat box is never written to. B still closes the chat.
+- The keyboard is disabled in combat: trying to open it shows "Not possible in combat". The chat works
+  as usual, and the keyboard comes back by itself after combat if the chat is still open.
+- The wheel center no longer shows the gesture legend; it only shows the letter aimed with the right
+  stick.
+
+### Fixes
+
+- Crashes and "action blocked" cascades in combat: text typed by the addon into the game's chat box
+  tainted WoW Forever's gamepad UI when it read it back.
+- The keyboard could be blocked from opening ("ControllerKeyboardFrame:Show()").
+- LB / RB / LT / RT could stay captured by the addon until the end of combat.
 
 ## 0.2.0
 
