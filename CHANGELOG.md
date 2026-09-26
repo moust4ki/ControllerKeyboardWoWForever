@@ -9,6 +9,8 @@
   center, corners reachable), with a dead zone, a magnet so the highlight does not flicker and a line
   from the center. RT types, LT deletes, RB space, LB shift, left stick click 123. Wider panel, every
   key clickable.
+- The edge and corner keys are reachable even when the stick does not report a full tilt: from
+  80 % the stick counts as pushed all the way, and full tilt lands inside the edge keys.
 - Options: input method, layout, dead zone, magnet, cursor line. Commands: `/ck mode wheel|stick`,
   `/ck layout azerty|qwerty`. The options panel scrolls with the mouse wheel.
 

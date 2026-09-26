@@ -56,7 +56,13 @@ M.height = 2 * PAD + 4 * KEY_H + 3 * GAP
 -- Cursor range: the centers of the corner keys
 local GRID_W, GRID_H = 10 * UNIT - GAP, 4 * KEY_H + 3 * GAP
 local CENTER_X, CENTER_Y = PAD + GRID_W / 2, PAD + GRID_H / 2
-local HALF_X, HALF_Y = (GRID_W - (UNIT - GAP)) / 2, (GRID_H - KEY_H) / 2
+-- Full tilt puts the cursor well inside the edge keys (EDGE_IN px from their
+-- outer border), not on their center, so an imperfect push still reaches them
+local EDGE_IN = 6
+local HALF_X, HALF_Y = GRID_W / 2 - EDGE_IN, GRID_H / 2 - EDGE_IN
+-- Sticks rarely report a full 1.0, least of all diagonally: from this tilt on
+-- the stick counts as pushed all the way
+local SATURATION = 0.8
 
 local MAGNET_PX = { none = 0, weak = 4, medium = 8, strong = 14 }
 
@@ -144,9 +150,13 @@ M.discToSquare = discToSquare
 function M:OnLeftStick(x, y)
     local dead = CK.db.settings.deadzone
     local len = math.sqrt(x * x + y * y)
+    if CK.db.settings.debug and len > (self.maxLen or 0) then
+        self.maxLen = len
+        CK:Print("stick x=%.2f y=%.2f len=%.2f (max so far)", x, y, len)
+    end
     local u, v = 0, 0
     if len > dead then
-        local scale = (math.min(len, 1) - dead) / (1 - dead) / len
+        local scale = (math.min(len, SATURATION) - dead) / (SATURATION - dead) / len
         u, v = x * scale, y * scale
     end
     local sx, sy = discToSquare(u, v)
