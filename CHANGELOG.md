@@ -2,8 +2,9 @@
 
 ## 0.2.1
 
-- `/w` is always available: type the name then the message (`Bob hello`); names of recent
-  correspondents, group members, online friends and guild are suggested while typing the name.
+- `/w` is always available: pick the recipient first (suggested names or A to confirm what you
+  typed, names with a space work), then type the message. Deleting on an empty message goes back to
+  the name.
 - Option to hide the mouse buttons row (Shift, 123, Space, Delete, Send, X); the panel gets shorter.
 - Chat channel row under the wheel: `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`. D-pad ↓ / ↑ picks the
   active row (channels or suggestions), D-pad ← → and the right stick move inside it; with the mouse,

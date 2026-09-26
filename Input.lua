@@ -212,12 +212,37 @@ function CK:PrepareSend()
     self.justSent = false
     if InCombatLockdown() then return end
     self.sendButton:SetAttribute("macrotext", self:BuildMacroText() or "")
+    self:SendWhisper()
+end
+
+-- Whispers go straight through SendChatMessage with the full name: a macro
+-- "/w Fraicheur Hunt hi" would whisper "Fraicheur". Whispers need no hardware
+-- event and the game's chat box is not touched.
+function CK:SendWhisper()
+    local target = self:GetChatAttr("tellTarget")
+    if self:GetChatAttr("chatType") ~= "WHISPER" or self:GetChatAttr("reply")
+        or not target or target == "" then
+        return
+    end
+    local text = self:GetText():gsub("[\r\n]", " ")
+    if text:match("^%s*$") then return end
+    -- PreClick runs on both press and release: send once
+    local now = GetTime()
+    if self.lastWhisper == text and now - (self.lastWhisperTime or 0) < 0.5 then return end
+    self.lastWhisper, self.lastWhisperTime = text, now
+    local send = C_ChatInfo and C_ChatInfo.SendChatMessage or SendChatMessage
+    send(text, "WHISPER", nil, target)
 end
 
 -- Runs after the secure click: once the game sent the message, clear it
 -- (the chat stays open for the next message; B closes it)
 function CK:FinishSend(down)
     local text = self:GetText()
+    -- /w without a recipient yet: A confirms the typed name
+    if self:WhisperNameMode() then
+        if down ~= true then self:ConfirmWhisperTarget(text) end
+        return
+    end
     local slashCommand = text:sub(1, 1) == "/" and down ~= true
     if self.justSent or slashCommand then
         self.justSent = false

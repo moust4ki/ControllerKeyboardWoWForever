@@ -171,8 +171,8 @@ function CK:Refresh()
     self.state.commandMode = text:sub(1, 1) == "/" and spaces <= 1
     if self.state.commandMode then
         self.state.suggestions = CK.Predict:QueryCommands(text, n)
-    elseif self:WhisperNameMode() and not text:find(" ") then
-        -- Typing the name of a /w: suggest people
+    elseif self:WhisperNameMode() then
+        -- Typing the name of a /w (names may hold a space): suggest people
         self.state.suggestions = self:QueryNames(text, n)
     else
         local prefix = text:match(WORD_TAIL) or ""
@@ -212,7 +212,16 @@ function CK:Space()
 end
 
 function CK:Backspace()
-    self:SetText(CK.DropLastChar(self:GetText()))
+    local text = self:GetText()
+    -- Nothing left to delete in a /w message: back to choosing the name
+    if text == "" and self:GetChatAttr("chatType") == "WHISPER" and not self:GetChatAttr("reply")
+        and self:GetChatAttr("tellTarget") then
+        self.whisperTarget = nil
+        self:SetChatAttr("tellTarget", nil)
+        self:Refresh()
+        return
+    end
+    self:SetText(CK.DropLastChar(text))
 end
 
 function CK:DeleteWord()
@@ -226,6 +235,10 @@ function CK:AcceptSuggestion(index)
     if not word then return false end
     if self.state.commandMode then
         self:SetText(word .. " ")
+        return true
+    end
+    if self:WhisperNameMode() then
+        self:ConfirmWhisperTarget(word)
         return true
     end
     local text = self:GetText()
@@ -364,16 +377,30 @@ function CK:KnownNames()
     return list
 end
 
+-- Matching known names; what was typed is offered last so any name can be used
 function CK:QueryNames(prefix, n)
-    local norm = CK.Normalize(prefix)
-    local out = {}
+    local typed = prefix:gsub("^%s+", ""):gsub("%s+$", "")
+    local norm = CK.Normalize(typed)
+    local out, exact = {}, false
     for _, name in ipairs(self:KnownNames()) do
-        if #out >= n then break end
-        if name ~= prefix and CK.Normalize(name):sub(1, #norm) == norm then
+        if #out >= n - 1 then break end
+        local nn = CK.Normalize(name)
+        if nn:sub(1, #norm) == norm then
             out[#out + 1] = name
+            if nn == norm then exact = true end
         end
     end
+    if typed ~= "" and not exact then out[#out + 1] = typed end
     return out
+end
+
+-- Pick the /w recipient; the buffer then holds the message
+function CK:ConfirmWhisperTarget(name)
+    name = (name or ""):gsub("^%s+", ""):gsub("%s+$", "")
+    if name == "" then return end
+    self.whisperTarget = name
+    self:SetChatAttr("tellTarget", name)
+    self:SetText("")
 end
 
 function CK:ChannelAvailable(i)
@@ -462,10 +489,8 @@ function CK:BuildMacroText()
     if self:GetChatAttr("reply") then
         return "/r " .. text
     elseif chatType == "WHISPER" then
-        -- No target: the message starts with the name ("Bob hello")
-        local target = self:GetChatAttr("tellTarget")
-        if target and target ~= "" then return "/w " .. target .. " " .. text end
-        return "/w " .. text
+        -- Sent directly by CK:SendWhisper (names may hold a space)
+        return nil
     elseif chatType == "CHANNEL" then
         local target = self:GetChatAttr("channelTarget")
         return target and ("/" .. target .. " " .. text)
