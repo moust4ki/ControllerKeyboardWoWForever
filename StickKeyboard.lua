@@ -7,7 +7,7 @@ local L = CK.L
 -- stick's tilt is its cursor's ABSOLUTE position around the center of its
 -- half (released = center). LT types the left cursor's key, RT the right one.
 CK.Methods = CK.Methods or {}
-local M = { key = "stick", width = 460, areaWidth = 444 }
+local M = { key = "stick", width = 600, areaWidth = 584 }
 CK.Methods.stick = M
 
 M.buttons = {
@@ -52,7 +52,7 @@ local LAYOUTS = {
 
 local PAD, GAP = 4, 4
 local UNIT = (M.areaWidth - 2 * PAD + GAP) / 10   -- one key + one gap
-local KEY_H, ROW_STEP = 38, 42
+local KEY_H, ROW_STEP = 50, 54
 M.height = 2 * PAD + 4 * KEY_H + 3 * GAP
 
 local GRID_W, GRID_H = 10 * UNIT - GAP, 4 * KEY_H + 3 * GAP
@@ -84,7 +84,7 @@ local function buildKey(parent, def, x, y, w)
     b.select = K.nineSlice(b, "ck_select", 128, 32, 10, 10, "ARTWORK")
     b.select:SetShown(false)
     local isChar = type(def) == "string"
-    b.label = K.text(b, isChar and 16 or 11)
+    b.label = K.text(b, isChar and 20 or 13)
     b.label:SetPoint("CENTER", 0, 1)
     b.char = isChar and def or nil
     b.special = not isChar and def.k or nil
@@ -129,16 +129,16 @@ function M:Build(area)
         -- The line is optional: the keyboard works without it on a client lacking lines
         local line = over.CreateLine and over:CreateLine(nil, "OVERLAY")
         if line then
-            line:SetThickness(2)
+            line:SetThickness(3)
             line:SetColorTexture(K.C.gold[1], K.C.gold[2], K.C.gold[3], 0.55)
             c.line = line
         end
         c.hub = K.texture(over, "ck_hl_hover", "OVERLAY")
-        c.hub:SetSize(12, 12)
+        c.hub:SetSize(14, 14)
         c.hub:SetPoint("CENTER", over, "TOPLEFT", half.cx, -CENTER_Y)
         c.hub:SetAlpha(0.6)
         c.dot = K.texture(over, "ck_hl", "OVERLAY", 1)
-        c.dot:SetSize(16, 16)
+        c.dot:SetSize(22, 22)
         self.cursors[side] = c
     end
     self:Reset()
