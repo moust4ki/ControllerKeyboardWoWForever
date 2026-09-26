@@ -19,15 +19,13 @@ if GetLocale() == "frFR" then
     L.CHANNEL = "Canal"
     L.SEND = "Envoyer"
     L.CLOSE = "Fermer"
-    L.HUB_X = "Eff."
-    L.HUB_Y = "Esp."
-    L.HUB_B = "Ferm."
-    L.HUB_A = "Mot"
-    L.CAPS = "MAJUSCULES"
-    L.HINT = "Stick G : pétale  |  LB/RB : suggestion  |  LT : Maj  |  RT : 123  |  Start : envoyer  |  Select : canal"
+    L.HUB_UP = "Mot"
+    L.HUB_DOWN = "Eff."
+    L.CAPS = "MAJ"
+    L.HINT = "Stick G : pétale   Stick D : lettre   LB : effacer   RB : espace\nLT : Maj   RT : 123   A : mot   Start : envoyer   Select : canal"
     L.LOADED = "v%s chargé. /ck pour l'aide."
     L.HELP = {
-        "/ck - ouvrir/fermer le clavier",
+        "/ck - ouvrir le clavier",
         "/ck auto - ouverture automatique avec le chat (actuel : %s)",
         "/ck pad - n'ouvrir automatiquement que si la manette est active (actuel : %s)",
         "/ck learn - apprendre les mots de vos messages (actuel : %s)",
@@ -54,15 +52,13 @@ else
     L.CHANNEL = "Channel"
     L.SEND = "Send"
     L.CLOSE = "Close"
-    L.HUB_X = "Del"
-    L.HUB_Y = "Space"
-    L.HUB_B = "Close"
-    L.HUB_A = "Word"
+    L.HUB_UP = "Word"
+    L.HUB_DOWN = "Del"
     L.CAPS = "CAPS"
-    L.HINT = "L stick: petal  |  LB/RB: suggestion  |  LT: Shift  |  RT: 123  |  Start: send  |  Select: channel"
+    L.HINT = "L stick: petal   R stick: letter   LB: delete   RB: space\nLT: Shift   RT: 123   A: word   Start: send   Select: channel"
     L.LOADED = "v%s loaded. /ck for help."
     L.HELP = {
-        "/ck - open/close the keyboard",
+        "/ck - open the keyboard",
         "/ck auto - open automatically with the chat (current: %s)",
         "/ck pad - only auto-open when the gamepad is active (current: %s)",
         "/ck learn - learn words from your messages (current: %s)",
@@ -90,7 +86,7 @@ BINDING_NAME_CONTROLLERKEYBOARD_TOGGLE = GetLocale() == "frFR" and "Ouvrir/ferme
 ---------------------------------------------------------------------------
 local DEFAULTS = {
     autoOpen = true,
-    onlyWithGamepad = true,
+    onlyWithGamepad = false,
     learn = true,
     dicts = { frFR = true, enUS = false },
     maxWords = 8000,
@@ -116,6 +112,12 @@ function CK:InitDB()
     local db = ControllerKeyboardDB
     db.settings = db.settings or {}
     copyDefaults(DEFAULTS, db.settings)
+    -- v2: auto-open no longer requires the gamepad to be the active input
+    if (db.version or 1) < 2 then
+        db.settings.onlyWithGamepad = false
+        db.pos = nil
+        db.version = 2
+    end
     db.words = db.words or {}
     db.bigrams = db.bigrams or {}
     self.db = db

@@ -15,21 +15,26 @@ au trackpad du Steam Controller.
 ```
 
 - **Stick gauche** : choisit un pétale.
-- **X / Y / B / A** : tape la lettre placée à gauche / en haut / à droite / en bas du pétale.
-- **Stick au centre** : X = effacer (maintenir pour répéter), Y = espace, A = insérer la suggestion, B = fermer.
+- **Stick droit** : pichenette vers la lettre à taper (gauche / haut / droite / bas du pétale).
+- **Stick gauche au centre** : le stick droit gère les suggestions (← → choisir, ↑ insérer, ↓ effacer).
 
 | Bouton | Action |
 |---|---|
-| LB / RB (ou croix ← →) | suggestion précédente / suivante |
-| Croix ↑ ou clic stick droit | insérer la suggestion |
+| LB (ou X) | effacer (maintenir pour répéter) |
+| RB (ou Y) | espace |
+| A, croix ↑ ou clic stick droit | insérer la suggestion |
+| Croix ← → | suggestion précédente / suivante |
 | Croix ↓ | effacer le dernier mot |
 | LT | Maj (1 appui = une majuscule, 2 appuis rapides = verrouillage) |
 | RT ou clic stick gauche | chiffres, accents et symboles |
+| B | fermer |
 | Start | envoyer |
 | Select | changer de canal (Dire, Groupe, Raid, Guilde, Crier) |
 
-Le clavier s'ouvre tout seul quand la zone de saisie du chat s'active et que la manette est active. Un
-raccourci **« Ouvrir/fermer le clavier »** est aussi disponible dans *Échap > Raccourcis > AddOns*.
+Le clavier s'ouvre tout seul quand la zone de saisie du chat prend le focus (`/ck auto` pour désactiver,
+`/ck pad` pour ne l'ouvrir que si la manette est l'entrée active). Un raccourci **« Ouvrir/fermer le
+clavier »** est aussi disponible dans *Échap > Raccourcis > AddOns*. Faites glisser la barre de texte
+pour déplacer le clavier.
 
 ## Prédiction
 

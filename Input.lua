@@ -1,44 +1,83 @@
 local _, CK = ...
 
--- Face buttons -> petal slot (X left, Y top, B right, A bottom).
--- PAD1..4 keep the same positions on PlayStation pads (Cross, Circle, Square, Triangle).
-local SLOT_BY_BUTTON = { PAD3 = 1, PAD4 = 2, PAD2 = 3, PAD1 = 4 }
-
--- Face buttons when the stick is centered
-local NEUTRAL_ACTIONS = { "Backspace", "Space", "Cancel", "AcceptSuggestion" }
-
+-- Left stick picks a petal, right stick flicks toward the letter to type.
+-- With the left stick centered, the right stick drives the suggestions.
 local BUTTON_ACTIONS = {
-    PADLSHOULDER = "PrevSuggestion",
-    PADRSHOULDER = "NextSuggestion",
+    PAD1 = "AcceptSuggestion",      -- A / Cross
+    PAD2 = "Cancel",                -- B / Circle
+    PAD3 = "Backspace",             -- X / Square
+    PAD4 = "Space",                 -- Y / Triangle
+    PADLSHOULDER = "Backspace",
+    PADRSHOULDER = "Space",
+    PADLTRIGGER = "ToggleShift",
+    PADRTRIGGER = "ToggleSymbols",
     PADDLEFT = "PrevSuggestion",
     PADDRIGHT = "NextSuggestion",
     PADDUP = "AcceptSuggestion",
     PADDDOWN = "DeleteWord",
-    PADLTRIGGER = "ToggleShift",
-    PADRTRIGGER = "ToggleSymbols",
     PADLSTICK = "ToggleSymbols",
     PADRSTICK = "AcceptSuggestion",
     PADFORWARD = "Send",
     PADBACK = "CycleChannel",
 }
 
--- Actions repeated while the button is held
-local REPEATABLE = { Backspace = true }
-local REPEAT_DELAY, REPEAT_RATE = 0.45, 0.07
+-- Right stick directions -> petal slot (1 left, 2 up, 3 right, 4 down)
+local SLOT_BY_SECTOR = { [0] = 2, [1] = 3, [2] = 4, [3] = 1 }
+-- Right stick with no petal selected
+local NEUTRAL_FLICK = { "PrevSuggestion", "AcceptSuggestion", "NextSuggestion", "Backspace" }
 
-local DEADZONE_IN, DEADZONE_OUT = 0.5, 0.35
+-- Actions repeated while the button (or stick) is held
+local REPEATABLE = { Backspace = true, PrevSuggestion = true, NextSuggestion = true }
+local REPEAT_DELAY, REPEAT_RATE = 0.45, 0.08
 
-function CK:SetStick(x, y)
+local LEFT_IN, LEFT_OUT = 0.5, 0.35      -- petal selection deadzone (with hysteresis)
+local RIGHT_AIM, RIGHT_FIRE, RIGHT_RESET = 0.3, 0.75, 0.4
+
+local function sector(x, y, count)
+    local fromNorth = (90 - math.deg(math.atan2(y, x))) % 360
+    local size = 360 / count
+    return math.floor((fromNorth + size / 2) / size) % count
+end
+
+function CK:SetLeftStick(x, y)
     if self.db.settings.invertY then y = -y end
     local len = math.sqrt(x * x + y * y)
     local petal
-    if len >= DEADZONE_IN or (self.state.petal and len >= DEADZONE_OUT) then
-        local fromNorth = (90 - math.deg(math.atan2(y, x))) % 360
-        petal = math.floor((fromNorth + 22.5) / 45) % 8 + 1
+    if len >= LEFT_IN or (self.state.petal and len >= LEFT_OUT) then
+        petal = sector(x, y, 8) + 1
     end
     if petal ~= self.state.petal then
         self.state.petal = petal
         self:UpdateWheel()
+    end
+end
+
+function CK:SetRightStick(x, y)
+    if self.db.settings.invertY then y = -y end
+    local state = self.state
+    local len = math.sqrt(x * x + y * y)
+
+    local aim
+    if len >= RIGHT_AIM then
+        aim = SLOT_BY_SECTOR[sector(x, y, 4)]
+    end
+    if aim ~= state.aim then
+        state.aim = aim
+        self:UpdateWheel()
+    end
+
+    if self.rightFired then
+        if len < RIGHT_RESET then
+            self.rightFired = false
+            if self.repeatButton == "RIGHTSTICK" then self.repeatFn = nil end
+        end
+    elseif aim and len >= RIGHT_FIRE then
+        self.rightFired = true
+        if state.petal then
+            self:TypeSlot(state.petal, aim)
+        else
+            self:RunAction(NEUTRAL_FLICK[aim], "RIGHTSTICK")
+        end
     end
 end
 
@@ -53,16 +92,7 @@ end
 
 function CK:OnPadButton(button)
     if self.db.settings.debug then
-        self:Print("button %s (petal %s)", tostring(button), tostring(self.state.petal))
-    end
-    local slot = SLOT_BY_BUTTON[button]
-    if slot then
-        if self.state.petal then
-            self:TypeSlot(self.state.petal, slot)
-        else
-            self:RunAction(NEUTRAL_ACTIONS[slot], button)
-        end
-        return
+        self:Print("button %s", tostring(button))
     end
     local action = BUTTON_ACTIONS[button]
     if action then
@@ -83,8 +113,11 @@ function CK:OnUpdate()
     if not self.stickEvents and C_GamePad and C_GamePad.GetDeviceMappedState then
         local id = C_GamePad.GetActiveDeviceID and C_GamePad.GetActiveDeviceID()
         local st = id and C_GamePad.GetDeviceMappedState(id)
-        local stick = st and st.sticks and st.sticks[1]
-        if stick then self:SetStick(stick.x or 0, stick.y or 0) end
+        local sticks = st and st.sticks
+        if sticks then
+            if sticks[1] then self:SetLeftStick(sticks[1].x or 0, sticks[1].y or 0) end
+            if sticks[2] then self:SetRightStick(sticks[2].x or 0, sticks[2].y or 0) end
+        end
     end
 
     if self.repeatFn and now >= self.repeatAt then
@@ -92,6 +125,9 @@ function CK:OnUpdate()
         self.repeatAt = now + REPEAT_RATE
     end
 end
+
+local LEFT_STICKS = { Left = true, Movement = true }
+local RIGHT_STICKS = { Right = true, Camera = true }
 
 function CK:SetupInput(f)
     if f.EnableGamePadButton then
@@ -102,16 +138,19 @@ function CK:SetupInput(f)
     if f.EnableGamePadStick then
         f:EnableGamePadStick(true)
         f:SetScript("OnGamePadStick", function(_, stick, x, y)
-            if CK.db.settings.debug and not CK.seenSticks then
-                CK.seenSticks = {}
+            if CK.db.settings.debug then
+                CK.seenSticks = CK.seenSticks or {}
+                if not CK.seenSticks[stick] then
+                    CK.seenSticks[stick] = true
+                    CK:Print("stick %s", tostring(stick))
+                end
             end
-            if CK.seenSticks and not CK.seenSticks[stick] then
-                CK.seenSticks[stick] = true
-                CK:Print("stick %s", tostring(stick))
-            end
-            if stick == "Left" or stick == "Movement" then
+            if LEFT_STICKS[stick] then
                 CK.stickEvents = true
-                CK:SetStick(x or 0, y or 0)
+                CK:SetLeftStick(x or 0, y or 0)
+            elseif RIGHT_STICKS[stick] then
+                CK.stickEvents = true
+                CK:SetRightStick(x or 0, y or 0)
             end
         end)
     end

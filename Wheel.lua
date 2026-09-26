@@ -1,8 +1,8 @@
 local _, CK = ...
 local L = CK.L
 
--- 8 petals, clockwise from the top. Each petal holds 4 characters placed like
--- the face buttons: X (left), Y (top), B (right), A (bottom).
+-- 8 petals, clockwise from the top. Each petal holds 4 characters placed
+-- left, top, right, bottom: the right stick flicks toward the one to type.
 local LAYOUTS = {
     letters = {
         { "a", "b", "c", "d" },
@@ -27,25 +27,24 @@ local LAYOUTS = {
 }
 CK.LAYOUTS = LAYOUTS
 
-local SLOT_OFFSETS = { { -30, 0 }, { 0, 30 }, { 30, 0 }, { 0, -30 } }
-local SLOT_COLORS = {
-    { 0.35, 0.60, 1.00 }, -- X blue
-    { 1.00, 0.85, 0.20 }, -- Y yellow
-    { 1.00, 0.35, 0.35 }, -- B red
-    { 0.40, 1.00, 0.40 }, -- A green
-}
-
 local CIRCLE = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
-local WHEEL_RADIUS = 140
-local PETAL_SIZE = 104
-local KEY_SIZE = 32
-local FRAME_WIDTH, FRAME_HEIGHT = 460, 580
+local WHITE = "Interface\\Buttons\\WHITE8X8"
+
+local WIDTH = 340
+local WHEEL_SIZE = 290
+local WHEEL_RADIUS = 104
+local PETAL_SIZE = 82
+local KEY_OFFSET = 23
+local KEY_SIZE = 26
+local HUB_SIZE = 70
+local SLOT_OFFSETS = { { -KEY_OFFSET, 0 }, { 0, KEY_OFFSET }, { KEY_OFFSET, 0 }, { 0, -KEY_OFFSET } }
 
 CK.state = {
     layer = "letters",
     shift = false,
     caps = false,
     petal = nil,
+    aim = nil,
     suggestions = {},
     selected = 1,
     lastShift = 0,
@@ -54,16 +53,6 @@ CK.state = {
 ---------------------------------------------------------------------------
 -- UI construction
 ---------------------------------------------------------------------------
-local function newButton(parent, text, width, height, onClick)
-    local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-    b:SetSize(width, height)
-    b:SetText(text)
-    b:SetNormalFontObject("GameFontNormalSmall")
-    b:SetHighlightFontObject("GameFontHighlightSmall")
-    b:SetScript("OnClick", onClick)
-    return b
-end
-
 local function circle(parent, layer, size, r, g, b, a)
     local t = parent:CreateTexture(nil, layer)
     t:SetTexture(CIRCLE)
@@ -72,73 +61,101 @@ local function circle(parent, layer, size, r, g, b, a)
     return t
 end
 
+local function flatButton(parent, width, height, text, onClick)
+    local b = CreateFrame("Button", nil, parent)
+    b:SetSize(width, height)
+    b.bg = b:CreateTexture(nil, "BACKGROUND")
+    b.bg:SetAllPoints()
+    b.bg:SetTexture(WHITE)
+    b:SetHighlightTexture(WHITE)
+    b:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.12)
+    b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    b.text:SetPoint("LEFT", 3, 0)
+    b.text:SetPoint("RIGHT", -3, 0)
+    b.text:SetText(text)
+    b:SetScript("OnClick", onClick)
+    function b:SetActive(active)
+        if active then
+            self.bg:SetVertexColor(0.55, 0.4, 0.05, 0.9)
+        else
+            self.bg:SetVertexColor(0, 0, 0, 0.6)
+        end
+    end
+    b:SetActive(false)
+    return b
+end
+
 function CK:BuildUI()
     if self.frame then return end
 
-    local f = CreateFrame("Frame", "ControllerKeyboardFrame", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
-    f:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
-    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    -- Invisible container: only the pieces below are drawn
+    local f = CreateFrame("Frame", "ControllerKeyboardFrame", UIParent)
+    f:SetSize(WIDTH, 440)
+    f:SetFrameStrata("DIALOG")
     f:SetClampedToScreen(true)
     f:SetMovable(true)
-    f:EnableMouse(true)
-    f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", f.StartMoving)
-    f:SetScript("OnDragStop", function(s)
-        s:StopMovingOrSizing()
-        CK:SavePosition()
-    end)
-    f:SetBackdrop({
-        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 16,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    f:SetBackdropColor(0.03, 0.03, 0.06, 0.92)
-    f:SetBackdropBorderColor(0.6, 0.6, 0.65, 1)
     f:Hide()
     self.frame = f
 
-    -- Header: channel, mode and a preview of the message
-    f.channel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    f.channel:SetPoint("TOPLEFT", 16, -14)
+    -- Message preview (drag it to move the keyboard)
+    local top = CreateFrame("Frame", nil, f, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    top:SetSize(WIDTH, 44)
+    top:SetPoint("TOP")
+    top:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 },
+    })
+    top:SetBackdropColor(0, 0, 0, 0.75)
+    top:SetBackdropBorderColor(0.5, 0.5, 0.55, 0.9)
+    top:EnableMouse(true)
+    top:RegisterForDrag("LeftButton")
+    top:SetScript("OnDragStart", function() f:StartMoving() end)
+    top:SetScript("OnDragStop", function()
+        f:StopMovingOrSizing()
+        CK:SavePosition()
+    end)
+    f.top = top
 
-    f.mode = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.mode:SetPoint("TOPRIGHT", -16, -15)
-
-    f.preview = f:CreateFontString(nil, "OVERLAY", "ChatFontNormal")
-    f.preview:SetPoint("TOPLEFT", 16, -34)
-    f.preview:SetSize(FRAME_WIDTH - 32, 36)
+    f.preview = top:CreateFontString(nil, "OVERLAY", "ChatFontNormal")
+    f.preview:SetPoint("TOPLEFT", 9, -7)
+    f.preview:SetPoint("BOTTOMRIGHT", -44, 6)
     f.preview:SetJustifyH("LEFT")
     f.preview:SetJustifyV("TOP")
+
+    f.mode = top:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    f.mode:SetPoint("TOPRIGHT", -8, -8)
 
     -- Suggestions
     f.sugg = {}
     local n = self.db.settings.numSuggestions
-    local sw = math.floor((FRAME_WIDTH - 32 - (n - 1) * 2) / n)
+    local sw = (WIDTH - (n - 1) * 2) / n
     for i = 1, n do
-        local b = newButton(f, "", sw, 24, function() CK:AcceptSuggestion(i) end)
-        b:SetNormalFontObject("GameFontHighlight")
-        b:SetPoint("TOPLEFT", 16 + (i - 1) * (sw + 2), -76)
+        local b = flatButton(f, sw, 22, "", function() CK:AcceptSuggestion(i) end)
+        b.text:SetFontObject("GameFontHighlight")
+        b:SetPoint("TOPLEFT", (i - 1) * (sw + 2), -47)
         b:Hide()
         f.sugg[i] = b
     end
 
     -- Wheel
     local wheel = CreateFrame("Frame", nil, f)
-    wheel:SetSize(400, 400)
-    wheel:SetPoint("TOP", 0, -106)
+    wheel:SetSize(WHEEL_SIZE, WHEEL_SIZE)
+    wheel:SetPoint("TOP", 0, -72)
     f.wheel = wheel
 
-    local hub = circle(wheel, "BACKGROUND", 116, 0.15, 0.15, 0.2, 0.8)
+    local hub = circle(wheel, "BACKGROUND", HUB_SIZE, 0, 0, 0, 0.6)
     hub:SetPoint("CENTER")
     f.hubHints = {}
-    local hubText = { L.HUB_X, L.HUB_Y, L.HUB_B, L.HUB_A }
-    for s = 1, 4 do
+    local hubHints = {
+        { "<", -20, 0 }, { L.HUB_UP, 0, 18 }, { ">", 20, 0 }, { L.HUB_DOWN, 0, -18 },
+    }
+    for i, h in ipairs(hubHints) do
         local t = wheel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        t:SetPoint("CENTER", wheel, "CENTER", SLOT_OFFSETS[s][1] * 1.2, SLOT_OFFSETS[s][2] * 1.2)
-        t:SetText(hubText[s])
-        t:SetTextColor(unpack(SLOT_COLORS[s]))
-        f.hubHints[s] = t
+        t:SetPoint("CENTER", wheel, "CENTER", h[2], h[3])
+        t:SetText(h[1])
+        f.hubHints[i] = t
     end
 
     f.petals = {}
@@ -147,13 +164,16 @@ function CK:BuildUI()
         local p = CreateFrame("Frame", nil, wheel)
         p:SetSize(PETAL_SIZE, PETAL_SIZE)
         p:SetPoint("CENTER", wheel, "CENTER", math.cos(angle) * WHEEL_RADIUS, math.sin(angle) * WHEEL_RADIUS)
-        p.bg = circle(p, "BACKGROUND", PETAL_SIZE, 0.25, 0.25, 0.3, 0.6)
+        p.bg = circle(p, "BACKGROUND", PETAL_SIZE, 0, 0, 0, 0.55)
         p.bg:SetPoint("CENTER")
         p.keys = {}
         for s = 1, 4 do
             local b = CreateFrame("Button", nil, p)
             b:SetSize(KEY_SIZE, KEY_SIZE)
             b:SetPoint("CENTER", p, "CENTER", SLOT_OFFSETS[s][1], SLOT_OFFSETS[s][2])
+            b.aim = circle(b, "ARTWORK", KEY_SIZE + 4, 1, 0.8, 0.2, 0.9)
+            b.aim:SetPoint("CENTER")
+            b.aim:Hide()
             b:SetHighlightTexture(CIRCLE)
             b:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.3)
             b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
@@ -164,7 +184,7 @@ function CK:BuildUI()
         f.petals[i] = p
     end
 
-    -- Bottom row (mouse / Steam Controller trackpad)
+    -- Mouse / Steam Controller trackpad actions
     local actions = {
         { L.SHIFT, "ToggleShift" },
         { L.SYMBOLS, "ToggleSymbols" },
@@ -172,19 +192,24 @@ function CK:BuildUI()
         { L.BACKSPACE, "Backspace" },
         { L.CHANNEL, "CycleChannel" },
         { L.SEND, "Send" },
-        { L.CLOSE, "Cancel" },
+        { "X", "Cancel" },
     }
-    local bw = math.floor((FRAME_WIDTH - 32 - (#actions - 1) * 2) / #actions)
+    local widths = { 1, 1, 1.3, 1.3, 1.1, 1.3, 0.6 }
+    local total = 0
+    for _, w in ipairs(widths) do total = total + w end
+    local unit = (WIDTH - (#actions - 1) * 2) / total
     f.actions = {}
+    local x = 0
     for i, a in ipairs(actions) do
-        local b = newButton(f, a[1], bw, 24, function() CK[a[2]](CK) end)
-        b:SetPoint("TOPLEFT", 16 + (i - 1) * (bw + 2), -512)
+        local b = flatButton(f, unit * widths[i], 20, a[1], function() CK[a[2]](CK) end)
+        b:SetPoint("TOPLEFT", x, -72 - WHEEL_SIZE - 4)
+        x = x + unit * widths[i] + 2
         f.actions[a[2]] = b
     end
 
     f.hint = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    f.hint:SetPoint("TOPLEFT", 16, -542)
-    f.hint:SetSize(FRAME_WIDTH - 32, 26)
+    f.hint:SetPoint("TOP", 0, -72 - WHEEL_SIZE - 30)
+    f.hint:SetWidth(WIDTH)
     f.hint:SetText(L.HINT)
 
     self:SetupInput(f)
@@ -202,8 +227,10 @@ function CK:RestorePosition()
     local pos = self.db.pos
     if pos then
         f:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4])
+    elseif ChatFrame1 then
+        f:SetPoint("BOTTOMLEFT", ChatFrame1, "BOTTOMRIGHT", 40, -30)
     else
-        f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 160)
+        f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 140)
     end
     f:SetScale(self.db.settings.scale)
 end
@@ -227,40 +254,40 @@ function CK:UpdateWheel()
     for i, p in ipairs(f.petals) do
         local selected = state.petal == i
         if selected then
-            p.bg:SetVertexColor(0.85, 0.65, 0.15, 0.7)
-            p:SetScale(1.08)
+            p.bg:SetVertexColor(0.45, 0.33, 0.05, 0.85)
+            p:SetScale(1.12)
         else
-            p.bg:SetVertexColor(0.25, 0.25, 0.3, 0.6)
+            p.bg:SetVertexColor(0, 0, 0, state.petal and 0.35 or 0.55)
             p:SetScale(1)
         end
         for s, b in ipairs(p.keys) do
             b.text:SetText(self:DisplayChar(layout[i][s]))
-            if selected then
-                b.text:SetTextColor(unpack(SLOT_COLORS[s]))
+            local aimed = selected and state.aim == s
+            b.aim:SetShown(aimed)
+            if aimed then
+                b.text:SetTextColor(0, 0, 0)
+            elseif selected or not state.petal then
+                b.text:SetTextColor(1, 1, 1)
             else
-                b.text:SetTextColor(0.92, 0.92, 0.92)
+                b.text:SetTextColor(0.6, 0.6, 0.6)
             end
         end
     end
 
     for _, t in ipairs(f.hubHints) do
-        t:SetAlpha(state.petal and 0.25 or 1)
+        t:SetShown(not state.petal)
     end
 
-    local mode = {}
     if state.caps then
-        mode[#mode + 1] = L.CAPS
+        f.mode:SetText(L.CAPS)
     elseif state.shift then
-        mode[#mode + 1] = L.SHIFT
-    end
-    if state.layer == "symbols" then mode[#mode + 1] = L.SYMBOLS end
-    f.mode:SetText(table.concat(mode, "  "))
-    f.actions.ToggleSymbols:SetText(state.layer == "symbols" and L.LETTERS or L.SYMBOLS)
-    if state.shift or state.caps then
-        f.actions.ToggleShift:LockHighlight()
+        f.mode:SetText(L.SHIFT)
     else
-        f.actions.ToggleShift:UnlockHighlight()
+        f.mode:SetText(state.layer == "symbols" and L.SYMBOLS or "")
     end
+    f.actions.ToggleSymbols.text:SetText(state.layer == "symbols" and L.LETTERS or L.SYMBOLS)
+    f.actions.ToggleSymbols:SetActive(state.layer == "symbols")
+    f.actions.ToggleShift:SetActive(state.shift or state.caps)
 end
 
 function CK:UpdateSuggestions()
@@ -269,9 +296,9 @@ function CK:UpdateSuggestions()
     for i, b in ipairs(f.sugg) do
         local word = list[i]
         if word then
-            b:SetText(word)
+            b.text:SetText(word)
+            b:SetActive(i == self.state.selected)
             b:Show()
-            if i == self.state.selected then b:LockHighlight() else b:UnlockHighlight() end
         else
             b:Hide()
         end
@@ -297,6 +324,19 @@ function CK:GetChannelLabel(eb)
     return label
 end
 
+-- Keep the end of long messages visible
+local MAX_PREVIEW = 80
+local function previewTail(text)
+    if #text <= MAX_PREVIEW then return text end
+    local start = #text - MAX_PREVIEW + 1
+    while start <= #text do
+        local b = text:byte(start)
+        if b < 128 or b >= 192 then break end
+        start = start + 1
+    end
+    return "..." .. text:sub(start)
+end
+
 local WORD_TAIL = "(" .. CK.WORD_CHARS .. "*)$"
 local PREV_WORD = "(" .. CK.WORD_CHARS .. "+)%s+$"
 
@@ -306,8 +346,7 @@ function CK:Refresh()
     if not (f and f:IsShown() and eb) then return end
 
     local text = eb:GetText() or ""
-    f.channel:SetText(self:GetChannelLabel(eb))
-    f.preview:SetText(text .. "|cffffd200_|r")
+    f.preview:SetText(self:GetChannelLabel(eb) .. previewTail(text) .. "|cffffd200_|r")
 
     local prefix = text:match(WORD_TAIL) or ""
     local prev = text:sub(1, #text - #prefix):match(PREV_WORD)
@@ -474,7 +513,7 @@ function CK:Open(eb)
     self:BuildUI()
     self.editBox = eb
     local state = self.state
-    state.layer, state.shift, state.caps, state.petal = "letters", false, false, nil
+    state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
     self.frame:Show()
     self:UpdateWheel()
     self:Refresh()
@@ -485,6 +524,7 @@ function CK:Close()
         self.frame:Hide()
     end
     self.state.petal = nil
+    self.state.aim = nil
     self.repeatFn = nil
 end
 

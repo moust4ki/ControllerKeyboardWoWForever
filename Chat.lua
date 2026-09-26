@@ -12,6 +12,7 @@ function CK:IsGamepadActive()
 end
 
 function CK:OnChatActivated(eb)
+    if self:IsOpen() and self.editBox == eb then return end
     local s = self.db.settings
     if self.forceOpen or (s.autoOpen and (not s.onlyWithGamepad or self:IsGamepadActive())) then
         self:Open(eb)
@@ -37,6 +38,7 @@ function CK:HookChat()
             eb:HookScript("OnTextChanged", function(box)
                 if box == CK.editBox then CK:Refresh() end
             end)
+            eb:HookScript("OnEditFocusGained", function(box) CK:OnChatActivated(box) end)
             eb:HookScript("OnHide", function(box) CK:OnChatDeactivated(box) end)
         end
     end
@@ -75,7 +77,12 @@ local function slash(msg)
     local cmd, arg = (msg or ""):lower():match("^%s*(%S*)%s*(.-)%s*$")
 
     if cmd == "" then
-        ControllerKeyboard_Toggle()
+        -- The chat edit box is still sending this command: open once it is closed
+        C_Timer.After(0, function()
+            CK.forceOpen = true
+            ChatFrame_OpenChat("")
+            CK.forceOpen = false
+        end)
     elseif cmd == "auto" then
         s.autoOpen = not s.autoOpen
         CK:Print("auto: %s", onOff(s.autoOpen))
