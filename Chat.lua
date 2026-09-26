@@ -11,12 +11,18 @@ function CK:IsGamepadActive()
         and GetCVar("GamePadEnable") == "1"
 end
 
+-- With the "IM" chat style the edit box stays visible and is "activated"
+-- without being typed in: only open when it really has the keyboard focus.
 function CK:OnChatActivated(eb)
-    if self:IsOpen() and self.editBox == eb then return end
-    local s = self.db.settings
-    if self.forceOpen or (s.autoOpen and (not s.onlyWithGamepad or self:IsGamepadActive())) then
-        self:Open(eb)
-    end
+    local forced = self.forceOpen
+    C_Timer.After(0, function()
+        if not eb:HasFocus() then return end
+        if CK:IsOpen() and CK.editBox == eb then return end
+        local s = CK.db.settings
+        if forced or (s.autoOpen and (not s.onlyWithGamepad or CK:IsGamepadActive())) then
+            CK:Open(eb)
+        end
+    end)
 end
 
 function CK:OnChatDeactivated(eb)
@@ -39,6 +45,7 @@ function CK:HookChat()
                 if box == CK.editBox then CK:Refresh() end
             end)
             eb:HookScript("OnEditFocusGained", function(box) CK:OnChatActivated(box) end)
+            eb:HookScript("OnEditFocusLost", function(box) CK:OnChatDeactivated(box) end)
             eb:HookScript("OnHide", function(box) CK:OnChatDeactivated(box) end)
         end
     end
@@ -59,7 +66,7 @@ function ControllerKeyboard_Toggle()
     end
     CK.forceOpen = true
     local active = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()
-    if active then
+    if active and active:HasFocus() then
         CK:Open(active)
     else
         ChatFrame_OpenChat("")

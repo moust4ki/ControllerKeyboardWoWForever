@@ -109,6 +109,12 @@ end
 function CK:OnUpdate()
     local now = GetTime()
 
+    -- Safety net: the chat lost the focus without any event we hooked
+    if not (self.editBox and self.editBox:HasFocus()) then
+        self:Close()
+        return
+    end
+
     -- Fallback when OnGamePadStick never fires: poll the device state
     if not self.stickEvents and C_GamePad and C_GamePad.GetDeviceMappedState then
         local id = C_GamePad.GetActiveDeviceID and C_GamePad.GetActiveDeviceID()
