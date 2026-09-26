@@ -53,8 +53,9 @@ choisissez-le dans le chat avant de taper, ou commencez le message par `/p`, `/g
 
 ## Prédiction
 
-- **Complétion des mots** : dictionnaire français de 12 000 mots + vocabulaire WoW (lfg, heal,
-  donjon, hdv…). Les accents sont ignorés pendant la recherche : `ca` propose « ça », `ete` « été ».
+- **Complétion des mots** : dictionnaires français et anglais de 12 000 mots chacun + vocabulaire WoW
+  (lfg, heal, donjon, hdv…). Par défaut, la langue du client (français sur un client français, anglais
+  sinon), modifiable dans les options. Les accents sont ignorés pendant la recherche : `ca` propose « ça », `ete` « été ».
 - **Mot suivant, comme sur iPhone** : dès l'ouverture du chat, vos débuts de message habituels ; après
   chaque mot, la suite la plus probable d'après vos enchaînements de 2 et 3 mots et une base
   d'expressions françaises courantes (« je » → suis, vais… ; « bonne » → nuit, soirée… ; « j' » → ai…).

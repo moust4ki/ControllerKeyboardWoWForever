@@ -346,8 +346,10 @@ end
 -- combat got blocked by the game. It reopens after combat if the chat is open.
 function CK:BlockedByCombat()
     if not InCombatLockdown() then return false end
-    if not self.combatNotified then
-        self.combatNotified = true
+    -- Red message in the middle of the screen, like the game's own errors
+    if UIErrorsFrame then
+        UIErrorsFrame:AddMessage(CK.L.COMBAT_UNAVAILABLE, 1, 0.1, 0.1, 1)
+    else
         self:Print(CK.L.COMBAT_UNAVAILABLE)
     end
     return true

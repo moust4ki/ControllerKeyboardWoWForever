@@ -2,8 +2,11 @@
 
 ## 0.2.1
 
-- The keyboard is now disabled in combat: the game blocks too many actions during a fight. The chat
-  works as usual, and the keyboard comes back by itself after combat if the chat is still open.
+- The keyboard is now disabled in combat: the game blocks too many actions during a fight. Trying
+  to open it shows "Not possible in combat"; the chat works as usual, and the keyboard comes back by
+  itself after combat if the chat is still open.
+- Suggestions default to the client's language: French on a French client, English otherwise
+  (both 12,000-word dictionaries are included; change it in the options).
 - Fix: the keyboard could be blocked from opening ("ControllerKeyboardFrame:Show()").
 - Fix: LB / RB / LT / RT could stay captured by the addon until the end of combat.
 

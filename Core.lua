@@ -26,7 +26,7 @@ if GetLocale() == "frFR" then
     L.DRAG_HINT = "Glisser pour déplacer le clavier (/ck lock pour verrouiller)"
     L.LOCKED = "Position verrouillée : %s"
     L.TEXTURES_MISSING = "|cffff4040Textures introuvables|r : quittez et relancez le jeu (un /reload ne suffit pas pour de nouveaux fichiers)."
-    L.COMBAT_UNAVAILABLE = "Clavier indisponible en combat : il reviendra après le combat."
+    L.COMBAT_UNAVAILABLE = "Impossible en combat"
     L.GESTURE_INSERT = "Insérer"
     L.GESTURE_WORD = "Mot"
     L.GESTURE_DELETE = "Effacer"
@@ -97,7 +97,7 @@ else
     L.DRAG_HINT = "Drag to move the keyboard (/ck lock to lock)"
     L.LOCKED = "Position locked: %s"
     L.TEXTURES_MISSING = "|cffff4040Textures not found|r: quit and restart the game (/reload is not enough for new files)."
-    L.COMBAT_UNAVAILABLE = "Keyboard unavailable in combat: it will come back after combat."
+    L.COMBAT_UNAVAILABLE = "Not possible in combat"
     L.GESTURE_INSERT = "Insert"
     L.GESTURE_WORD = "Word"
     L.GESTURE_DELETE = "Delete"
@@ -164,7 +164,8 @@ local DEFAULTS = {
     autoOpen = true,
     onlyWithGamepad = false,
     learn = true,
-    dicts = { frFR = true, enUS = false },
+    -- Suggestions in the client's language by default
+    dicts = { frFR = GetLocale() == "frFR", enUS = GetLocale() ~= "frFR" },
     maxWords = 8000,
     numSuggestions = 5,
     scale = 1,

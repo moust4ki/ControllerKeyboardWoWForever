@@ -280,7 +280,6 @@ end
 
 -- Back after combat if the chat is still being typed in
 function CK:OnCombatEnded()
-    self.combatNotified = false
     local eb = self.reopenAfterCombat
     self.reopenAfterCombat = nil
     if not eb then

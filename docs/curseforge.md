@@ -16,7 +16,8 @@ Friz Quadrata, icônes de boutons du jeu.
 - **Clavier en roue (daisywheel)** : 8 pétales de 4 caractères, couche chiffres / accents / symboles.
 - **Deux sticks** : stick gauche = pétale, stick droit = lettre. Les pouces ne quittent jamais les sticks.
 - **Prédiction façon iPhone**
-  - complétion des mots (12 000 mots français + vocabulaire WoW : lfg, heal, donjon, hdv…) ;
+  - complétion des mots : dictionnaires français et anglais (12 000 mots chacun, langue du client par
+    défaut) + vocabulaire WoW : lfg, heal, donjon, hdv… ;
   - accents ignorés : `ca` propose « ça », `ete` propose « été » ;
   - mot suivant d'après vos habitudes et des expressions courantes (« je » → suis, vais… ; « bonne » →
     nuit, soirée…) ;
@@ -80,7 +81,8 @@ the game's own button icons.
 - **Daisywheel keyboard**: 8 petals of 4 characters, plus a numbers / accents / symbols layer.
 - **Dual-stick typing**: left stick = petal, right stick = letter. Thumbs never leave the sticks.
 - **iPhone-style prediction**
-  - word completion (12,000 French words, English dictionary available, WoW slang: lfg, heal…);
+  - word completion: English and French dictionaries (12,000 words each, client language by default)
+    plus WoW slang: lfg, heal…;
   - accents ignored while searching;
   - next word from your habits and common phrases;
   - suggestions as soon as the chat opens.
