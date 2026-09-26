@@ -12,7 +12,7 @@ button icons.
 1. Download the repository (*Code > Download ZIP*) and extract it, or grab the zip from CurseForge.
 2. Rename the folder to **`ControllerKeyboard`** (exact name) and put it in
    `World of Warcraft/_classic_beta_/Interface/AddOns/`.
-3. **Fully restart the game** (`/reload` does not load new texture files).
+3. **Fully restart the game** after installing or updating (`/reload` does not load new files).
 
 ## Gamepad
 
@@ -76,7 +76,8 @@ the highlight from flickering. Keys over the middle (Space) belong to both halve
 Shift is the keyboard's own Shift key (tap = one capital, double tap = caps lock). The suggestions
 and channels are driven with the D-pad.
 
-Options: layout, stick dead zone, magnet strength, cursor line.
+Options: layout, stick dead zone, stick response (linear, gentle, fast), magnet strength, cursor
+lines. Pick a larger window size in the options if the keys feel small.
 
 ## Mouse / Steam Controller
 
@@ -86,15 +87,17 @@ gamepad UI closes the chat on the first click: the keyboard then stays open and 
 
 ## Chat channels
 
-A row under the keyboard shows `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel colors. You have
-to reach for it, so you never switch by mistake: press **D-pad ↓** to make it the active row, then
-**D-pad ← →** (or the right stick); **D-pad ↑** goes back to the suggestions. With the mouse, simply
-**hover** a channel (no click needed). The message is then sent there with A. Unavailable channels are greyed out and skipped (party / raid / guild you are
-not in, `/r` with nobody to reply to). With `/w`, first pick the recipient: type the name (names may
-contain a space) and insert a suggestion — recent correspondents, group members, online friends,
-guild — or press A to confirm what you typed; then type the message. Deleting on an empty message
-goes back to the name. The game's chat box is never
-touched, so switching never loses the chat focus.
+A row under the keyboard shows `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel
+colors. You have to reach for it, so you never switch by mistake: press **D-pad ↓** to make it the
+active row, then **D-pad ← →** (or the right stick in the daisywheel); **D-pad ↑** goes back to the
+suggestions. With the mouse, simply **hover** a channel (no click needed). The message is then sent
+there with A. Unavailable channels are greyed out and skipped (party / raid / guild you are not in,
+`/r` with nobody to reply to). The game's chat box is never touched, so switching never loses the
+chat focus.
+
+With `/w`, first pick the recipient: type the name (names may contain a space) and insert a
+suggestion (recent correspondents, group members, online friends, guild) or press A to confirm what
+you typed; then type the message. Deleting on an empty message goes back to the name.
 
 ## Prediction
 
