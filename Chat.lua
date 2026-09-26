@@ -51,7 +51,10 @@ function CK:HookChat()
     end
 
     -- Learn from every message the player sends (keyboard or controller)
-    local function learn(msg) CK.Predict:LearnMessage(msg) end
+    local function learn(msg)
+        CK.justSent = true
+        CK.Predict:LearnMessage(msg)
+    end
     if SendChatMessage then hooksecurefunc("SendChatMessage", learn) end
     if C_ChatInfo and C_ChatInfo.SendChatMessage then
         hooksecurefunc(C_ChatInfo, "SendChatMessage", learn)
@@ -169,6 +172,8 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
     elseif event == "PLAYER_LOGIN" then
         CK.Predict:Load()
         CK:HookChat()
+        -- Build the frames now, never while the chat is open (see Input.lua)
+        if InCombatLockdown() then CK.buildPending = true else CK:BuildUI() end
         local version = (C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata)(ADDON, "Version")
         CK:Print(L.LOADED, version or "?")
     elseif event == "PLAYER_LOGOUT" then
@@ -176,6 +181,10 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
     elseif event == "GAME_PAD_ACTIVE_CHANGED" then
         CK.gamepadActive = arg1
     elseif event == "PLAYER_REGEN_ENABLED" then
+        if CK.buildPending then
+            CK.buildPending = false
+            CK:BuildUI()
+        end
         CK:OnCombatEnded()
     elseif (event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN") and arg1 == ADDON then
         -- Release the pad at once so the game's popup can be answered safely

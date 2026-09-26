@@ -27,14 +27,20 @@ au trackpad du Steam Controller.
 | Croix ↓ | effacer le dernier mot |
 | LT | Maj (1 appui = une majuscule, 2 appuis rapides = verrouillage) |
 | RT ou clic stick gauche | chiffres, accents et symboles |
-| B | fermer |
-| A (ou Start) | envoyer le message |
+| A (ou Start) | envoyer le message (le chat reste ouvert pour le suivant) |
+| B | fermer le chat (géré par l'interface manette du jeu) |
 | Select | changer de canal (Dire, Groupe, Raid, Guilde, Crier) |
 
 Le clavier s'ouvre tout seul quand la zone de saisie du chat prend le focus (`/ck auto` pour désactiver,
 `/ck pad` pour ne l'ouvrir que si la manette est l'entrée active). Un raccourci **« Ouvrir/fermer le
 clavier »** est aussi disponible dans *Échap > Raccourcis > AddOns*. Faites glisser la barre de texte
 pour déplacer le clavier.
+
+### Pourquoi l'envoi passe par une macro
+
+L'interface manette de WoW Forever interdit aux addons de fermer le chat ou d'envoyer le texte
+eux-mêmes (erreur `SetPreferredGamepadInteractTarget`). A « clique » donc un bouton de macro sécurisé
+qui envoie `/s texte` (ou `/p`, `/g`, `/w nom`…), et c'est le jeu qui ferme le chat avec B.
 
 ## Prédiction
 

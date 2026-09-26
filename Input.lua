@@ -2,9 +2,12 @@ local _, CK = ...
 
 -- Left stick picks a petal, right stick flicks toward the letter to type.
 -- With the left stick centered, the right stick drives the suggestions.
+--
+-- B is deliberately NOT handled: closing the chat from addon code runs
+-- WoW Forever's gamepad UI (FrameControlsManager -> UpdateInteractIcons ->
+-- SetPreferredGamepadInteractTarget) in a tainted context, which the game
+-- forbids. The game's own gamepad UI closes the chat instead.
 local BUTTON_ACTIONS = {
-    PAD1 = "Send",                  -- A / Cross
-    PAD2 = "Cancel",                -- B / Circle
     PAD3 = "Backspace",             -- X / Square
     PAD4 = "Space",                 -- Y / Triangle
     PADLSHOULDER = "Backspace",
@@ -17,9 +20,11 @@ local BUTTON_ACTIONS = {
     PADDDOWN = "DeleteWord",
     PADLSTICK = "ToggleSymbols",
     PADRSTICK = "AcceptSuggestion",
-    PADFORWARD = "Send",
     PADBACK = "CycleChannel",
 }
+
+-- Buttons that send the message through the secure macro button
+local SEND_KEYS = { "PAD1", "PADFORWARD" }
 
 -- Right stick directions -> petal slot (1 left, 2 up, 3 right, 4 down)
 local SLOT_BY_SECTOR = { [0] = 2, [1] = 3, [2] = 4, [3] = 1 }
@@ -132,25 +137,37 @@ function CK:OnUpdate()
     end
 end
 
-local LEFT_STICKS = { Left = true, Movement = true }
-local RIGHT_STICKS = { Right = true, Camera = true }
+---------------------------------------------------------------------------
+-- Frames
+--
+-- WoW Forever's gamepad smart navigation hooks the global CreateFrame and
+-- refreshes its button groups from the caller's (tainted) context. Creating
+-- frames without a parent and calling SetParent afterwards is not watched.
+---------------------------------------------------------------------------
+function CK.NewFrame(frameType, name, parent, template)
+    local f = CreateFrame(frameType, name, nil, template)
+    if parent then f:SetParent(parent) end
+    return f
+end
 
 ---------------------------------------------------------------------------
 -- Buttons
 --
--- Sending in /say, /yell or a public channel needs a hardware event: a button
--- read through OnGamePadButtonDown does not count and the game blocks it.
--- While the keyboard is open, each pad button is bound (override binding) to
--- "click" a hidden button, which the game treats as a real click.
--- In combat bindings can't change: fall back to reading the buttons directly.
+-- While the keyboard is open, each pad button is bound (override binding)
+-- to "click" a hidden button. Pad buttons keep working while the chat edit
+-- box has the focus, and A clicks a secure macro button that sends the text
+-- with "/s ...", "/p ..." etc.: the game itself sends the message.
+-- In combat bindings and attributes are locked: they stay as set on open.
 ---------------------------------------------------------------------------
 local function bindingButtonName(key)
     return "ControllerKeyboardPad" .. key
 end
 
-function CK:CreateBindingButtons()
+local SEND_BUTTON = "ControllerKeyboardSendButton"
+
+function CK:CreateButtons()
     for key in pairs(BUTTON_ACTIONS) do
-        local b = CreateFrame("Button", bindingButtonName(key), UIParent)
+        local b = CK.NewFrame("Button", bindingButtonName(key))
         b:SetSize(1, 1)
         b:RegisterForClicks("AnyDown", "AnyUp")
         b:SetScript("OnClick", function(_, _, down)
@@ -161,48 +178,90 @@ function CK:CreateBindingButtons()
             end
         end)
     end
+
+    -- Secure macro button: also laid over the "Send" button for the mouse
+    local s = CK.NewFrame("Button", SEND_BUTTON, nil, "SecureActionButtonTemplate")
+    s:SetAttribute("type", "macro")
+    s:SetAttribute("macrotext", "")
+    s:RegisterForClicks("AnyDown", "AnyUp")
+    s:SetFrameStrata("FULLSCREEN_DIALOG")
+    s:SetHighlightTexture("Interface\\Buttons\\WHITE8X8")
+    s:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.12)
+    s:SetScript("PreClick", function() CK:PrepareSend() end)
+    s:SetScript("PostClick", function(_, _, down) CK:FinishSend(down) end)
+    s:Hide()
+    self.sendButton = s
+end
+
+-- Runs before the secure click: put the current message in the macro
+function CK:PrepareSend()
+    self.justSent = false
+    if InCombatLockdown() then return end
+    self.sendButton:SetAttribute("macrotext", self:BuildMacroText() or "")
+end
+
+-- Runs after the secure click: once the game sent the message, clear it
+-- (the chat stays open for the next message; B closes it)
+function CK:FinishSend(down)
+    local eb = self.editBox
+    if not eb then return end
+    local text = eb:GetText() or ""
+    local slashCommand = text:sub(1, 1) == "/" and down ~= true
+    if self.justSent or slashCommand then
+        self.justSent = false
+        if eb.AddHistoryLine then eb:AddHistoryLine(text) end
+        if not InCombatLockdown() then
+            self.sendButton:SetAttribute("macrotext", "")
+        end
+        self:SetText("")
+    end
 end
 
 function CK:EnableButtons()
     local f = self.frame
-    if self.db.settings.inputMode == "bind" and not InCombatLockdown() then
-        for key in pairs(BUTTON_ACTIONS) do
-            SetOverrideBindingClick(f, true, key, bindingButtonName(key))
-        end
-        self.bindingsActive = true
-        self.clearBindingsPending = false
-        if f.EnableGamePadButton then f:EnableGamePadButton(false) end
-    elseif f.EnableGamePadButton then
-        f:EnableGamePadButton(true)
+    if InCombatLockdown() then return end
+    for key in pairs(BUTTON_ACTIONS) do
+        SetOverrideBindingClick(f, true, key, bindingButtonName(key))
     end
+    for _, key in ipairs(SEND_KEYS) do
+        SetOverrideBindingClick(f, true, key, SEND_BUTTON)
+    end
+    self.bindingsActive = true
+    self.clearPending = false
+
+    local s = self.sendButton
+    s:ClearAllPoints()
+    s:SetAllPoints(f.actions.Send)
+    s:Show()
 end
 
 function CK:DisableButtons()
-    local f = self.frame
-    if not f then return end
-    if f.EnableGamePadButton then f:EnableGamePadButton(false) end
-    if self.bindingsActive then
-        if InCombatLockdown() then
-            self.clearBindingsPending = true
-        else
-            ClearOverrideBindings(f)
-            self.bindingsActive = false
-        end
+    if not self.bindingsActive then return end
+    if InCombatLockdown() then
+        self.clearPending = true
+        return
     end
+    ClearOverrideBindings(self.frame)
+    self.sendButton:Hide()
+    self.sendButton:SetAttribute("macrotext", "")
+    self.bindingsActive = false
+    self.clearPending = false
 end
 
 function CK:OnCombatEnded()
-    if self.clearBindingsPending and not self:IsOpen() then
-        ClearOverrideBindings(self.frame)
-        self.bindingsActive = false
-        self.clearBindingsPending = false
+    if self.clearPending and not self:IsOpen() then
+        self:DisableButtons()
     end
 end
 
+---------------------------------------------------------------------------
+-- Sticks
+---------------------------------------------------------------------------
+local LEFT_STICKS = { Left = true, Movement = true }
+local RIGHT_STICKS = { Right = true, Camera = true }
+
 function CK:SetupInput(f)
-    self:CreateBindingButtons()
-    f:SetScript("OnGamePadButtonDown", function(_, button) CK:OnPadButton(button) end)
-    f:SetScript("OnGamePadButtonUp", function(_, button) CK:OnPadButtonUp(button) end)
+    self:CreateButtons()
     if f.EnableGamePadStick then
         f:EnableGamePadStick(true)
         f:SetScript("OnGamePadStick", function(_, stick, x, y)

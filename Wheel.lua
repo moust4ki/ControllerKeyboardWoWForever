@@ -62,7 +62,7 @@ local function circle(parent, layer, size, r, g, b, a)
 end
 
 local function flatButton(parent, width, height, text, onClick)
-    local b = CreateFrame("Button", nil, parent)
+    local b = CK.NewFrame("Button", nil, parent)
     b:SetSize(width, height)
     b.bg = b:CreateTexture(nil, "BACKGROUND")
     b.bg:SetAllPoints()
@@ -89,7 +89,7 @@ function CK:BuildUI()
     if self.frame then return end
 
     -- Invisible container: only the pieces below are drawn
-    local f = CreateFrame("Frame", "ControllerKeyboardFrame", UIParent)
+    local f = CK.NewFrame("Frame", "ControllerKeyboardFrame", UIParent)
     f:SetSize(WIDTH, 440)
     f:SetFrameStrata("DIALOG")
     f:SetClampedToScreen(true)
@@ -98,7 +98,7 @@ function CK:BuildUI()
     self.frame = f
 
     -- Message preview (drag it to move the keyboard)
-    local top = CreateFrame("Frame", nil, f, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    local top = CK.NewFrame("Frame", nil, f, BackdropTemplateMixin and "BackdropTemplate" or nil)
     top:SetSize(WIDTH, 44)
     top:SetPoint("TOP")
     top:SetBackdrop({
@@ -140,7 +140,7 @@ function CK:BuildUI()
     end
 
     -- Wheel
-    local wheel = CreateFrame("Frame", nil, f)
+    local wheel = CK.NewFrame("Frame", nil, f)
     wheel:SetSize(WHEEL_SIZE, WHEEL_SIZE)
     wheel:SetPoint("TOP", 0, -72)
     f.wheel = wheel
@@ -161,14 +161,14 @@ function CK:BuildUI()
     f.petals = {}
     for i = 1, 8 do
         local angle = math.rad(90 - (i - 1) * 45)
-        local p = CreateFrame("Frame", nil, wheel)
+        local p = CK.NewFrame("Frame", nil, wheel)
         p:SetSize(PETAL_SIZE, PETAL_SIZE)
         p:SetPoint("CENTER", wheel, "CENTER", math.cos(angle) * WHEEL_RADIUS, math.sin(angle) * WHEEL_RADIUS)
         p.bg = circle(p, "BACKGROUND", PETAL_SIZE, 0, 0, 0, 0.55)
         p.bg:SetPoint("CENTER")
         p.keys = {}
         for s = 1, 4 do
-            local b = CreateFrame("Button", nil, p)
+            local b = CK.NewFrame("Button", nil, p)
             b:SetSize(KEY_SIZE, KEY_SIZE)
             b:SetPoint("CENTER", p, "CENTER", SLOT_OFFSETS[s][1], SLOT_OFFSETS[s][2])
             b.aim = circle(b, "ARTWORK", KEY_SIZE + 4, 1, 0.8, 0.2, 0.9)
@@ -192,7 +192,7 @@ function CK:BuildUI()
         { L.BACKSPACE, "Backspace" },
         { L.CHANNEL, "CycleChannel" },
         { L.SEND, "Send" },
-        { "X", "Cancel" },
+        { "X", "Close" },
     }
     local widths = { 1, 1, 1.3, 1.3, 1.1, 1.3, 0.6 }
     local total = 0
@@ -479,38 +479,47 @@ function CK:CycleChannel()
     self:Refresh()
 end
 
-function CK:Send()
+-- The message is sent by the secure macro button (see Input.lua): calling the
+-- chat functions from addon code gets blocked by WoW Forever's gamepad UI.
+local SLASH = {
+    SAY = "/s", YELL = "/y", PARTY = "/p", RAID = "/ra", GUILD = "/g",
+    OFFICER = "/o", INSTANCE_CHAT = "/i", RAID_WARNING = "/rw", EMOTE = "/e",
+}
+
+function CK:BuildMacroText()
     local eb = self.editBox
     if not eb then return end
-    if (eb:GetText() or ""):match("^%s*$") then
-        return self:Cancel()
+    local text = (eb:GetText() or ""):gsub("[\r\n]", " ")
+    if text:match("^%s*$") then return end
+    if text:sub(1, 1) == "/" then return text end
+
+    local chatType = eb:GetAttribute("chatType") or "SAY"
+    if chatType == "WHISPER" then
+        local target = eb:GetAttribute("tellTarget")
+        return target and ("/w " .. target .. " " .. text)
+    elseif chatType == "CHANNEL" then
+        local target = eb:GetAttribute("channelTarget")
+        return target and ("/" .. target .. " " .. text)
     end
-    if ChatEdit_OnEnterPressed then
-        ChatEdit_OnEnterPressed(eb)
-    else
-        ChatEdit_SendText(eb, 1)
-        ChatEdit_DeactivateChat(eb)
-    end
-    self:Close()
+    local cmd = SLASH[chatType]
+    return cmd and (cmd .. " " .. text)
 end
 
-function CK:Cancel()
-    local eb = self.editBox
-    self:Close()
-    if not eb then return end
-    if ChatEdit_OnEscapePressed then
-        ChatEdit_OnEscapePressed(eb)
-    else
-        eb:SetText("")
-        ChatEdit_DeactivateChat(eb)
-    end
+-- Only reached when the secure button is not over the "Send" button (the
+-- keyboard was opened in combat): press Enter instead.
+function CK:Send()
+    self:Print(L.SEND_COMBAT)
 end
 
 ---------------------------------------------------------------------------
 -- Open / close
 ---------------------------------------------------------------------------
 function CK:Open(eb)
-    self:BuildUI()
+    if not self.frame then
+        -- Secure buttons can't be created in combat: wait for PLAYER_REGEN_ENABLED
+        if InCombatLockdown() then return end
+        self:BuildUI()
+    end
     self.editBox = eb
     local state = self.state
     state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
