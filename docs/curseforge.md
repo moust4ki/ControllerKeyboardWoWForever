@@ -1,7 +1,72 @@
 # Controller Keyboard
 
+**Type in WoW Forever's chat with a gamepad, no keyboard needed.**
+*Écrivez dans le chat de WoW Forever à la manette. (Français plus bas)*
+
+Controller Keyboard adds a wheel keyboard that opens with the chat. The left stick picks a petal, the
+right stick types the letter: two gestures per letter, no grid to navigate. Smartphone-style
+prediction suggests words and the rest of your sentences, and learns the way you write.
+
+The look matches WoW Forever's gamepad UI: dark wheel with bronze and gold rims, Friz Quadrata font,
+the game's own button icons.
+
+## Features
+
+- **Daisywheel keyboard**: 8 petals of 4 characters, plus a numbers / accents / symbols layer.
+- **Dual-stick typing**: left stick = petal, right stick = letter. Thumbs never leave the sticks.
+- **iPhone-style prediction**
+  - word completion: English and French dictionaries (12,000 words each, client language by default)
+    plus WoW slang: lfg, heal…;
+  - accents ignored while searching;
+  - next word from your habits and common phrases;
+  - suggestions as soon as the chat opens.
+- **Slash command autocomplete**: `/` suggests `/reload`, `/p`, `/ra`, `/g`, `/w`, then your most used
+  commands.
+- **Learning**: your words, message starters and word sequences are remembered, locally.
+- **Mouse and Steam Controller**: everything is clickable; the message is kept even when the game
+  closes the chat.
+- **Works with the game's gamepad UI**: A sends, B goes back, X opens channels, as usual.
+- **Options panel**: lock position, size, Blizzard font, Xbox / PlayStation glyphs, suggestion
+  language (French, English, both)…
+
+## Gamepad controls
+
+| Button | Action |
+|---|---|
+| Left stick | pick a petal |
+| Right stick | type the aimed letter |
+| Right stick (left stick centered) | ← → pick a suggestion, ↑ insert it, ↓ delete |
+| LB / RB | delete / space |
+| LT | shift (double tap: caps lock) |
+| RT | numbers, accents, symbols |
+| D-pad ← → / ↑ / ↓ | suggestion / insert / delete word |
+| A, B, X, Y | handled by the game: send, back, channels, tab |
+
+## Installation
+
+Install with the CurseForge app, or extract the zip into
+`World of Warcraft/_classic_beta_/Interface/AddOns/`. **Fully restart the game** after installing (a
+`/reload` does not load new textures).
+
+## Commands
+
+- `/ck`: open the keyboard
+- `/ck lock`: lock / unlock the position
+- `/ck glyphs`: list the game's gamepad button icons
+- `/ck help`: all commands
+- Options: *Escape > Options > AddOns > Controller Keyboard*
+
+## Compatibility
+
+Made for **WoW Forever** and its gamepad UI. The keyboard is disabled in combat (the game blocks too
+many actions there) and comes back after combat. Source code and issues:
+[GitHub](https://github.com/moust4ki/ControllerKeyboardWoWForever).
+
+---
+
+# Controller Keyboard (Français)
+
 **Écrivez dans le chat de WoW Forever à la manette, sans clavier.**
-*Type in WoW Forever's chat with a gamepad, no keyboard needed. (English below)*
 
 Controller Keyboard ajoute un clavier en roue qui s'ouvre avec le chat. Le stick gauche choisit un
 pétale, le stick droit tape la lettre : deux gestes par lettre, sans naviguer dans une grille. Une
@@ -63,81 +128,16 @@ Conçu pour **WoW Forever** et son interface manette. Le clavier est désactivé
 bloque trop d'actions) et revient après le combat. Code source et suivi des problèmes :
 [GitHub](https://github.com/moust4ki/ControllerKeyboardWoWForever).
 
----
-
-# Controller Keyboard (English)
-
-**Type in WoW Forever's chat with a gamepad, no keyboard needed.**
-
-Controller Keyboard adds a wheel keyboard that opens with the chat. The left stick picks a petal, the
-right stick types the letter: two gestures per letter, no grid to navigate. Smartphone-style
-prediction suggests words and the rest of your sentences, and learns the way you write.
-
-The look matches WoW Forever's gamepad UI: dark wheel with bronze and gold rims, Friz Quadrata font,
-the game's own button icons.
-
-## Features
-
-- **Daisywheel keyboard**: 8 petals of 4 characters, plus a numbers / accents / symbols layer.
-- **Dual-stick typing**: left stick = petal, right stick = letter. Thumbs never leave the sticks.
-- **iPhone-style prediction**
-  - word completion: English and French dictionaries (12,000 words each, client language by default)
-    plus WoW slang: lfg, heal…;
-  - accents ignored while searching;
-  - next word from your habits and common phrases;
-  - suggestions as soon as the chat opens.
-- **Slash command autocomplete**: `/` suggests `/reload`, `/p`, `/ra`, `/g`, `/w`, then your most used
-  commands.
-- **Learning**: your words, message starters and word sequences are remembered, locally.
-- **Mouse and Steam Controller**: everything is clickable; the message is kept even when the game
-  closes the chat.
-- **Works with the game's gamepad UI**: A sends, B goes back, X opens channels, as usual.
-- **Options panel**: lock position, size, Blizzard font, Xbox / PlayStation glyphs, suggestion
-  language (French, English, both)…
-
-## Gamepad controls
-
-| Button | Action |
-|---|---|
-| Left stick | pick a petal |
-| Right stick | type the aimed letter |
-| Right stick (left stick centered) | ← → pick a suggestion, ↑ insert it, ↓ delete |
-| LB / RB | delete / space |
-| LT | shift (double tap: caps lock) |
-| RT | numbers, accents, symbols |
-| D-pad ← → / ↑ / ↓ | suggestion / insert / delete word |
-| A, B, X, Y | handled by the game: send, back, channels, tab |
-
-## Installation
-
-Install with the CurseForge app, or extract the zip into
-`World of Warcraft/_classic_beta_/Interface/AddOns/`. **Fully restart the game** after installing (a
-`/reload` does not load new textures).
-
-## Commands
-
-- `/ck`: open the keyboard
-- `/ck lock`: lock / unlock the position
-- `/ck glyphs`: list the game's gamepad button icons
-- `/ck help`: all commands
-- Options: *Escape > Options > AddOns > Controller Keyboard*
-
-## Compatibility
-
-Made for **WoW Forever** and its gamepad UI. The keyboard is disabled in combat (the game blocks too
-many actions there) and comes back after combat. Source code and issues:
-[GitHub](https://github.com/moust4ki/ControllerKeyboardWoWForever).
-
 *Dictionaries derived from FrequencyWords by Hermit Dave (CC-BY-SA-4.0). Code under the MIT license.*
 
 ---
 
-## Transparence IA / AI disclosure
+## AI disclosure
 
-Cet addon a été développé avec l'aide de l'intelligence artificielle : le code a été écrit avec
-Claude Code (Anthropic) et le design visuel créé avec Claude Design, sous la direction de l'auteur, qui
-a défini les fonctionnalités et testé l'addon en jeu.
-
-*This addon was built with the help of AI: the code was written with Claude Code (Anthropic) and the
+This addon was built with the help of AI: the code was written with Claude Code (Anthropic) and the
 visual design created with Claude Design, directed by the author, who defined the features and tested
-the addon in game.*
+the addon in game.
+
+*Cet addon a été développé avec l'aide de l'intelligence artificielle : le code a été écrit avec
+Claude Code (Anthropic) et le design visuel créé avec Claude Design, sous la direction de l'auteur, qui
+a défini les fonctionnalités et testé l'addon en jeu.*

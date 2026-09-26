@@ -1,23 +1,23 @@
 # Controller Keyboard
 
-Clavier visuel en **roue (daisywheel)** pour écrire dans le chat de **WoW Forever** à la manette, avec
-une **prédiction de mots façon smartphone** qui apprend votre façon d'écrire. Tout reste cliquable à la
-souris, donc aussi au trackpad du Steam Controller.
+A **daisywheel keyboard** to type in **WoW Forever**'s chat with a gamepad, with **smartphone-style
+word prediction** that learns the way you write. Everything is also clickable with the mouse, so it
+works with the Steam Controller trackpad too.
 
-Le design reprend les codes de l'interface manette de WoW Forever : roue sombre à 8 pétales, liserés
-bronze et or, police Friz Quadrata, icônes de boutons du jeu.
+The look follows WoW Forever's gamepad UI: dark 8-petal wheel, bronze and gold rims, Friz Quadrata
+font, the game's own button icons.
 
 ## Installation
 
-1. Téléchargez le dépôt (*Code > Download ZIP*) et extrayez-le.
-2. Renommez le dossier en **`ControllerKeyboard`** (nom exact) et placez-le dans
+1. Download the repository (*Code > Download ZIP*) and extract it, or grab the zip from CurseForge.
+2. Rename the folder to **`ControllerKeyboard`** (exact name) and put it in
    `World of Warcraft/_classic_beta_/Interface/AddOns/`.
-3. **Relancez complètement le jeu** (un `/reload` ne suffit pas pour de nouveaux fichiers de textures).
+3. **Fully restart the game** (`/reload` does not load new texture files).
 
-## Utilisation à la manette
+## Gamepad
 
-Le clavier s'ouvre tout seul quand le chat s'ouvre. Il est désactivé en combat (le jeu y bloque trop
-d'actions) et revient après le combat si le chat est encore ouvert.
+The keyboard opens by itself with the chat. It is disabled in combat (the game blocks too many
+actions there, "Not possible in combat") and comes back after combat if the chat is still open.
 
 ```
             [a b c d]
@@ -27,107 +27,112 @@ d'actions) et revient après le combat si le chat est encore ouvert.
             [q r s t]
 ```
 
-- **Stick gauche** : choisit un pétale.
-- **Stick droit** : pichenette vers la lettre à taper (gauche / haut / droite / bas du pétale).
-- **Stick gauche au centre** : le stick droit gère les suggestions (← → choisir, ↑ insérer, ↓ effacer).
+- **Left stick**: pick a petal.
+- **Right stick**: flick toward the letter to type (left / top / right / bottom of the petal).
+- **Left stick centered**: the right stick drives the suggestions (← → pick, ↑ insert, ↓ delete).
 
-| Bouton | Action |
+| Button | Action |
 |---|---|
-| LB | effacer (maintenir pour répéter) |
-| RB | espace |
-| LT | Maj (1 appui = une majuscule, 2 appuis rapides = verrouillage) |
-| RT ou clic stick gauche | chiffres, accents et symboles |
-| Croix ← → | suggestion précédente / suivante |
-| Croix ↑ ou clic stick droit | insérer la suggestion |
-| Croix ↓ | effacer le dernier mot |
+| LB | delete (hold to repeat) |
+| RB | space |
+| LT | shift (tap = one capital, double tap = caps lock) |
+| RT or left stick click | numbers, accents and symbols |
+| D-pad ← → | previous / next suggestion |
+| D-pad ↑ or right stick click | insert the suggestion |
+| D-pad ↓ | delete the last word |
 
-**A** (envoyer), **X** (canaux), **Y** (paramètres de l'onglet), **B** (retour), **Start** et **Select**
-restent gérés par l'interface manette du jeu : l'addon ne les utilise pas.
+**A** (send), **X** (channels), **Y** (tab settings), **B** (back), **Start** and **Select** stay with
+the game's gamepad UI: the addon does not use them.
 
-## Utilisation à la souris / Steam Controller
+## Mouse / Steam Controller
 
-Toutes les lettres, suggestions et actions (Maj, 123, Espace, Effacer, Envoyer, X) sont cliquables.
-L'interface manette du jeu ferme le chat au premier clic : le clavier reste alors ouvert et garde le
-message, « Envoyer » l'envoie sur le canal du chat et « X » ferme le clavier. Pour changer de canal,
-choisissez-le dans le chat avant de taper, ou commencez le message par `/p`, `/g`, `/w nom`…
+Every letter, suggestion and action (Shift, 123, Space, Delete, Send, X) is clickable. The game's
+gamepad UI closes the chat on the first click: the keyboard then stays open and keeps the message,
+"Send" sends it to the chat channel and "X" closes the keyboard. To change channel, pick it in the chat
+before typing, or start the message with `/p`, `/g`, `/w name`…
 
-## Prédiction
+## Prediction
 
-- **Complétion des mots** : dictionnaires français et anglais de 12 000 mots chacun + vocabulaire WoW
-  (lfg, heal, donjon, hdv…). Par défaut, la langue du client (français sur un client français, anglais
-  sinon), modifiable dans les options. Les accents sont ignorés pendant la recherche : `ca` propose « ça », `ete` « été ».
-- **Mot suivant, comme sur iPhone** : dès l'ouverture du chat, vos débuts de message habituels ; après
-  chaque mot, la suite la plus probable d'après vos enchaînements de 2 et 3 mots et une base
-  d'expressions françaises courantes (« je » → suis, vais… ; « bonne » → nuit, soirée… ; « j' » → ai…).
-- **Commandes** : un message qui commence par `/` propose `/reload`, `/p`, `/ra`, `/g`, `/w`, puis vos
-  commandes les plus utilisées et les commandes courantes (`/r`, `/roll`, `/dance`, `/ck lock`…).
-- **Apprentissage** : chaque message envoyé (manette ou clavier) enrichit vos mots, débuts de message,
-  enchaînements et commandes. Le contenu des messages après `/w`, `/g`… n'est jamais mémorisé comme
-  commande. Tout reste en local dans `WTF/.../SavedVariables/ControllerKeyboard.lua`.
+- **Word completion**: English and French dictionaries of 12,000 words each, plus WoW slang (lfg,
+  heal, dungeon…). Defaults to the client's language, changeable in the options. Accents are ignored
+  while searching: `ca` suggests "ça", `ete` suggests "été".
+- **Next word, iPhone style**: your usual message starters as soon as the chat opens; after each word,
+  the most likely next word from your own 2 and 3 word sequences, plus built-in common French phrases.
+- **Slash commands**: a message starting with `/` suggests `/reload`, `/p`, `/ra`, `/g`, `/w`, then your
+  most used commands and common ones (`/r`, `/roll`, `/dance`, `/ck lock`…).
+- **Learning**: every message you send (gamepad or keyboard) feeds your words, message starters, word
+  sequences and commands. The text after `/w`, `/g`… is never stored as a command. Everything stays
+  local, in `WTF/.../SavedVariables/ControllerKeyboard.lua`.
 
 ## Options
 
-*Échap > Options > AddOns > Controller Keyboard* :
+*Escape > Options > AddOns > Controller Keyboard*:
 
-- verrouiller la position, ouverture automatique, seulement quand la manette est active ;
-- taille du clavier, inversion de l'axe vertical des sticks ;
-- police (polices Blizzard : Friz Quadrata, Morpheus, Skurri, Arial Narrow, ou celle du chat) ;
-- style des boutons (Xbox / PlayStation) et icônes de boutons du jeu ;
-- langue des suggestions (français, anglais, les deux), apprentissage ;
-- replacer le clavier, oublier les mots appris.
+- lock position, open automatically, only when the gamepad is active;
+- keyboard size, invert the sticks vertical axis;
+- font (Blizzard fonts: Friz Quadrata, Morpheus, Skurri, Arial Narrow, or the chat font);
+- button style (Xbox / PlayStation) and the game's button icons;
+- suggestion language (French, English, both), learning;
+- reset position, forget learned words.
 
-## Commandes
+## Commands
 
-| Commande | Effet |
+| Command | Effect |
 |---|---|
-| `/ck` | ouvrir le clavier |
-| `/ck lock` | verrouiller / déverrouiller la position (déverrouiller affiche le clavier pour le placer) |
-| `/ck auto` | ouverture automatique avec le chat |
-| `/ck pad` | n'ouvrir automatiquement que si la manette est active |
-| `/ck learn` | activer / désactiver l'apprentissage |
-| `/ck lang fr\|en\|both` | langue des suggestions |
-| `/ck scale 0.8` | taille du clavier |
-| `/ck invert` | inverser l'axe vertical des sticks |
-| `/ck reset` | replacer le clavier |
-| `/ck stats` | statistiques |
-| `/ck forget confirm` | oublier les mots appris |
-| `/ck glyphs` | lister les icônes de boutons manette du jeu |
-| `/ck debug` | afficher les boutons et sticks reçus |
+| `/ck` | open the keyboard |
+| `/ck lock` | lock / unlock the position (unlocking shows the keyboard to place it) |
+| `/ck auto` | open automatically with the chat |
+| `/ck pad` | only open automatically when the gamepad is active |
+| `/ck learn` | turn learning on / off |
+| `/ck lang fr\|en\|both` | suggestion language |
+| `/ck scale 0.8` | keyboard size |
+| `/ck invert` | invert the sticks vertical axis |
+| `/ck reset` | reset the keyboard position |
+| `/ck stats` | statistics |
+| `/ck forget confirm` | forget learned words |
+| `/ck glyphs` | list the game's gamepad button icons |
+| `/ck debug` | print received buttons and sticks |
 
-Un raccourci **« Ouvrir/fermer le clavier »** est aussi disponible dans *Échap > Raccourcis > AddOns*.
+A **"Toggle keyboard"** key binding is also available in *Escape > Key Bindings > AddOns*.
 
-## Notes techniques
+## Technical notes
 
-- L'interface manette de WoW Forever interdit aux addons de fermer le chat ou d'ouvrir des panneaux
-  (erreur `SetPreferredGamepadInteractTarget`, qui peut figer le client). L'addon ne ferme donc jamais le
-  chat lui-même, crée ses cadres hors de la surveillance de l'interface manette, et envoie à la souris
-  via un bouton de macro sécurisé.
-- Les boutons de la manette sont liés temporairement (override bindings) uniquement pendant la saisie.
+- WoW Forever's gamepad UI forbids addons from closing the chat or opening panels
+  (`SetPreferredGamepadInteractTarget` error, which can freeze the client). The addon never closes the
+  chat itself, creates its frames outside the gamepad UI's watch, and sends with the mouse through a
+  secure macro button.
+- Gamepad buttons are bound (override bindings) only while typing, and released before combat.
 
-## Développement
+## Development
 
-Textures (sources PNG dans `design/textures/`, conversion en TGA pour le jeu) :
+Textures (PNG sources in `design/textures/`, converted to TGA for the game):
 
 ```bash
 python tools/convert_textures.py
 ```
 
-Dictionnaires (liste de fréquences [FrequencyWords](https://github.com/hermitdave/FrequencyWords),
-OpenSubtitles) :
+Dictionaries ([FrequencyWords](https://github.com/hermitdave/FrequencyWords) frequency lists,
+OpenSubtitles):
 
 ```bash
 python tools/build_dict.py fr
 ```
 
-Package CurseForge / release (`dist/ControllerKeyboard-<version>.zip`, description dans
-`docs/curseforge.md`) :
+CurseForge / release package (`dist/ControllerKeyboard-<version>.zip`, page description in
+`docs/curseforge.md`):
 
 ```bash
 python tools/package.py
 ```
 
-## Licence
+## License
 
-Code sous licence MIT (voir `LICENSE`). `Dict_frFR.lua` et `Dict_enUS.lua` sont dérivés de
-FrequencyWords (Hermit Dave) et restent sous licence
-[CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+Code under the MIT license (see `LICENSE`). `Dict_frFR.lua` and `Dict_enUS.lua` are derived from
+FrequencyWords (Hermit Dave) and remain under the
+[CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/) license.
+
+## AI disclosure
+
+This addon was built with the help of AI: the code was written with Claude Code (Anthropic) and the
+visual design created with Claude Design, directed by the author, who defined the features and tested
+the addon in game.
