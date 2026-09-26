@@ -1,11 +1,11 @@
 # Controller Keyboard
 
-A **daisywheel keyboard** to type in **WoW Forever**'s chat with a gamepad, with **smartphone-style
-word prediction** that learns the way you write. Everything is also clickable with the mouse, so it
-works with the Steam Controller trackpad too.
+A **gamepad keyboard** to type in **WoW Forever**'s chat, with **smartphone-style word prediction**
+that learns the way you write. Two input methods: a **daisywheel** and a **one-stick keyboard**.
+Everything is also clickable with the mouse, so it works with the Steam Controller trackpad too.
 
-The look follows WoW Forever's gamepad UI: dark 8-petal wheel, bronze and gold rims, Friz Quadrata
-font, the game's own button icons.
+The look follows WoW Forever's gamepad UI: bronze and gold rims, Friz Quadrata font, the game's own
+button icons.
 
 ## Installation
 
@@ -18,6 +18,22 @@ font, the game's own button icons.
 
 The keyboard opens by itself with the chat. It is disabled in combat (the game blocks too many
 actions there, "Not possible in combat") and comes back after combat if the chat is still open.
+
+Choose the input method in the options or with `/ck mode wheel|stick`.
+
+### Common to both methods
+
+| Button | Action |
+|---|---|
+| A | send the message (secure macro `/s`, `/y`, `/p`, `/g`… following the channel, or a direct whisper) |
+| B | empty the message; with an empty message, B is the game's own and closes the chat |
+| D-pad ↓ / ↑ | go to the channel row / back to the suggestions |
+| D-pad ← → | move in the active row: suggestion, or chat channel |
+| Right stick click | insert the suggestion |
+
+**X** (channels), **Y** (tab settings), **Start** and **Select** stay with the game's gamepad UI.
+
+### Daisywheel
 
 ```
             [a b c d]
@@ -38,13 +54,26 @@ actions there, "Not possible in combat") and comes back after combat if the chat
 | RB | space |
 | LT | shift (tap = one capital, double tap = caps lock) |
 | RT or left stick click | numbers, accents and symbols |
-| D-pad ↓ / ↑ | go to the channel row (under the wheel) / back to the suggestions |
-| D-pad ← → | move in the active row: suggestion, or chat channel |
-| Right stick click | insert the suggestion |
 
-**A** sends the message (secure macro: `/s`, `/y`, `/p`, `/g`, `/w`… following the chat channel).
-**B** (back), **X** (channels), **Y** (tab settings), **Start** and **Select** stay with the game's
-gamepad UI.
+### One-stick keyboard
+
+A full AZERTY or QWERTY keyboard (option, `/ck layout azerty|qwerty`), with a numbers / accents /
+symbols layer (é è ê à â ç ù û î ô ë ï œ…). The **left stick's tilt is the cursor's position** on
+the keyboard: released, the cursor is at the center; push fully in a direction to reach that edge
+or corner. A line links the center to the cursor, and the key under it is highlighted; a magnet keeps
+the highlight from flickering between two neighbors.
+
+| Button | Action |
+|---|---|
+| Left stick | move the cursor (absolute position) |
+| RT | type the highlighted key (one pull = one letter) |
+| LT | delete (hold to repeat) |
+| RB | space |
+| LB | shift (tap = one capital, double tap = caps lock) |
+| Left stick click | numbers, accents and symbols |
+| Right stick | move in the active row (← →), ↑ insert, ↓ delete |
+
+Options: layout, stick dead zone, magnet strength, cursor line.
 
 ## Mouse / Steam Controller
 
@@ -54,7 +83,7 @@ gamepad UI closes the chat on the first click: the keyboard then stays open and 
 
 ## Chat channels
 
-A row under the wheel shows `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel colors. You have
+A row under the keyboard shows `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel colors. You have
 to reach for it, so you never switch by mistake: press **D-pad ↓** to make it the active row, then
 **D-pad ← →** (or the right stick); **D-pad ↑** goes back to the suggestions. With the mouse, simply
 **hover** a channel (no click needed). The message is then sent there with A. Unavailable channels are greyed out and skipped (party / raid / guild you are
@@ -81,6 +110,8 @@ touched, so switching never loses the chat focus.
 
 *Escape > Options > AddOns > Controller Keyboard*:
 
+- input method (daisywheel / one-stick keyboard), keyboard layout (AZERTY / QWERTY), stick dead
+  zone, magnet, cursor line;
 - lock position, open automatically, only when the gamepad is active;
 - keyboard size, invert the sticks vertical axis, show / hide the mouse buttons row;
 - font (Blizzard fonts: Friz Quadrata, Morpheus, Skurri, Arial Narrow, or the chat font);
@@ -94,6 +125,8 @@ touched, so switching never loses the chat focus.
 |---|---|
 | `/ck` | open the keyboard |
 | `/ck lock` | lock / unlock the position (unlocking shows the keyboard to place it) |
+| `/ck mode wheel\|stick` | daisywheel or one-stick keyboard |
+| `/ck layout azerty\|qwerty` | one-stick keyboard layout |
 | `/ck auto` | open automatically with the chat |
 | `/ck pad` | only open automatically when the gamepad is active |
 | `/ck learn` | turn learning on / off |
@@ -118,6 +151,11 @@ A **"Toggle keyboard"** key binding is also available in *Escape > Key Bindings 
   chat itself, creates its frames outside the gamepad UI's watch, and sends with the mouse through a
   secure macro button.
 - Gamepad buttons are bound (override bindings) only while typing, and released before combat.
+- B is bound only while the message holds text; the binding is removed when B is released, so with an
+  empty message B goes back to the game, which closes the chat.
+- Code layout: `Message.lua` is the common core (message, prediction, channels, sending),
+  `Wheel.lua` and `StickKeyboard.lua` are the input methods, `UI.lua` the common panel, `Input.lua`
+  the pad buttons and sticks.
 
 ## Development
 

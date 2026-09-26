@@ -12,8 +12,11 @@ the game's own button icons.
 
 ## Features
 
-- **Daisywheel keyboard**: 8 petals of 4 characters, plus a numbers / accents / symbols layer.
-- **Dual-stick typing**: left stick = petal, right stick = letter. Thumbs never leave the sticks.
+- **Two input methods**, switchable in the options:
+  - **Daisywheel**: 8 petals of 4 characters; left stick = petal, right stick = letter.
+  - **One-stick keyboard**: a full AZERTY / QWERTY keyboard; the left stick's tilt places the
+    cursor, RT types the highlighted key.
+- Numbers / accents / symbols layer in both.
 - **iPhone-style prediction**
   - word completion: English and French dictionaries (12,000 words each, client language by default)
     plus WoW slang: lfg, heal…;
@@ -31,7 +34,7 @@ the game's own button icons.
 - **Options panel**: lock position, size, optional mouse buttons row, Blizzard font, Xbox / PlayStation glyphs, suggestion
   language (French, English, both)…
 
-## Gamepad controls
+## Gamepad controls (daisywheel)
 
 | Button | Action |
 |---|---|
@@ -44,7 +47,20 @@ the game's own button icons.
 | D-pad ↓ / ↑ | channel row (under the wheel) / suggestions row |
 | D-pad ← → | move in the active row (suggestion or channel) |
 | A | send the message |
-| B, X, Y | handled by the game: back, channels, tab |
+| B | empty the message (with an empty message: the game's back, closes the chat) |
+| X, Y | handled by the game: channels, tab |
+
+## Gamepad controls (one-stick keyboard)
+
+| Button | Action |
+|---|---|
+| Left stick | move the cursor on the keyboard (absolute position) |
+| RT | type the highlighted key |
+| LT / RB | delete / space |
+| LB | shift (double tap: caps lock) |
+| Left stick click | numbers, accents, symbols |
+| Right stick | ← → move in the active row, ↑ insert, ↓ delete |
+| D-pad, A, B | same as the daisywheel |
 
 ## Installation
 
@@ -82,8 +98,11 @@ Friz Quadrata, icônes de boutons du jeu.
 
 ## Fonctionnalités
 
-- **Clavier en roue (daisywheel)** : 8 pétales de 4 caractères, couche chiffres / accents / symboles.
-- **Deux sticks** : stick gauche = pétale, stick droit = lettre. Les pouces ne quittent jamais les sticks.
+- **Deux méthodes de saisie**, au choix dans les options :
+  - **Daisywheel** : 8 pétales de 4 caractères ; stick gauche = pétale, stick droit = lettre.
+  - **Clavier 1 stick** : un clavier AZERTY / QWERTY complet ; l'inclinaison du stick gauche place le
+    curseur, RT tape la touche en surbrillance.
+- Couche chiffres / accents / symboles dans les deux.
 - **Prédiction façon iPhone**
   - complétion des mots : dictionnaires français et anglais (12 000 mots chacun, langue du client par
     défaut) + vocabulaire WoW : lfg, heal, donjon, hdv… ;
@@ -101,7 +120,7 @@ Friz Quadrata, icônes de boutons du jeu.
 - **Panneau d'options** : verrouillage de la position, taille, boutons souris optionnels, police Blizzard, style Xbox / PlayStation,
   langue des suggestions (français, anglais, les deux)…
 
-## Commandes à la manette
+## Commandes à la manette (daisywheel)
 
 | Bouton | Action |
 |---|---|
@@ -114,7 +133,20 @@ Friz Quadrata, icônes de boutons du jeu.
 | Croix ↓ / ↑ | rangée des canaux (sous la roue) / rangée des suggestions |
 | Croix ← → | se déplacer dans la rangée active (suggestion ou canal) |
 | A | envoyer le message |
-| B, X, Y | gérés par le jeu : retour, canaux, onglet |
+| B | vider le message (message vide : retour du jeu, ferme le chat) |
+| X, Y | gérés par le jeu : canaux, onglet |
+
+## Commandes à la manette (clavier 1 stick)
+
+| Bouton | Action |
+|---|---|
+| Stick gauche | déplacer le curseur sur le clavier (position absolue) |
+| RT | taper la touche en surbrillance |
+| LT / RB | effacer / espace |
+| LB | majuscule (deux appuis : verrouillage) |
+| Clic stick gauche | chiffres, accents, symboles |
+| Stick droit | ← → se déplacer dans la rangée active, ↑ insérer, ↓ effacer |
+| Croix, A, B | comme la daisywheel |
 
 ## Installation
 

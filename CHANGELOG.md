@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.0
+
+### New
+
+- Second input method, "one-stick keyboard": a full AZERTY / QWERTY keyboard with a numbers /
+  accents / symbols layer. The left stick's tilt is the cursor's absolute position (released =
+  center, corners reachable), with a dead zone, a magnet so the highlight does not flicker and a line
+  from the center. RT types, LT deletes, RB space, LB shift, left stick click 123. Wider panel, every
+  key clickable.
+- Options: input method, layout, dead zone, magnet, cursor line. Commands: `/ck mode wheel|stick`,
+  `/ck layout azerty|qwerty`. The options panel scrolls with the mouse wheel.
+
+### Changes
+
+- B empties the message (both methods). With an empty message, B is the game's own and closes the
+  chat.
+- Code split into a common core (`Message.lua`) and input methods (`Wheel.lua`, `StickKeyboard.lua`).
+
 ## 0.3.0
 
 ### New
