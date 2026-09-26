@@ -36,6 +36,13 @@ Le clavier s'ouvre tout seul quand la zone de saisie du chat prend le focus (`/c
 clavier »** est aussi disponible dans *Échap > Raccourcis > AddOns*. Faites glisser la barre de texte
 (icône de déplacement) ou le centre de la roue pour déplacer le clavier ; la position est mémorisée.
 
+### Souris et Steam Controller
+
+L'interface manette du jeu ferme le chat dès qu'on clique à la souris. Quand un clic sur le clavier ferme
+le chat, le clavier reste ouvert et garde le message : on continue à taper (souris ou manette), puis
+« Envoyer » (ou A) l'envoie sur le canal choisi, et « X » (ou B) ferme le clavier. Si le chat est rouvert,
+le message y est recopié.
+
 ### Envoi et fermeture du chat
 
 L'interface manette de WoW Forever interdit aux addons de fermer le chat ou d'envoyer le texte

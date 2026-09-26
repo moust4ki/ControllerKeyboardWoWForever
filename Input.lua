@@ -20,6 +20,10 @@ local BUTTON_ACTIONS = {
     PADRSTICK = "AcceptSuggestion",
 }
 
+-- Once a mouse click closed the chat, the game's chat UI is gone: A sends
+-- through the secure macro button and B closes the wheel.
+local STANDALONE_ACTIONS = { PAD2 = "Close" }
+
 -- Right stick directions -> petal slot (1 left, 2 up, 3 right, 4 down)
 local SLOT_BY_SECTOR = { [0] = 2, [1] = 3, [2] = 4, [3] = 1 }
 -- Right stick with no petal selected
@@ -93,7 +97,7 @@ function CK:OnPadButton(button)
     if self.db.settings.debug then
         self:Print("button %s", tostring(button))
     end
-    local action = BUTTON_ACTIONS[button]
+    local action = BUTTON_ACTIONS[button] or (self.standalone and STANDALONE_ACTIONS[button])
     if action then
         self:RunAction(action, button)
     end
@@ -110,9 +114,13 @@ function CK:OnUpdate()
     if self.moving then return end
 
     -- Safety net: the chat lost the focus without any event we hooked
-    if not (self.editBox and self.editBox:HasFocus()) then
-        self:Close("focus lost (OnUpdate)")
-        return
+    if not self.standalone and not (self.editBox and self.editBox:HasFocus()) then
+        if self:IsClickingWheel() then
+            self:EnterStandalone()
+        else
+            self:Close("focus lost (OnUpdate)")
+            return
+        end
     end
 
     -- Fallback when OnGamePadStick never fires: poll the device state
@@ -161,7 +169,10 @@ end
 local SEND_BUTTON = "ControllerKeyboardSendButton"
 
 function CK:CreateButtons()
-    for key in pairs(BUTTON_ACTIONS) do
+    local keys = {}
+    for key in pairs(BUTTON_ACTIONS) do keys[#keys + 1] = key end
+    for key in pairs(STANDALONE_ACTIONS) do keys[#keys + 1] = key end
+    for _, key in ipairs(keys) do
         local b = CK.NewFrame("Button", bindingButtonName(key))
         b:SetSize(1, 1)
         b:RegisterForClicks("AnyDown", "AnyUp")
@@ -199,25 +210,32 @@ end
 -- Runs after the secure click: once the game sent the message, clear it
 -- (the chat stays open for the next message; B closes it)
 function CK:FinishSend(down)
-    local eb = self.editBox
-    if not eb then return end
-    local text = eb:GetText() or ""
+    local text = self:GetText()
     local slashCommand = text:sub(1, 1) == "/" and down ~= true
     if self.justSent or slashCommand then
         self.justSent = false
-        if eb.AddHistoryLine then eb:AddHistoryLine(text) end
+        local eb = self.editBox
+        if eb and eb.AddHistoryLine then eb:AddHistoryLine(text) end
         if not InCombatLockdown() then
             self.sendButton:SetAttribute("macrotext", "")
         end
         self:SetText("")
+        if self.standalone then self:Close("sent") end
     end
 end
 
 function CK:EnableButtons()
     local f = self.frame
     if InCombatLockdown() then return end
+    ClearOverrideBindings(f)
     for key in pairs(BUTTON_ACTIONS) do
         SetOverrideBindingClick(f, true, key, bindingButtonName(key))
+    end
+    if self.standalone then
+        SetOverrideBindingClick(f, true, "PAD1", SEND_BUTTON)
+        for key in pairs(STANDALONE_ACTIONS) do
+            SetOverrideBindingClick(f, true, key, bindingButtonName(key))
+        end
     end
     self.bindingsActive = true
     self.clearPending = false

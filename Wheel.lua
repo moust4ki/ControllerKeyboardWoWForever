@@ -355,13 +355,68 @@ function CK:UpdateSuggestions()
     end
 end
 
-function CK:GetChannelLabel(eb)
-    local chatType = eb:GetAttribute("chatType") or "SAY"
+---------------------------------------------------------------------------
+-- Text and channel source
+--
+-- Normally the wheel types into the chat edit box. WoW Forever's gamepad UI
+-- closes the chat on any mouse click: the wheel then keeps the message in its
+-- own buffer ("standalone") and sends it with the secure macro button.
+---------------------------------------------------------------------------
+function CK:GetText()
+    if self.standalone then return self.buffer or "" end
+    return self.editBox and self.editBox:GetText() or ""
+end
+
+function CK:GetChatAttr(key)
+    if self.standalone then return self.chatAttrs[key] end
+    return self.editBox and self.editBox:GetAttribute(key)
+end
+
+function CK:SetChatAttr(key, value)
+    if self.standalone then
+        self.chatAttrs[key] = value
+    elseif self.editBox then
+        self.editBox:SetAttribute(key, value)
+    end
+end
+
+-- Remember the chat state so it survives the chat being closed by a click
+function CK:SnapshotChat()
+    local eb = self.editBox
+    if not eb then return end
+    self.lastText = eb:GetText() or ""
+    self.lastAttrs = {
+        chatType = eb:GetAttribute("chatType"),
+        tellTarget = eb:GetAttribute("tellTarget"),
+        channelTarget = eb:GetAttribute("channelTarget"),
+    }
+end
+
+-- True while a mouse button is held over the keyboard (not just hovering:
+-- sending with A while the cursor rests on the wheel must still close it)
+function CK:IsClickingWheel()
+    return self.frame and self.frame:IsMouseOver()
+        and (IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton"))
+end
+
+function CK:EnterStandalone()
+    if self.standalone then return end
+    self.standalone = true
+    self.buffer = self.lastText or ""
+    self.chatAttrs = self.lastAttrs or { chatType = "SAY" }
+    self.editBox = nil
+    if self.db.settings.debug then self:Print("standalone mode") end
+    self:EnableButtons()
+    self:Refresh()
+end
+
+function CK:GetChannelLabel()
+    local chatType = self:GetChatAttr("chatType") or "SAY"
     local label
     if chatType == "WHISPER" or chatType == "BN_WHISPER" then
-        label = format(CHAT_WHISPER_SEND or "To %s: ", eb:GetAttribute("tellTarget") or "?")
+        label = format(CHAT_WHISPER_SEND or "To %s: ", self:GetChatAttr("tellTarget") or "?")
     elseif chatType == "CHANNEL" then
-        local target = eb:GetAttribute("channelTarget")
+        local target = self:GetChatAttr("channelTarget")
         local _, name = GetChannelName(target or 0)
         label = (name or tostring(target or "")) .. ": "
     else
@@ -392,11 +447,12 @@ local PREV_WORD = "(" .. CK.WORD_CHARS .. "+)%s+$"
 
 function CK:Refresh()
     local f = self.frame
-    local eb = self.editBox
-    if not (f and f:IsShown() and eb) then return end
+    if not (f and f:IsShown()) or self.moving then return end
+    if not (self.standalone or self.editBox) then return end
+    if not self.standalone then self:SnapshotChat() end
 
-    local text = eb:GetText() or ""
-    f.preview:SetText(self:GetChannelLabel(eb) .. previewTail(text) .. "|cffffd200_|r")
+    local text = self:GetText()
+    f.preview:SetText(self:GetChannelLabel() .. previewTail(text) .. "|cffffd200_|r")
 
     local prefix = text:match(WORD_TAIL) or ""
     local prev = text:sub(1, #text - #prefix):match(PREV_WORD)
@@ -408,24 +464,20 @@ end
 ---------------------------------------------------------------------------
 -- Actions
 ---------------------------------------------------------------------------
-local function moveToEnd(eb)
-    eb:SetCursorPosition(#(eb:GetText() or ""))
+function CK:SetText(text)
+    if self.standalone then
+        self.buffer = text
+    elseif self.editBox then
+        self.editBox:SetText(text)
+        self.editBox:SetCursorPosition(#text)
+    else
+        return
+    end
+    self:Refresh()
 end
 
 function CK:InsertText(text)
-    local eb = self.editBox
-    if not eb then return end
-    moveToEnd(eb)
-    eb:Insert(text)
-    self:Refresh()
-end
-
-function CK:SetText(text)
-    local eb = self.editBox
-    if not eb then return end
-    eb:SetText(text)
-    moveToEnd(eb)
-    self:Refresh()
+    self:SetText(self:GetText() .. text)
 end
 
 function CK:TypeSlot(petal, slot)
@@ -443,23 +495,19 @@ function CK:Space()
 end
 
 function CK:Backspace()
-    local eb = self.editBox
-    if eb then self:SetText(CK.DropLastChar(eb:GetText() or "")) end
+    self:SetText(CK.DropLastChar(self:GetText()))
 end
 
 function CK:DeleteWord()
-    local eb = self.editBox
-    if not eb then return end
-    local text = (eb:GetText() or ""):gsub("%s+$", "")
+    local text = self:GetText():gsub("%s+$", "")
     text = text:gsub("[^%s]+$", "")
     self:SetText(text)
 end
 
 function CK:AcceptSuggestion(index)
-    local eb = self.editBox
     local word = self.state.suggestions[index or self.state.selected]
-    if not (eb and word) then return false end
-    local text = eb:GetText() or ""
+    if not word then return false end
+    local text = self:GetText()
     local prefix = text:match(WORD_TAIL) or ""
     self:SetText(text:sub(1, #text - #prefix) .. word .. " ")
     return true
@@ -519,11 +567,10 @@ end
 
 -- delta: 1 = next channel, -1 = previous. Whisper replies to the last whisper.
 function CK:CycleChannel(delta)
-    local eb = self.editBox
-    if not eb then return end
+    if not (self.standalone or self.editBox) then return end
     delta = delta or 1
     local n = #CHANNELS
-    local current = eb:GetAttribute("chatType")
+    local current = self:GetChatAttr("chatType")
     local index = delta > 0 and 0 or n + 1
     for i, t in ipairs(CHANNELS) do
         if t == current then index = i end
@@ -532,10 +579,10 @@ function CK:CycleChannel(delta)
         local t = CHANNELS[(index - 1 + step * delta) % n + 1]
         if channelAvailable(t) then
             if t == "WHISPER" then
-                eb:SetAttribute("tellTarget", lastTellTarget())
+                self:SetChatAttr("tellTarget", lastTellTarget())
             end
-            eb:SetAttribute("chatType", t)
-            if ChatEdit_UpdateHeader then ChatEdit_UpdateHeader(eb) end
+            self:SetChatAttr("chatType", t)
+            if self.editBox and ChatEdit_UpdateHeader then ChatEdit_UpdateHeader(self.editBox) end
             break
         end
     end
@@ -553,18 +600,17 @@ local SLASH = {
 }
 
 function CK:BuildMacroText()
-    local eb = self.editBox
-    if not eb then return end
-    local text = (eb:GetText() or ""):gsub("[\r\n]", " ")
+    if not (self.standalone or self.editBox) then return end
+    local text = self:GetText():gsub("[\r\n]", " ")
     if text:match("^%s*$") then return end
     if text:sub(1, 1) == "/" then return text end
 
-    local chatType = eb:GetAttribute("chatType") or "SAY"
+    local chatType = self:GetChatAttr("chatType") or "SAY"
     if chatType == "WHISPER" then
-        local target = eb:GetAttribute("tellTarget")
+        local target = self:GetChatAttr("tellTarget")
         return target and ("/w " .. target .. " " .. text)
     elseif chatType == "CHANNEL" then
-        local target = eb:GetAttribute("channelTarget")
+        local target = self:GetChatAttr("channelTarget")
         return target and ("/" .. target .. " " .. text)
     end
     local cmd = SLASH[chatType]
@@ -590,7 +636,16 @@ function CK:Open(eb)
         if InCombatLockdown() then return end
         self:BuildUI()
     end
+    -- Carry a message typed with the mouse back into the reopened chat
+    local carried = self.standalone and self.buffer or nil
+    local carriedAttrs = self.standalone and self.chatAttrs or nil
+    self.standalone = false
     self.editBox = eb
+    if carried and carried ~= "" then
+        eb:SetText(carried)
+        for k, v in pairs(carriedAttrs) do eb:SetAttribute(k, v) end
+        if ChatEdit_UpdateHeader then ChatEdit_UpdateHeader(eb) end
+    end
     local state = self.state
     state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
     self.frame:Show()
@@ -610,6 +665,9 @@ function CK:Close(reason)
         self:DisableButtons()
     end
     self.closing = false
+    self.standalone = false
+    self.buffer = nil
+    self.editBox = nil
     self.state.petal = nil
     self.state.aim = nil
     self.repeatFn = nil

@@ -26,7 +26,11 @@ function CK:OnChatActivated(eb)
 end
 
 function CK:OnChatDeactivated(eb)
-    if eb == self.editBox then
+    if eb ~= self.editBox then return end
+    -- The game closes the chat on mouse clicks: keep typing in the wheel
+    if self:IsClickingWheel() then
+        self:EnterStandalone()
+    else
         self:Close("chat deactivated")
     end
 end
