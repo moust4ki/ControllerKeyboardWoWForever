@@ -23,7 +23,7 @@ if GetLocale() == "frFR" then
     L.HUB_DOWN = "Eff."
     L.CAPS = "MAJ"
     L.SEND_COMBAT = "Clavier ouvert en combat : appuyez sur Entrée pour envoyer."
-    L.HINT = "Stick G : pétale   Stick D : lettre   LB : effacer   RB : espace\nLT : Maj   RT : 123   Croix < > : canal   A : envoyer   B : fermer"
+    L.HINT = "Stick G : pétale   Stick D : lettre   LB : effacer   RB : espace\nLT : Maj   RT : 123   Croix < > : suggestion   Croix ^ : insérer"
     L.LOADED = "v%s chargé. /ck pour l'aide."
     L.HELP = {
         "/ck - ouvrir le clavier",
@@ -57,7 +57,7 @@ else
     L.HUB_DOWN = "Del"
     L.CAPS = "CAPS"
     L.SEND_COMBAT = "Keyboard opened in combat: press Enter to send."
-    L.HINT = "L stick: petal   R stick: letter   LB: delete   RB: space\nLT: Shift   RT: 123   D-pad < >: channel   A: send   B: close"
+    L.HINT = "L stick: petal   R stick: letter   LB: delete   RB: space\nLT: Shift   RT: 123   D-pad < >: suggestion   D-pad ^: insert"
     L.LOADED = "v%s loaded. /ck for help."
     L.HELP = {
         "/ck - open the keyboard",

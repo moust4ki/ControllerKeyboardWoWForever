@@ -3,28 +3,22 @@ local _, CK = ...
 -- Left stick picks a petal, right stick flicks toward the letter to type.
 -- With the left stick centered, the right stick drives the suggestions.
 --
--- B, Start and Select are deliberately NOT handled: closing the chat from addon code runs
--- WoW Forever's gamepad UI (FrameControlsManager -> UpdateInteractIcons ->
--- SetPreferredGamepadInteractTarget) in a tainted context, which the game
--- forbids. The game's own gamepad UI closes the chat instead.
+-- A (send), B (back), X (chat channels), Y (tab settings), Start and Select
+-- belong to the game's own gamepad chat UI and are never bound here. It also
+-- avoids closing the chat from addon code, which WoW Forever's gamepad UI
+-- forbids (SetPreferredGamepadInteractTarget).
 local BUTTON_ACTIONS = {
-    PAD3 = "Backspace",             -- X / Square
-    PAD4 = "Space",                 -- Y / Triangle
     PADLSHOULDER = "Backspace",
     PADRSHOULDER = "Space",
     PADLTRIGGER = "ToggleShift",
     PADRTRIGGER = "ToggleSymbols",
-    PADDLEFT = "PrevChannel",
-    PADDRIGHT = "NextChannel",
+    PADDLEFT = "PrevSuggestion",
+    PADDRIGHT = "NextSuggestion",
     PADDUP = "AcceptSuggestion",
     PADDDOWN = "DeleteWord",
     PADLSTICK = "ToggleSymbols",
     PADRSTICK = "AcceptSuggestion",
 }
-
--- Buttons that send the message through the secure macro button
--- (Start/Select belong to the game's gamepad UI: never bound)
-local SEND_KEYS = { "PAD1" }
 
 -- Right stick directions -> petal slot (1 left, 2 up, 3 right, 4 down)
 local SLOT_BY_SECTOR = { [0] = 2, [1] = 3, [2] = 4, [3] = 1 }
@@ -179,7 +173,8 @@ function CK:CreateButtons()
         end)
     end
 
-    -- Secure macro button: also laid over the "Send" button for the mouse
+    -- Secure macro button laid over the "Send" button for the mouse
+    -- (the pad sends with A through the game's own chat UI)
     local s = CK.NewFrame("Button", SEND_BUTTON, nil, "SecureActionButtonTemplate")
     s:SetAttribute("type", "macro")
     s:SetAttribute("macrotext", "")
@@ -222,9 +217,6 @@ function CK:EnableButtons()
     if InCombatLockdown() then return end
     for key in pairs(BUTTON_ACTIONS) do
         SetOverrideBindingClick(f, true, key, bindingButtonName(key))
-    end
-    for _, key in ipairs(SEND_KEYS) do
-        SetOverrideBindingClick(f, true, key, SEND_BUTTON)
     end
     self.bindingsActive = true
     self.clearPending = false

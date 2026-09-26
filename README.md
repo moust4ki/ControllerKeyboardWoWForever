@@ -20,28 +20,28 @@ au trackpad du Steam Controller.
 
 | Bouton | Action |
 |---|---|
-| LB (ou X) | effacer (maintenir pour répéter) |
-| RB (ou Y) | espace |
-| Croix ↑ ou clic stick droit | insérer la suggestion |
-| Croix ← → | canal précédent / suivant (Dire, Groupe, Raid, Guilde, Chuchoter au dernier, Crier) |
-| Croix ↓ | effacer le dernier mot |
+| LB | effacer (maintenir pour répéter) |
+| RB | espace |
 | LT | Maj (1 appui = une majuscule, 2 appuis rapides = verrouillage) |
 | RT ou clic stick gauche | chiffres, accents et symboles |
-| A | envoyer le message (le chat reste ouvert pour le suivant) |
-| B | fermer le chat (géré par l'interface manette du jeu) |
+| Croix ← → | suggestion précédente / suivante |
+| Croix ↑ ou clic stick droit | insérer la suggestion |
+| Croix ↓ | effacer le dernier mot |
 
-Start et Select restent à l'interface manette du jeu : l'addon ne les utilise pas.
+A (envoyer), X (canaux), Y (paramètres de l'onglet), B (retour), Start et Select restent gérés par
+l'interface manette du jeu : l'addon ne les utilise pas.
 
 Le clavier s'ouvre tout seul quand la zone de saisie du chat prend le focus (`/ck auto` pour désactiver,
 `/ck pad` pour ne l'ouvrir que si la manette est l'entrée active). Un raccourci **« Ouvrir/fermer le
 clavier »** est aussi disponible dans *Échap > Raccourcis > AddOns*. Faites glisser la barre de texte
 pour déplacer le clavier.
 
-### Pourquoi l'envoi passe par une macro
+### Envoi et fermeture du chat
 
 L'interface manette de WoW Forever interdit aux addons de fermer le chat ou d'envoyer le texte
-eux-mêmes (erreur `SetPreferredGamepadInteractTarget`). A « clique » donc un bouton de macro sécurisé
-qui envoie `/s texte` (ou `/p`, `/g`, `/w nom`…), et c'est le jeu qui ferme le chat avec B.
+eux-mêmes (erreur `SetPreferredGamepadInteractTarget`). À la manette, c'est le A natif du jeu qui
+envoie ; à la souris, le bouton « Envoyer » est un bouton de macro sécurisé qui envoie `/s texte`
+(ou `/p`, `/g`, `/w nom`…).
 
 ## Prédiction
 
