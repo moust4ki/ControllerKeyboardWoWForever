@@ -1,25 +1,27 @@
 local _, CK = ...
 local L = CK.L
 
--- Input method "one-stick keyboard": a full AZERTY / QWERTY keyboard. The left
--- stick's tilt is the cursor's ABSOLUTE position on the keyboard (released =
--- center), RT types the highlighted key, LT deletes.
+-- Input method "split keyboard" (settings key "stick"): a full AZERTY / QWERTY
+-- keyboard cut in two halves. The left stick moves a cursor on the left half
+-- (columns 1-5), the right stick on the right half (columns 6-10); each
+-- stick's tilt is its cursor's ABSOLUTE position around the center of its
+-- half (released = center). LT types the left cursor's key, RT the right one.
 CK.Methods = CK.Methods or {}
 local M = { key = "stick", width = 460, areaWidth = 444 }
 CK.Methods.stick = M
 
 M.buttons = {
-    PADRTRIGGER = "TypeHighlighted",
-    PADLTRIGGER = "Backspace",
+    PADLTRIGGER = "TypeLeft",
+    PADRTRIGGER = "TypeRight",
+    PADLSHOULDER = "Backspace",
     PADRSHOULDER = "Space",
-    PADLSHOULDER = "ToggleShift",
     PADLSTICK = "ToggleSymbols",
 }
 
 function M:Help()
     return {
-        { "LS", L.HELP_CURSOR }, { "RT", L.HELP_TYPE }, { "LT", L.BACKSPACE }, { "RB", L.SPACE },
-        { "LB", L.SHIFT }, { "RS", L.HELP_PICK },
+        { "LS", L.HELP_CURSOR_L }, { "RS", L.HELP_CURSOR_R }, { "LT", L.HELP_TYPE_L }, { "RT", L.HELP_TYPE_R },
+        { "LB", L.BACKSPACE }, { "RB", L.SPACE },
     }
 end
 
@@ -53,13 +55,18 @@ local UNIT = (M.areaWidth - 2 * PAD + GAP) / 10   -- one key + one gap
 local KEY_H, ROW_STEP = 38, 42
 M.height = 2 * PAD + 4 * KEY_H + 3 * GAP
 
--- Cursor range: the centers of the corner keys
 local GRID_W, GRID_H = 10 * UNIT - GAP, 4 * KEY_H + 3 * GAP
-local CENTER_X, CENTER_Y = PAD + GRID_W / 2, PAD + GRID_H / 2
--- Full tilt puts the cursor well inside the edge keys (EDGE_IN px from their
--- outer border), not on their center, so an imperfect push still reaches them
+local MID_X = PAD + GRID_W / 2                     -- border between the halves
+local CENTER_Y = PAD + GRID_H / 2
+-- Each half's center, and the cursor's reach around it. Full tilt puts the
+-- cursor EDGE_IN px inside the half's edge keys, so an imperfect push still
+-- reaches them.
 local EDGE_IN = 6
-local HALF_X, HALF_Y = GRID_W / 2 - EDGE_IN, GRID_H / 2 - EDGE_IN
+local HALVES = {
+    left = { cx = PAD + GRID_W / 4 },
+    right = { cx = MID_X + GRID_W / 4 },
+}
+local REACH_X, REACH_Y = GRID_W / 4 - EDGE_IN, GRID_H / 2 - EDGE_IN
 -- Sticks rarely report a full 1.0, least of all diagonally: from this tilt on
 -- the stick counts as pushed all the way
 local SATURATION = 0.8
@@ -83,6 +90,8 @@ local function buildKey(parent, def, x, y, w)
     b.special = not isChar and def.k or nil
     -- Center and size in area coordinates (y down), for the nearest-key search
     b.cx, b.cy, b.w, b.h = x + w / 2, y + KEY_H / 2, w, KEY_H
+    -- Halves the key belongs to: a key straddling the middle (Space) is in both
+    b.inHalf = { left = x < MID_X - 1, right = x + w > MID_X + 1 }
     b:SetScript("OnClick", function() M:Press(b) end)
     b:SetScript("OnEnter", function() M.hover = b; M:Update() end)
     b:SetScript("OnLeave", function() M.hover = nil; M:Update() end)
@@ -109,35 +118,37 @@ function M:Build(area)
         self.sets[name] = set
     end
 
-    -- Cursor and line from the center, above the keys
+    -- One cursor per half, with a line from the half's center, above the keys
     local over = CK.NewFrame("Frame", nil, area)
     over:SetAllPoints()
     over:SetFrameLevel(area:GetFrameLevel() + 30)
     self.over = over
-    -- The line is optional: the keyboard works without it on a client lacking lines
-    local line = over.CreateLine and over:CreateLine(nil, "OVERLAY")
-    if line then
-        line:SetThickness(2)
-        line:SetColorTexture(K.C.gold[1], K.C.gold[2], K.C.gold[3], 0.55)
-        self.line = line
+    self.cursors = {}
+    for side, half in pairs(HALVES) do
+        local c = { side = side, homeX = half.cx }
+        -- The line is optional: the keyboard works without it on a client lacking lines
+        local line = over.CreateLine and over:CreateLine(nil, "OVERLAY")
+        if line then
+            line:SetThickness(2)
+            line:SetColorTexture(K.C.gold[1], K.C.gold[2], K.C.gold[3], 0.55)
+            c.line = line
+        end
+        c.hub = K.texture(over, "ck_hl_hover", "OVERLAY")
+        c.hub:SetSize(12, 12)
+        c.hub:SetPoint("CENTER", over, "TOPLEFT", half.cx, -CENTER_Y)
+        c.hub:SetAlpha(0.6)
+        c.dot = K.texture(over, "ck_hl", "OVERLAY", 1)
+        c.dot:SetSize(16, 16)
+        self.cursors[side] = c
     end
-    local hub = K.texture(over, "ck_hl_hover", "OVERLAY")
-    hub:SetSize(12, 12)
-    hub:SetPoint("CENTER", over, "TOPLEFT", CENTER_X, -CENTER_Y)
-    hub:SetAlpha(0.6)
-    self.hub = hub
-    local cursor = K.texture(over, "ck_hl", "OVERLAY", 1)
-    cursor:SetSize(16, 16)
-    self.cursor = cursor
-
-    self.cx, self.cy = CENTER_X, CENTER_Y
+    self:Reset()
 end
 
 ---------------------------------------------------------------------------
--- Cursor
+-- Cursors
 ---------------------------------------------------------------------------
 -- Disc -> square (inverse elliptical grid mapping): lets the round stick
--- reach the corners of the rectangular keyboard
+-- reach the corners of the rectangular half
 local SQ2 = 2 * math.sqrt(2)
 local function discToSquare(u, v)
     local u2, v2 = u * u, v * v
@@ -147,12 +158,14 @@ local function discToSquare(u, v)
 end
 M.discToSquare = discToSquare
 
-function M:OnLeftStick(x, y)
+function M:MoveCursor(side, x, y)
+    local c = self.cursors and self.cursors[side]
+    if not c then return end
     local dead = CK.db.settings.deadzone
     local len = math.sqrt(x * x + y * y)
-    if CK.db.settings.debug and len > (self.maxLen or 0) then
-        self.maxLen = len
-        CK:Print("stick x=%.2f y=%.2f len=%.2f (max so far)", x, y, len)
+    if CK.db.settings.debug and len > (c.maxLen or 0) then
+        c.maxLen = len
+        CK:Print("%s stick x=%.2f y=%.2f len=%.2f (max so far)", side, x, y, len)
     end
     local u, v = 0, 0
     if len > dead then
@@ -160,9 +173,12 @@ function M:OnLeftStick(x, y)
         u, v = x * scale, y * scale
     end
     local sx, sy = discToSquare(u, v)
-    self.cx, self.cy = CENTER_X + sx * HALF_X, CENTER_Y - sy * HALF_Y
+    c.cx, c.cy = c.homeX + sx * REACH_X, CENTER_Y - sy * REACH_Y
     self:Update()
 end
+
+function M:OnLeftStick(x, y) self:MoveCursor("left", x, y) end
+function M:OnRightStick(x, y) self:MoveCursor("right", x, y) end
 
 local function rectDistance(key, x, y)
     local dx = math.max(math.abs(x - key.cx) - key.w / 2, 0)
@@ -170,21 +186,22 @@ local function rectDistance(key, x, y)
     return math.sqrt(dx * dx + dy * dy), math.abs(x - key.cx) + math.abs(y - key.cy)
 end
 
--- Nearest key, with a magnet: the highlighted key only changes when another
--- one is clearly closer, so it does not flicker between two neighbors
-function M:PickKey(set)
-    local x, y = self.cx, self.cy
+-- Nearest key of the cursor's half, with a magnet: the highlighted key only
+-- changes when another one is clearly closer, so it does not flicker
+function M:PickKey(set, c)
     local best, bestD, bestTie
     for _, key in ipairs(set.keys) do
-        local d, tie = rectDistance(key, x, y)
-        if not best or d < bestD or (d == bestD and tie < bestTie) then
-            best, bestD, bestTie = key, d, tie
+        if key.inHalf[c.side] then
+            local d, tie = rectDistance(key, c.cx, c.cy)
+            if not best or d < bestD or (d == bestD and tie < bestTie) then
+                best, bestD, bestTie = key, d, tie
+            end
         end
     end
-    local current = self.selected
-    if current and current:GetParent() == set and best ~= current then
+    local current = c.selected
+    if current and current:GetParent() == set and current.inHalf[c.side] and best ~= current then
         local magnet = MAGNET_PX[CK.db.settings.magnet] or 8
-        if rectDistance(current, x, y) <= bestD + magnet then return current end
+        if rectDistance(current, c.cx, c.cy) <= bestD + magnet then return current end
     end
     return best
 end
@@ -195,8 +212,10 @@ function M:ActiveSet()
 end
 
 function M:Reset()
-    self.cx, self.cy = CENTER_X, CENTER_Y
-    self.selected = nil
+    if not self.cursors then return end
+    for _, c in pairs(self.cursors) do
+        c.cx, c.cy, c.selected = c.homeX, CENTER_Y, nil
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -217,10 +236,13 @@ function M:Press(key)
     end
 end
 
--- RT: the binding gives one press per pull of the trigger, so one letter
-function CK:TypeHighlighted()
-    if self:GetMethod() ~= M then return end
-    M:Press(M.selected)
+-- LT / RT: the binding gives one press per pull of the trigger, so one letter
+function CK:TypeLeft()
+    if self:GetMethod() == M and M.cursors then M:Press(M.cursors.left.selected) end
+end
+
+function CK:TypeRight()
+    if self:GetMethod() == M and M.cursors then M:Press(M.cursors.right.selected) end
 end
 
 ---------------------------------------------------------------------------
@@ -235,11 +257,13 @@ function M:Update()
     local set = self:ActiveSet()
     for _, s in pairs(self.sets) do s:SetShown(s == set) end
 
-    self.selected = self:PickKey(set)
+    local left, right = self.cursors.left, self.cursors.right
+    left.selected = self:PickKey(set, left)
+    right.selected = self:PickKey(set, right)
     local shiftOn = state.shift or state.caps
 
     for _, key in ipairs(set.keys) do
-        local selected = key == self.selected
+        local selected = key == left.selected or key == right.selected
         local active = key.special == "SHIFT" and shiftOn
         if key == self.hover then
             key.base:SetFile("ck_btn_hover")
@@ -268,13 +292,15 @@ function M:Update()
         end
     end
 
-    self.cursor:ClearAllPoints()
-    self.cursor:SetPoint("CENTER", self.over, "TOPLEFT", self.cx, -self.cy)
     local showLine = CK.db.settings.showLine
-    if self.line then
-        self.line:SetShown(showLine)
-        self.line:SetStartPoint("TOPLEFT", self.over, CENTER_X, -CENTER_Y)
-        self.line:SetEndPoint("TOPLEFT", self.over, self.cx, -self.cy)
+    for _, c in pairs(self.cursors) do
+        c.dot:ClearAllPoints()
+        c.dot:SetPoint("CENTER", self.over, "TOPLEFT", c.cx, -c.cy)
+        if c.line then
+            c.line:SetShown(showLine)
+            c.line:SetStartPoint("TOPLEFT", self.over, c.homeX, -CENTER_Y)
+            c.line:SetEndPoint("TOPLEFT", self.over, c.cx, -c.cy)
+        end
+        c.hub:SetShown(showLine)
     end
-    self.hub:SetShown(showLine)
 end

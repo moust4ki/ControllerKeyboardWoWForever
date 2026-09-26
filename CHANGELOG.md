@@ -4,14 +4,14 @@
 
 ### New
 
-- Second input method, "one-stick keyboard": a full AZERTY / QWERTY keyboard with a numbers /
-  accents / symbols layer. The left stick's tilt is the cursor's absolute position (released =
-  center, corners reachable), with a dead zone, a magnet so the highlight does not flicker and a line
-  from the center. RT types, LT deletes, RB space, LB shift, left stick click 123. Wider panel, every
-  key clickable.
-- The edge and corner keys are reachable even when the stick does not report a full tilt: from
-  80 % the stick counts as pushed all the way, and full tilt lands inside the edge keys.
-- Options: input method, layout, dead zone, magnet, cursor line. Commands: `/ck mode wheel|stick`,
+- Second input method, "split keyboard": a full AZERTY / QWERTY keyboard with a numbers / accents /
+  symbols layer, cut in two halves. The left stick moves a cursor on the left half, the right stick
+  on the right half; each stick's tilt is its cursor's absolute position around the center of its
+  half (released = center), so the keys near the middle are at the edge of their half and easy to
+  hit. LT / RT type the left / right cursor's key, LB deletes, RB space, left stick click 123. Dead
+  zone, magnet against flicker, a line from each center, edge keys reachable from 80 % tilt. Wider
+  panel, every key clickable.
+- Options: input method, layout, dead zone, magnet, cursor lines. Commands: `/ck mode wheel|stick`,
   `/ck layout azerty|qwerty`. The options panel scrolls with the mouse wheel.
 
 ### Changes

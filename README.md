@@ -1,7 +1,7 @@
 # Controller Keyboard
 
 A **gamepad keyboard** to type in **WoW Forever**'s chat, with **smartphone-style word prediction**
-that learns the way you write. Two input methods: a **daisywheel** and a **one-stick keyboard**.
+that learns the way you write. Two input methods: a **daisywheel** and a **split keyboard** (one half per stick).
 Everything is also clickable with the mouse, so it works with the Steam Controller trackpad too.
 
 The look follows WoW Forever's gamepad UI: bronze and gold rims, Friz Quadrata font, the game's own
@@ -55,23 +55,26 @@ Choose the input method in the options or with `/ck mode wheel|stick`.
 | LT | shift (tap = one capital, double tap = caps lock) |
 | RT or left stick click | numbers, accents and symbols |
 
-### One-stick keyboard
+### Split keyboard
 
 A full AZERTY or QWERTY keyboard (option, `/ck layout azerty|qwerty`), with a numbers / accents /
-symbols layer (é è ê à â ç ù û î ô ë ï œ…). The **left stick's tilt is the cursor's position** on
-the keyboard: released, the cursor is at the center; push fully in a direction to reach that edge
-or corner. A line links the center to the cursor, and the key under it is highlighted; a magnet keeps
-the highlight from flickering between two neighbors.
+symbols layer (é è ê à â ç ù û î ô ë ï œ…), cut in two halves: the **left stick** drives a cursor on
+the left half (columns 1-5), the **right stick** on the right half (columns 6-10). Each stick's
+**tilt is its cursor's position** around the center of its half: released, the cursor is at the
+center; push fully to reach an edge or a corner. The keys near the middle of the keyboard are at the
+edge of their half, so they are easy to hit. A line links each center to its cursor; a magnet keeps
+the highlight from flickering. Keys over the middle (Space) belong to both halves.
 
 | Button | Action |
 |---|---|
-| Left stick | move the cursor (absolute position) |
-| RT | type the highlighted key (one pull = one letter) |
-| LT | delete (hold to repeat) |
+| Left stick / right stick | move the left / right cursor (absolute position) |
+| LT / RT | type the left / right cursor's key (one pull = one letter) |
+| LB | delete (hold to repeat) |
 | RB | space |
-| LB | shift (tap = one capital, double tap = caps lock) |
 | Left stick click | numbers, accents and symbols |
-| Right stick | move in the active row (← →), ↑ insert, ↓ delete |
+
+Shift is the keyboard's own Shift key (tap = one capital, double tap = caps lock). The suggestions
+and channels are driven with the D-pad.
 
 Options: layout, stick dead zone, magnet strength, cursor line.
 
@@ -110,7 +113,7 @@ touched, so switching never loses the chat focus.
 
 *Escape > Options > AddOns > Controller Keyboard*:
 
-- input method (daisywheel / one-stick keyboard), keyboard layout (AZERTY / QWERTY), stick dead
+- input method (daisywheel / split keyboard), keyboard layout (AZERTY / QWERTY), stick dead
   zone, magnet, cursor line;
 - lock position, open automatically, only when the gamepad is active;
 - keyboard size, invert the sticks vertical axis, show / hide the mouse buttons row;
@@ -125,8 +128,8 @@ touched, so switching never loses the chat focus.
 |---|---|
 | `/ck` | open the keyboard |
 | `/ck lock` | lock / unlock the position (unlocking shows the keyboard to place it) |
-| `/ck mode wheel\|stick` | daisywheel or one-stick keyboard |
-| `/ck layout azerty\|qwerty` | one-stick keyboard layout |
+| `/ck mode wheel\|stick` | daisywheel or split keyboard |
+| `/ck layout azerty\|qwerty` | split keyboard layout |
 | `/ck auto` | open automatically with the chat |
 | `/ck pad` | only open automatically when the gamepad is active |
 | `/ck learn` | turn learning on / off |

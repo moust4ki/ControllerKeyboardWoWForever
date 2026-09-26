@@ -14,8 +14,8 @@ the game's own button icons.
 
 - **Two input methods**, switchable in the options:
   - **Daisywheel**: 8 petals of 4 characters; left stick = petal, right stick = letter.
-  - **One-stick keyboard**: a full AZERTY / QWERTY keyboard; the left stick's tilt places the
-    cursor, RT types the highlighted key.
+  - **Split keyboard**: a full AZERTY / QWERTY keyboard in two halves; each stick places a cursor
+    on its half, LT / RT type.
 - Numbers / accents / symbols layer in both.
 - **iPhone-style prediction**
   - word completion: English and French dictionaries (12,000 words each, client language by default)
@@ -50,16 +50,14 @@ the game's own button icons.
 | B | empty the message (with an empty message: the game's back, closes the chat) |
 | X, Y | handled by the game: channels, tab |
 
-## Gamepad controls (one-stick keyboard)
+## Gamepad controls (split keyboard)
 
 | Button | Action |
 |---|---|
-| Left stick | move the cursor on the keyboard (absolute position) |
-| RT | type the highlighted key |
-| LT / RB | delete / space |
-| LB | shift (double tap: caps lock) |
+| Left stick / right stick | move the cursor on the left / right half (absolute position) |
+| LT / RT | type the left / right cursor's key |
+| LB / RB | delete / space |
 | Left stick click | numbers, accents, symbols |
-| Right stick | ← → move in the active row, ↑ insert, ↓ delete |
 | D-pad, A, B | same as the daisywheel |
 
 ## Installation
@@ -100,8 +98,8 @@ Friz Quadrata, icônes de boutons du jeu.
 
 - **Deux méthodes de saisie**, au choix dans les options :
   - **Daisywheel** : 8 pétales de 4 caractères ; stick gauche = pétale, stick droit = lettre.
-  - **Clavier 1 stick** : un clavier AZERTY / QWERTY complet ; l'inclinaison du stick gauche place le
-    curseur, RT tape la touche en surbrillance.
+  - **Clavier 2 sticks** : un clavier AZERTY / QWERTY complet coupé en deux moitiés ; chaque stick place
+    un curseur sur sa moitié, LT / RT tapent.
 - Couche chiffres / accents / symboles dans les deux.
 - **Prédiction façon iPhone**
   - complétion des mots : dictionnaires français et anglais (12 000 mots chacun, langue du client par
@@ -136,16 +134,14 @@ Friz Quadrata, icônes de boutons du jeu.
 | B | vider le message (message vide : retour du jeu, ferme le chat) |
 | X, Y | gérés par le jeu : canaux, onglet |
 
-## Commandes à la manette (clavier 1 stick)
+## Commandes à la manette (clavier 2 sticks)
 
 | Bouton | Action |
 |---|---|
-| Stick gauche | déplacer le curseur sur le clavier (position absolue) |
-| RT | taper la touche en surbrillance |
-| LT / RB | effacer / espace |
-| LB | majuscule (deux appuis : verrouillage) |
+| Stick gauche / stick droit | déplacer le curseur de la moitié gauche / droite (position absolue) |
+| LT / RT | taper la touche du curseur gauche / droit |
+| LB / RB | effacer / espace |
 | Clic stick gauche | chiffres, accents, symboles |
-| Stick droit | ← → se déplacer dans la rangée active, ↑ insérer, ↓ effacer |
 | Croix, A, B | comme la daisywheel |
 
 ## Installation

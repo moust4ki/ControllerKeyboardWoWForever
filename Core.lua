@@ -31,13 +31,15 @@ if GetLocale() == "frFR" then
     L.HELP_LETTER = "Lettre"
     L.HELP_CHANNEL = "Canal"
     L.HELP_PICK = "Choisir"
-    L.HELP_CURSOR = "Curseur"
-    L.HELP_TYPE = "Taper"
+    L.HELP_CURSOR_L = "Curseur G"
+    L.HELP_CURSOR_R = "Curseur D"
+    L.HELP_TYPE_L = "Taper G"
+    L.HELP_TYPE_R = "Taper D"
     L.OPT_INPUT = "Saisie"
     L.OPT_METHOD = "Méthode de saisie"
     L.METHOD_WHEEL = "Daisywheel"
-    L.METHOD_STICK = "Clavier 1 stick"
-    L.OPT_LAYOUT = "Disposition (clavier 1 stick)"
+    L.METHOD_STICK = "Clavier 2 sticks"
+    L.OPT_LAYOUT = "Disposition (clavier 2 sticks)"
     L.OPT_DEADZONE = "Zone morte du stick"
     L.OPT_MAGNET = "Effet aimant"
     L.MAGNET_NONE = "Aucun"
@@ -84,8 +86,8 @@ if GetLocale() == "frFR" then
         "/ck pad - n'ouvrir automatiquement que si la manette est active (actuel : %s)",
         "/ck learn - apprendre les mots de vos messages (actuel : %s)",
         "/ck lock - verrouiller/déverrouiller la position (actuel : %s)",
-        "/ck mode wheel|stick - daisywheel ou clavier 1 stick",
-        "/ck layout azerty|qwerty - disposition du clavier 1 stick",
+        "/ck mode wheel|stick - daisywheel ou clavier 2 sticks",
+        "/ck layout azerty|qwerty - disposition du clavier 2 sticks",
         "/ck lang fr|en|both - dictionnaires utilisés",
         "/ck scale 0.8 - taille du clavier",
         "/ck invert - inverser l'axe vertical du stick",
@@ -123,13 +125,15 @@ else
     L.HELP_LETTER = "Letter"
     L.HELP_CHANNEL = "Channel"
     L.HELP_PICK = "Select"
-    L.HELP_CURSOR = "Cursor"
-    L.HELP_TYPE = "Type"
+    L.HELP_CURSOR_L = "Left cursor"
+    L.HELP_CURSOR_R = "Right cursor"
+    L.HELP_TYPE_L = "Type left"
+    L.HELP_TYPE_R = "Type right"
     L.OPT_INPUT = "Input"
     L.OPT_METHOD = "Input method"
     L.METHOD_WHEEL = "Daisywheel"
-    L.METHOD_STICK = "One-stick keyboard"
-    L.OPT_LAYOUT = "Layout (one-stick keyboard)"
+    L.METHOD_STICK = "Split keyboard"
+    L.OPT_LAYOUT = "Layout (split keyboard)"
     L.OPT_DEADZONE = "Stick dead zone"
     L.OPT_MAGNET = "Magnet"
     L.MAGNET_NONE = "None"
@@ -176,8 +180,8 @@ else
         "/ck pad - only auto-open when the gamepad is active (current: %s)",
         "/ck learn - learn words from your messages (current: %s)",
         "/ck lock - lock/unlock the position (current: %s)",
-        "/ck mode wheel|stick - daisywheel or one-stick keyboard",
-        "/ck layout azerty|qwerty - one-stick keyboard layout",
+        "/ck mode wheel|stick - daisywheel or split keyboard",
+        "/ck layout azerty|qwerty - split keyboard layout",
         "/ck lang fr|en|both - dictionaries in use",
         "/ck scale 0.8 - keyboard size",
         "/ck invert - invert the stick vertical axis",

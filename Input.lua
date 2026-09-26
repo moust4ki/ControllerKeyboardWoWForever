@@ -41,6 +41,12 @@ end
 
 function CK:SetRightStick(x, y)
     if self.db.settings.invertY then y = -y end
+    -- A method that uses the right stick as a cursor (split keyboard) gets it raw
+    local method = self:GetMethod()
+    if method.OnRightStick then
+        method:OnRightStick(x, y)
+        return
+    end
     local state = self.state
     local len = math.sqrt(x * x + y * y)
 
@@ -60,7 +66,6 @@ function CK:SetRightStick(x, y)
         end
     elseif aim and len >= RIGHT_FIRE then
         self.rightFired = true
-        local method = self:GetMethod()
         if not (method.OnFlick and method:OnFlick(aim)) then
             self:RunAction(NEUTRAL_FLICK[aim], "RIGHTSTICK")
         end
