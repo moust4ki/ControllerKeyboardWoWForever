@@ -114,6 +114,7 @@ function CK:BuildUI()
 
     -- Move grip (also shows that the keyboard can be dragged)
     local grip = top:CreateTexture(nil, "OVERLAY")
+    f.grip = grip
     grip:SetTexture("Interface\CURSOR\UI-Cursor-Move")
     grip:SetSize(18, 18)
     grip:SetPoint("TOPRIGHT", -6, -6)
@@ -219,6 +220,7 @@ function CK:BuildUI()
 
     self:SetupInput(f)
     self:RestorePosition()
+    self:UpdateLock()
 
     -- Debug: report when something else than CK:Close hides the keyboard
     f:HookScript("OnHide", function()
@@ -233,12 +235,15 @@ function CK:MakeDragHandle(handle)
     local f = self.frame
     handle:EnableMouse(true)
     handle:RegisterForDrag("LeftButton")
-    handle:SetScript("OnDragStart", function() f:StartMoving() end)
+    handle:SetScript("OnDragStart", function()
+        if not CK.db.settings.locked then f:StartMoving() end
+    end)
     handle:SetScript("OnDragStop", function()
         f:StopMovingOrSizing()
         CK:SavePosition()
     end)
     handle:SetScript("OnEnter", function(h)
+        if CK.db.settings.locked then return end
         GameTooltip:SetOwner(h, "ANCHOR_TOP")
         GameTooltip:SetText(L.DRAG_HINT, 1, 1, 1)
         GameTooltip:Show()
@@ -246,24 +251,11 @@ function CK:MakeDragHandle(handle)
     handle:SetScript("OnLeave", function() GameTooltip:Hide() end)
 end
 
--- Show the keyboard without the chat so it can be placed (/ck move)
-function CK:ToggleMoveMode()
-    if not self.frame then
-        if InCombatLockdown() then return end
-        self:BuildUI()
+-- The move grip is only shown while the position is unlocked (/ck lock)
+function CK:UpdateLock()
+    if self.frame then
+        self.frame.grip:SetShown(not self.db.settings.locked)
     end
-    if self.moving then
-        self.moving = false
-        self.frame:Hide()
-        return
-    end
-    if self:IsOpen() then return end
-    self.moving = true
-    self.editBox = nil
-    self.frame:Show()
-    self:UpdateWheel()
-    self.frame.preview:SetText(L.MOVE_MODE)
-    for _, b in ipairs(self.frame.sugg) do b:Hide() end
 end
 
 function CK:SavePosition()
@@ -399,6 +391,26 @@ function CK:IsClickingWheel()
         and (IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton"))
 end
 
+-- Keyboard without the chat (after /ck lock, to place it): A sends with the
+-- secure macro button, B closes
+function CK:OpenStandalone()
+    if not self.frame then
+        if InCombatLockdown() then return end
+        self:BuildUI()
+    end
+    if self:IsOpen() then return end
+    self.standalone = true
+    self.buffer = ""
+    self.chatAttrs = { chatType = "SAY" }
+    self.editBox = nil
+    local state = self.state
+    state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
+    self.frame:Show()
+    self:EnableButtons()
+    self:UpdateWheel()
+    self:Refresh()
+end
+
 function CK:EnterStandalone()
     if self.standalone then return end
     self.standalone = true
@@ -447,16 +459,24 @@ local PREV_WORD = "(" .. CK.WORD_CHARS .. "+)%s+$"
 
 function CK:Refresh()
     local f = self.frame
-    if not (f and f:IsShown()) or self.moving then return end
+    if not (f and f:IsShown()) then return end
     if not (self.standalone or self.editBox) then return end
     if not self.standalone then self:SnapshotChat() end
 
     local text = self:GetText()
     f.preview:SetText(self:GetChannelLabel() .. previewTail(text) .. "|cffffd200_|r")
 
-    local prefix = text:match(WORD_TAIL) or ""
-    local prev = text:sub(1, #text - #prefix):match(PREV_WORD)
-    self.state.suggestions = CK.Predict:Query(prefix, prev, self.db.settings.numSuggestions)
+    -- "/re" -> /reload, "/ck l" -> /ck lock: command and at most one argument
+    local n = self.db.settings.numSuggestions
+    local _, spaces = text:gsub(" ", "")
+    self.state.commandMode = text:sub(1, 1) == "/" and spaces <= 1
+    if self.state.commandMode then
+        self.state.suggestions = CK.Predict:QueryCommands(text, n)
+    else
+        local prefix = text:match(WORD_TAIL) or ""
+        local prev = text:sub(1, #text - #prefix):match(PREV_WORD)
+        self.state.suggestions = CK.Predict:Query(prefix, prev, n)
+    end
     self.state.selected = 1
     self:UpdateSuggestions()
 end
@@ -507,6 +527,10 @@ end
 function CK:AcceptSuggestion(index)
     local word = self.state.suggestions[index or self.state.selected]
     if not word then return false end
+    if self.state.commandMode then
+        self:SetText(word .. " ")
+        return true
+    end
     local text = self:GetText()
     local prefix = text:match(WORD_TAIL) or ""
     self:SetText(text:sub(1, #text - #prefix) .. word .. " ")
@@ -627,10 +651,6 @@ end
 -- Open / close
 ---------------------------------------------------------------------------
 function CK:Open(eb)
-    if self.moving then
-        self.moving = false
-        if self.frame then self.frame:Hide() end
-    end
     if not self.frame then
         -- Secure buttons can't be created in combat: wait for PLAYER_REGEN_ENABLED
         if InCombatLockdown() then return end
@@ -659,7 +679,6 @@ function CK:Close(reason)
         self:Print("close: %s", tostring(reason or "button"))
     end
     self.closing = true
-    self.moving = false
     if self.frame and self.frame:IsShown() then
         self.frame:Hide()
         self:DisableButtons()

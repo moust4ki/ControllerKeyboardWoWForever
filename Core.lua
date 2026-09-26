@@ -23,8 +23,8 @@ if GetLocale() == "frFR" then
     L.HUB_DOWN = "Eff."
     L.CAPS = "MAJ"
     L.SEND_COMBAT = "Clavier ouvert en combat : appuyez sur Entrée pour envoyer."
-    L.DRAG_HINT = "Glisser pour déplacer le clavier"
-    L.MOVE_MODE = "|cffffd200Glissez la barre ou le centre de la roue.|r /ck move pour terminer."
+    L.DRAG_HINT = "Glisser pour déplacer le clavier (/ck lock pour verrouiller)"
+    L.LOCKED = "Position verrouillée : %s"
     L.HINT = "Stick G : pétale   Stick D : lettre   LB : effacer   RB : espace\nLT : Maj   RT : 123   Croix < > : suggestion   Croix ^ : insérer"
     L.LOADED = "v%s chargé. /ck pour l'aide."
     L.HELP = {
@@ -32,10 +32,10 @@ if GetLocale() == "frFR" then
         "/ck auto - ouverture automatique avec le chat (actuel : %s)",
         "/ck pad - n'ouvrir automatiquement que si la manette est active (actuel : %s)",
         "/ck learn - apprendre les mots de vos messages (actuel : %s)",
+        "/ck lock - verrouiller/déverrouiller la position (actuel : %s)",
         "/ck lang fr|en|both - dictionnaires utilisés",
         "/ck scale 0.8 - taille du clavier",
         "/ck invert - inverser l'axe vertical du stick",
-        "/ck move - afficher le clavier pour le déplacer",
         "/ck reset - replacer le clavier",
         "/ck stats - statistiques d'apprentissage",
         "/ck forget - oublier tous les mots appris",
@@ -60,8 +60,8 @@ else
     L.HUB_DOWN = "Del"
     L.CAPS = "CAPS"
     L.SEND_COMBAT = "Keyboard opened in combat: press Enter to send."
-    L.DRAG_HINT = "Drag to move the keyboard"
-    L.MOVE_MODE = "|cffffd200Drag the bar or the wheel center.|r /ck move when done."
+    L.DRAG_HINT = "Drag to move the keyboard (/ck lock to lock)"
+    L.LOCKED = "Position locked: %s"
     L.HINT = "L stick: petal   R stick: letter   LB: delete   RB: space\nLT: Shift   RT: 123   D-pad < >: suggestion   D-pad ^: insert"
     L.LOADED = "v%s loaded. /ck for help."
     L.HELP = {
@@ -69,10 +69,10 @@ else
         "/ck auto - open automatically with the chat (current: %s)",
         "/ck pad - only auto-open when the gamepad is active (current: %s)",
         "/ck learn - learn words from your messages (current: %s)",
+        "/ck lock - lock/unlock the position (current: %s)",
         "/ck lang fr|en|both - dictionaries in use",
         "/ck scale 0.8 - keyboard size",
         "/ck invert - invert the stick vertical axis",
-        "/ck move - show the keyboard to move it",
         "/ck reset - reset keyboard position",
         "/ck stats - learning statistics",
         "/ck forget - forget all learned words",
@@ -101,7 +101,7 @@ local DEFAULTS = {
     numSuggestions = 5,
     scale = 1,
     invertY = false,
-    inputMode = "bind",   -- "bind": override bindings (hardware events), "frame": OnGamePadButtonDown
+    locked = true,
     debug = false,
 }
 
@@ -128,6 +128,7 @@ function CK:InitDB()
         db.version = 2
     end
     db.words = db.words or {}
+    db.commands = db.commands or {}
     db.bigrams = db.bigrams or {}
     self.db = db
 end

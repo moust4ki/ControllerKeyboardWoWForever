@@ -42,10 +42,26 @@ function CK:HookChat()
     if ChatEdit_DeactivateChat then
         hooksecurefunc("ChatEdit_DeactivateChat", function(eb) CK:OnChatDeactivated(eb) end)
     end
+    -- Learn slash commands: remember the last text typed in each edit box
+    -- (the command is already cleared when ChatEdit_SendText returns)
+    local lastTyped = {}
+    if ChatEdit_SendText then
+        hooksecurefunc("ChatEdit_SendText", function(eb)
+            local text = lastTyped[eb]
+            lastTyped[eb] = nil
+            if text and text:sub(1, 1) == "/" then CK.Predict:LearnCommand(text) end
+        end)
+    end
+    if ChatEdit_DeactivateChat then
+        hooksecurefunc("ChatEdit_DeactivateChat", function(eb) lastTyped[eb] = nil end)
+    end
+
     for i = 1, NUM_CHAT_WINDOWS or 10 do
         local eb = _G["ChatFrame" .. i .. "EditBox"]
         if eb then
             eb:HookScript("OnTextChanged", function(box)
+                local text = box:GetText()
+                if text and text ~= "" then lastTyped[box] = text end
                 if box == CK.editBox then CK:Refresh() end
             end)
             eb:HookScript("OnEditFocusGained", function(box) CK:OnChatActivated(box) end)
@@ -119,16 +135,17 @@ local function slash(msg)
             if CK.frame then CK.frame:SetScale(v) end
         end
         CK:Print("scale: %.2f", s.scale)
-    elseif cmd == "input" then
-        s.inputMode = s.inputMode == "bind" and "frame" or "bind"
-        CK:Close("input mode")
-        CK:Print("input: %s", s.inputMode)
     elseif cmd == "invert" then
         s.invertY = not s.invertY
         CK:Print("invert: %s", onOff(s.invertY))
-    elseif cmd == "move" then
-        -- Wait for the chat that sent this command to close
-        C_Timer.After(0, function() CK:ToggleMoveMode() end)
+    elseif cmd == "lock" then
+        s.locked = not s.locked
+        CK:UpdateLock()
+        CK:Print(L.LOCKED, onOff(s.locked))
+        if not s.locked then
+            -- Show the keyboard to place it, once the chat that sent this is closed
+            C_Timer.After(0, function() CK:OpenStandalone() end)
+        end
     elseif cmd == "reset" then
         CK.db.pos = nil
         s.scale = 1
@@ -147,11 +164,14 @@ local function slash(msg)
         CK.seenSticks = nil
         CK:Print("debug: %s", onOff(s.debug))
     else
-        local h = L.HELP
-        for i, line in ipairs(h) do
-            if i == 2 then line = format(line, onOff(s.autoOpen))
-            elseif i == 3 then line = format(line, onOff(s.onlyWithGamepad))
-            elseif i == 4 then line = format(line, onOff(s.learn)) end
+        -- Lines with %s show, in order, the current value of these settings
+        local values = { s.autoOpen, s.onlyWithGamepad, s.learn, s.locked }
+        local v = 0
+        for _, line in ipairs(L.HELP) do
+            if line:find("%s", 1, true) then
+                v = v + 1
+                line = format(line, onOff(values[v]))
+            end
             DEFAULT_CHAT_FRAME:AddMessage("  " .. line)
         end
     end

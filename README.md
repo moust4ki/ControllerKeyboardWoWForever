@@ -70,7 +70,7 @@ envoie ; à la souris, le bouton « Envoyer » est un bouton de macro sécurisé
 | `/ck lang fr\|en\|both` | dictionnaires utilisés |
 | `/ck scale 0.8` | taille du clavier |
 | `/ck invert` | inverser l'axe vertical du stick |
-| `/ck move` | afficher le clavier sans le chat pour le déplacer (refaire pour terminer) |
+| `/ck lock` | verrouiller / déverrouiller la position (déverrouiller affiche le clavier pour le placer) |
 | `/ck reset` | replacer le clavier |
 | `/ck stats` | statistiques |
 | `/ck forget confirm` | oublier les mots appris |

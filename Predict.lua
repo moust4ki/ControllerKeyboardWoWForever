@@ -211,8 +211,66 @@ function P:Prune()
     end
 end
 
+---------------------------------------------------------------------------
+-- Slash commands
+---------------------------------------------------------------------------
+-- Suggested after /reload and the player's own commands (most used first)
+local BUILTIN_COMMANDS = {
+    "/ck", "/ck lock", "/s", "/p", "/g", "/ra", "/w", "/r", "/y", "/e", "/inv",
+    "/roll", "/afk", "/dnd", "/who", "/dance", "/sit", "/played", "/follow",
+    "/assist", "/target", "/logout", "/camp", "/ck debug", "/ck auto",
+    "/ck learn", "/ck lang", "/ck scale", "/ck reset", "/ck stats", "/ck invert",
+    "/ck pad", "/ck forget",
+}
+
+-- Commands followed by a message: never learn their argument
+local CHAT_COMMANDS = {
+    ["/s"] = true, ["/say"] = true, ["/p"] = true, ["/party"] = true, ["/g"] = true,
+    ["/guild"] = true, ["/o"] = true, ["/w"] = true, ["/whisper"] = true, ["/t"] = true,
+    ["/tell"] = true, ["/r"] = true, ["/reply"] = true, ["/y"] = true, ["/yell"] = true,
+    ["/e"] = true, ["/me"] = true, ["/emote"] = true, ["/ra"] = true, ["/raid"] = true,
+    ["/rw"] = true, ["/i"] = true, ["/bg"] = true,
+}
+
+function P:LearnCommand(text)
+    local db = CK.db
+    if not (db and db.settings.learn) then return end
+    local cmd, rest = text:match("^(/%S+)%s*(.-)%s*$")
+    if not cmd or #cmd > 30 then return end
+    cmd = CK.Lower(cmd)
+    local commands = db.commands
+    commands[cmd] = (commands[cmd] or 0) + 1
+    -- "/ck lock": remember a single short argument, not chat messages
+    local arg = rest:match("^(%S+)$")
+    if arg and #arg <= 15 and not CHAT_COMMANDS[cmd] and not cmd:match("^/%d+$") then
+        local full = cmd .. " " .. CK.Lower(arg)
+        commands[full] = (commands[full] or 0) + 1
+    end
+end
+
+-- /reload always first, then learned commands by use, then common ones
+function P:QueryCommands(text, n)
+    local lower = CK.Lower(text)
+    local out, seen = {}, {}
+    local function add(cmd)
+        if #out < n and not seen[cmd] and cmd ~= lower and cmd:sub(1, #lower) == lower then
+            seen[cmd] = true
+            out[#out + 1] = cmd
+        end
+    end
+    add("/reload")
+    local commands = CK.db.commands
+    local learned = {}
+    for cmd in pairs(commands) do learned[#learned + 1] = cmd end
+    table.sort(learned, function(a, b) return commands[a] > commands[b] end)
+    for _, cmd in ipairs(learned) do add(cmd) end
+    for _, cmd in ipairs(BUILTIN_COMMANDS) do add(cmd) end
+    return out
+end
+
 function P:Forget()
     wipe(CK.db.words)
     wipe(CK.db.bigrams)
+    wipe(CK.db.commands)
     self:Load()
 end

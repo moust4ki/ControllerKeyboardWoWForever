@@ -111,7 +111,6 @@ end
 
 function CK:OnUpdate()
     local now = GetTime()
-    if self.moving then return end
 
     -- Safety net: the chat lost the focus without any event we hooked
     if not self.standalone and not (self.editBox and self.editBox:HasFocus()) then
@@ -219,6 +218,7 @@ function CK:FinishSend(down)
         if not InCombatLockdown() then
             self.sendButton:SetAttribute("macrotext", "")
         end
+        if slashCommand then CK.Predict:LearnCommand(text) end
         self:SetText("")
         if self.standalone then self:Close("sent") end
     end
