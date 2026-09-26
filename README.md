@@ -37,7 +37,7 @@ actions there, "Not possible in combat") and comes back after combat if the chat
 | RB | space |
 | LT | shift (tap = one capital, double tap = caps lock) |
 | RT or left stick click | numbers, accents and symbols |
-| D-pad ← → | previous / next suggestion |
+| D-pad ← → | previous / next chat channel |
 | D-pad ↑ or right stick click | insert the suggestion |
 | D-pad ↓ | delete the last word |
 
@@ -49,8 +49,15 @@ gamepad UI.
 
 Every letter, suggestion and action (Shift, 123, Space, Delete, Send, X) is clickable. The game's
 gamepad UI closes the chat on the first click: the keyboard then stays open and keeps the message,
-"Send" sends it to the chat channel and "X" closes the keyboard. To change channel, pick it in the chat
-before typing, or start the message with `/p`, `/g`, `/w name`…
+"Send" sends it to the chat channel and "X" closes the keyboard.
+
+## Chat channels
+
+A row under the text bar shows `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel colors. Press
+**D-pad ← →** or simply **hover** a channel with the mouse (no click needed) to switch: the message is
+then sent there with A. Unavailable channels are greyed out and skipped (party / raid / guild you are
+not in, `/w` with nobody to whisper, `/r` with nobody to reply to). The game's chat box is never
+touched, so switching never loses the chat focus.
 
 ## Prediction
 

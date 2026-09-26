@@ -9,6 +9,7 @@ local FALLBACK = {
     LB = "ck_g_lb", RB = "ck_g_rb", LT = "ck_g_lt", RT = "ck_g_rt",
     LS = "ck_g_ls", RS = "ck_g_rs",
     DPAD = "ck_g_dpad", DPAD_LR = "ck_g_dpad_lr", DPAD_UP = "ck_g_dpad_up",
+    DPAD_LEFT = "ck_g_dpad_lr", DPAD_RIGHT = "ck_g_dpad_lr",
 }
 
 -- Atlas names tried first, per glyph style. /ck glyphs lists the gamepad
@@ -26,6 +27,8 @@ local ATLAS = {
         LS = { "Gamepad_Gen_LStickIn_64", "Gamepad_Ltr_LStickIn_64" },
         RS = { "Gamepad_Gen_RStickIn_64", "Gamepad_Ltr_RStickIn_64" },
         DPAD_UP = { "Gamepad_Gen_Up_64", "Gamepad_Ltr_Up_64" },
+        DPAD_LEFT = { "Gamepad_Gen_Left_64", "Gamepad_Ltr_Left_64" },
+        DPAD_RIGHT = { "Gamepad_Gen_Right_64", "Gamepad_Ltr_Right_64" },
     },
     playstation = {
         A = { "Gamepad_Shp_Cross_64", "Gamepad_Shp_Cross_32" },
@@ -39,6 +42,8 @@ local ATLAS = {
         LS = { "Gamepad_Gen_LStickIn_64", "Gamepad_Shp_LStickIn_64" },
         RS = { "Gamepad_Gen_RStickIn_64", "Gamepad_Shp_RStickIn_64" },
         DPAD_UP = { "Gamepad_Gen_Up_64", "Gamepad_Shp_Up_64" },
+        DPAD_LEFT = { "Gamepad_Gen_Left_64", "Gamepad_Shp_Left_64" },
+        DPAD_RIGHT = { "Gamepad_Gen_Right_64", "Gamepad_Shp_Right_64" },
     },
 }
 

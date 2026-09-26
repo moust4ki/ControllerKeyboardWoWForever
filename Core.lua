@@ -33,6 +33,10 @@ if GetLocale() == "frFR" then
     L.HELP_PETAL = "Pétale"
     L.HELP_LETTER = "Lettre"
     L.HELP_SUGGESTION = "Suggestion"
+    L.HELP_CHANNEL = "Canal"
+    L.REPLY_TO = "Répondre à %s : "
+    L.CHANNEL_NAMES = { "Dire", "Groupe", "Raid", "Guilde", "Général (/1)", "Chuchoter", "Répondre" }
+    L.CHANNEL_UNAVAILABLE = "indisponible"
     L.BADGE_SHIFT = "MAJ"
     L.BADGE_CAPS = "VERR. MAJ"
     L.FONT_CHAT = "Police du chat"
@@ -104,6 +108,10 @@ else
     L.HELP_PETAL = "Petal"
     L.HELP_LETTER = "Letter"
     L.HELP_SUGGESTION = "Suggestion"
+    L.HELP_CHANNEL = "Channel"
+    L.REPLY_TO = "Reply to %s: "
+    L.CHANNEL_NAMES = { "Say", "Party", "Raid", "Guild", "General (/1)", "Whisper", "Reply" }
+    L.CHANNEL_UNAVAILABLE = "unavailable"
     L.BADGE_SHIFT = "SHIFT"
     L.BADGE_CAPS = "CAPS"
     L.FONT_CHAT = "Chat font"

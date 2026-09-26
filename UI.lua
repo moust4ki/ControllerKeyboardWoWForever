@@ -4,8 +4,8 @@ local L = CK.L
 -- Layout from the Claude Design spec (Controller Keyboard.dc.html):
 -- 340 x 456 panel, coordinates in px from its top-left corner (y goes down).
 local TEX = "Interface\\AddOns\\ControllerKeyboard\\textures\\"
-local W, H = 340, 456
-local WHEEL_X, WHEEL_Y, WHEEL_SIZE = 30, 92, 280
+local W, H = 340, 484
+local WHEEL_X, WHEEL_Y, WHEEL_SIZE = 30, 120, 280
 local PETAL_R, PETAL_SIZE, PETAL_SEL = 96, 76, 81
 local HUB_SIZE = 92
 -- Character offsets in a petal: left, top, right, bottom (y down)
@@ -206,21 +206,54 @@ function CK:BuildUI()
     self:MakeDragHandle(grip)
     f.grip = grip
 
+    -- Channel row: hover (no click, the game would close the chat) or D-pad < >
+    local cbar = CK.NewFrame("Frame", nil, f)
+    place(cbar, f, 8, 58, 324, 26)
+    nineSlice(cbar, "ck_bar", 256, 64, 8, 8, "BORDER")
+    local chanLeft = texture(cbar, nil, "OVERLAY")
+    place(chanLeft, f, 12, 60, 22, 22)
+    self:SetGlyph(chanLeft, "DPAD_LEFT")
+    local chanRight = texture(cbar, nil, "OVERLAY")
+    place(chanRight, f, 306, 60, 22, 22)
+    self:SetGlyph(chanRight, "DPAD_RIGHT")
+    f.chanLeft, f.chanRight = chanLeft, chanRight
+    f.channels = {}
+    for i, ch in ipairs(CK.CHANNEL_LIST) do
+        local b = CK.NewFrame("Button", nil, f)
+        place(b, f, 38 + 38 * (i - 1), 59, 36, 24)
+        b:SetFrameLevel(cbar:GetFrameLevel() + 2)
+        b.select = nineSlice(b, "ck_select", 128, 32, 10, 8, "ARTWORK")
+        b.label = text(b, 12)
+        b.label:SetPoint("CENTER", 0, 0)
+        b.label:SetText(ch.label)
+        b:SetScript("OnEnter", function(s)
+            CK:SetChannel(i)
+            GameTooltip:SetOwner(s, "ANCHOR_BOTTOM")
+            local name = L.CHANNEL_NAMES[i]
+            if not CK:ChannelAvailable(i) then name = name .. " (" .. L.CHANNEL_UNAVAILABLE .. ")" end
+            GameTooltip:SetText(name, 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        b:SetScript("OnClick", function() CK:SetChannel(i) end)
+        f.channels[i] = b
+    end
+
     -- Suggestions bar
     local sbar = CK.NewFrame("Frame", nil, f)
-    place(sbar, f, 8, 58, 324, 28)
+    place(sbar, f, 8, 86, 324, 28)
     nineSlice(sbar, "ck_bar", 256, 64, 8, 8, "BORDER")
     local lb = texture(sbar, nil, "OVERLAY")
-    place(lb, f, 12, 61, 22, 22)
-    self:SetGlyph(lb, "LB")
+    place(lb, f, 12, 89, 22, 22)
+    self:SetGlyph(lb, "RS")
     local rb = texture(sbar, nil, "OVERLAY")
-    place(rb, f, 306, 61, 22, 22)
-    self:SetGlyph(rb, "RB")
+    place(rb, f, 306, 89, 22, 22)
+    self:SetGlyph(rb, "RS")
 
     f.sugg = {}
     for n = 0, 4 do
         local b = CK.NewFrame("Button", nil, f)
-        place(b, f, 38 + 54 * n, 59, 50, 26)
+        place(b, f, 38 + 54 * n, 87, 50, 26)
         b:SetFrameLevel(sbar:GetFrameLevel() + 2)
         b.select = nineSlice(b, "ck_select", 128, 32, 10, 10, "ARTWORK")
         b.label = text(b, 12)
@@ -321,24 +354,24 @@ function CK:BuildUI()
     f.actions = {}
     for _, a in ipairs(actions) do
         local method = a[1]
-        f.actions[method] = buildButton(f, a[3], 378, a[4], 26, a[2], function() CK[method](CK) end)
+        f.actions[method] = buildButton(f, a[3], 406, a[4], 26, a[2], function() CK[method](CK) end)
     end
 
     -- Help band: gamepad glyphs (A/B/X/Y belong to the game's chat UI)
     local band = solid(f, "BACKGROUND", 0, 0, 0, 0.35)
-    place(band, f, 0, 410, W, 40)
+    place(band, f, 0, 438, W, 40)
     local filet1 = texture(f, "ck_filet", "BORDER")
-    place(filet1, f, 0, 406, W, 8)
+    place(filet1, f, 0, 434, W, 8)
     local filet2 = texture(f, "ck_filet", "BORDER")
-    place(filet2, f, 0, 446, W, 8)
+    place(filet2, f, 0, 474, W, 8)
     local help = {
         { "LS", L.HELP_PETAL }, { "RS", L.HELP_LETTER }, { "LB", L.BACKSPACE }, { "RB", L.SPACE },
-        { "LT", L.SHIFT }, { "RT", L.SYMBOLS }, { "DPAD_UP", L.GESTURE_INSERT }, { "DPAD_LR", L.HELP_SUGGESTION },
+        { "LT", L.SHIFT }, { "RT", L.SYMBOLS }, { "DPAD_UP", L.GESTURE_INSERT }, { "DPAD_LR", L.HELP_CHANNEL },
     }
     f.helpGlyphs = {}
     for n, h in ipairs(help) do
         local col, row = (n - 1) % 4, math.floor((n - 1) / 4)
-        local x, y = 10 + col * 80, 414 + row * 17
+        local x, y = 10 + col * 80, 442 + row * 17
         local g = texture(f, nil, "ARTWORK")
         place(g, f, x, y, 16, 16)
         self:SetGlyph(g, h[1])
@@ -379,8 +412,10 @@ end
 function CK:UpdateGlyphs()
     local f = self.frame
     if not f then return end
-    self:SetGlyph(f.lbGlyph, "LB")
-    self:SetGlyph(f.rbGlyph, "RB")
+    self:SetGlyph(f.lbGlyph, "RS")
+    self:SetGlyph(f.rbGlyph, "RS")
+    self:SetGlyph(f.chanLeft, "DPAD_LEFT")
+    self:SetGlyph(f.chanRight, "DPAD_RIGHT")
     for _, g in ipairs(f.helpGlyphs) do self:SetGlyph(g.tex, g.key) end
 end
 
@@ -536,6 +571,22 @@ function CK:UpdateWheel()
     symbols.label:SetText(state.layer == "symbols" and L.LETTERS or L.SYMBOLS)
     symbols:SetActive(state.layer == "symbols")
     f.actions.ToggleShift:SetActive(state.shift or state.caps)
+end
+
+function CK:UpdateChannels()
+    local f = self.frame
+    if not (f and f.channels) then return end
+    local current = self:CurrentChannelIndex()
+    for i, b in ipairs(f.channels) do
+        local ch = CK.CHANNEL_LIST[i]
+        local info = ChatTypeInfo and ChatTypeInfo[ch.color]
+        local r, g, bl = 1, 1, 1
+        if info then r, g, bl = info.r, info.g, info.b end
+        local available = self:ChannelAvailable(i)
+        b.select:SetShown(i == current)
+        b.label:SetTextColor(r, g, bl)
+        b.label:SetAlpha(available and 1 or 0.3)
+    end
 end
 
 function CK:UpdateSuggestions()

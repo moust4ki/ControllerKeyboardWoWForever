@@ -120,7 +120,9 @@ end
 function CK:GetChannelLabel()
     local chatType = self:GetChatAttr("chatType") or "SAY"
     local label
-    if chatType == "WHISPER" or chatType == "BN_WHISPER" then
+    if self:GetChatAttr("reply") then
+        label = format(CK.L.REPLY_TO, self:GetChatAttr("tellTarget") or "?")
+    elseif chatType == "WHISPER" or chatType == "BN_WHISPER" then
         label = format(CHAT_WHISPER_SEND or "To %s: ", self:GetChatAttr("tellTarget") or "?")
     elseif chatType == "CHANNEL" then
         local target = self:GetChatAttr("channelTarget")
@@ -173,6 +175,7 @@ function CK:Refresh()
     end
     self.state.selected = 1
     self:UpdateSuggestions()
+    self:UpdateChannels()
 end
 
 ---------------------------------------------------------------------------
@@ -256,49 +259,101 @@ function CK:ToggleSymbols()
     self:UpdateWheel()
 end
 
-local CHANNELS = { "SAY", "PARTY", "RAID", "GUILD", "WHISPER", "YELL" }
-
+-- Channel row: the keyboard keeps its own channel (the game's chat box is
+-- never touched) and A sends with the matching command
 local function lastTellTarget()
     return ChatEdit_GetLastTellTarget and ChatEdit_GetLastTellTarget() or nil
 end
 
-local function channelAvailable(chatType)
-    if chatType == "WHISPER" then
-        local target = lastTellTarget()
-        return target ~= nil and target ~= ""
-    elseif chatType == "PARTY" then
-        if IsInGroup then return IsInGroup() end
-        return (GetNumPartyMembers and GetNumPartyMembers() or 0) > 0
-    elseif chatType == "RAID" then
-        if IsInRaid then return IsInRaid() end
-        return (GetNumRaidMembers and GetNumRaidMembers() or 0) > 0
-    elseif chatType == "GUILD" then
-        return IsInGuild()
-    end
-    return true
+local function lastToldTarget()
+    return ChatEdit_GetLastToldTarget and ChatEdit_GetLastToldTarget() or nil
 end
 
--- delta: 1 = next channel, -1 = previous. Whisper replies to the last whisper.
-function CK:CycleChannel(delta)
-    if not (self.standalone or self.editBox) then return end
-    delta = delta or 1
-    local n = #CHANNELS
-    local current = self:GetChatAttr("chatType")
-    local index = delta > 0 and 0 or n + 1
-    for i, t in ipairs(CHANNELS) do
-        if t == current then index = i end
+local function nonEmpty(v)
+    return v ~= nil and v ~= ""
+end
+
+local function inGroup()
+    if IsInGroup then return IsInGroup() end
+    return (GetNumPartyMembers and GetNumPartyMembers() or 0) > 0
+end
+
+local function inRaid()
+    if IsInRaid then return IsInRaid() end
+    return (GetNumRaidMembers and GetNumRaidMembers() or 0) > 0
+end
+
+CK.CHANNEL_LIST = {
+    { key = "s", label = "/s", color = "SAY",
+      available = function() return true end,
+      attrs = function() return { chatType = "SAY" } end },
+    { key = "p", label = "/p", color = "PARTY",
+      available = inGroup,
+      attrs = function() return { chatType = "PARTY" } end },
+    { key = "ra", label = "/ra", color = "RAID",
+      available = inRaid,
+      attrs = function() return { chatType = "RAID" } end },
+    { key = "g", label = "/g", color = "GUILD",
+      available = function() return IsInGuild() end,
+      attrs = function() return { chatType = "GUILD" } end },
+    { key = "1", label = "/1", color = "CHANNEL1",
+      available = function() return (GetChannelName(1) or 0) ~= 0 end,
+      attrs = function() return { chatType = "CHANNEL", channelTarget = 1 } end },
+    -- /w: the person the chat was opened for, else the last one you whispered
+    { key = "w", label = "/w", color = "WHISPER",
+      available = function(ck)
+          return nonEmpty(ck.whisperTarget) or nonEmpty(lastToldTarget()) or nonEmpty(lastTellTarget())
+      end,
+      attrs = function(ck)
+          local target = ck.whisperTarget
+          if not nonEmpty(target) then target = lastToldTarget() end
+          if not nonEmpty(target) then target = lastTellTarget() end
+          return { chatType = "WHISPER", tellTarget = target }
+      end },
+    -- /r: reply to the last person who whispered you
+    { key = "r", label = "/r", color = "WHISPER",
+      available = function() return nonEmpty(lastTellTarget()) end,
+      attrs = function() return { chatType = "WHISPER", tellTarget = lastTellTarget(), reply = true } end },
+}
+
+function CK:ChannelAvailable(i)
+    local ch = CK.CHANNEL_LIST[i]
+    return ch and ch.available(self) and true or false
+end
+
+-- Index of the current channel in CHANNEL_LIST (nil for other channels)
+function CK:CurrentChannelIndex()
+    local chatType = self:GetChatAttr("chatType") or "SAY"
+    if self:GetChatAttr("reply") then return 7 end
+    if chatType == "CHANNEL" then
+        return tonumber(self:GetChatAttr("channelTarget")) == 1 and 5 or nil
     end
+    local map = { SAY = 1, PARTY = 2, RAID = 3, GUILD = 4, WHISPER = 6 }
+    return map[chatType]
+end
+
+function CK:SetChannel(i)
+    if not (self.standalone or self.editBox) or not self:ChannelAvailable(i) then return end
+    -- Remember who the chat was opened for before switching away from them
+    if not self.chatAttrs and self.editBox and self.editBox:GetAttribute("chatType") == "WHISPER" then
+        self.whisperTarget = self.editBox:GetAttribute("tellTarget")
+    end
+    self.chatAttrs = CK.CHANNEL_LIST[i].attrs(self)
+    self:Refresh()
+end
+
+-- delta: 1 = next available channel, -1 = previous
+function CK:CycleChannel(delta)
+    delta = delta or 1
+    local n = #CK.CHANNEL_LIST
+    local index = self:CurrentChannelIndex() or (delta > 0 and 0 or n + 1)
     for step = 1, n do
-        local t = CHANNELS[(index - 1 + step * delta) % n + 1]
-        if channelAvailable(t) then
-            if t == "WHISPER" then
-                self:SetChatAttr("tellTarget", lastTellTarget())
-            end
-            self:SetChatAttr("chatType", t)
-            break
+        local i = (index - 1 + step * delta) % n + 1
+        if self:ChannelAvailable(i) then
+            self:SetChannel(i)
+            return
         end
     end
-    self:Refresh()
 end
 
 function CK:NextChannel() self:CycleChannel(1) end
@@ -318,7 +373,9 @@ function CK:BuildMacroText()
     if text:sub(1, 1) == "/" then return text end
 
     local chatType = self:GetChatAttr("chatType") or "SAY"
-    if chatType == "WHISPER" then
+    if self:GetChatAttr("reply") then
+        return "/r " .. text
+    elseif chatType == "WHISPER" then
         local target = self:GetChatAttr("tellTarget")
         return target and ("/w " .. target .. " " .. text)
     elseif chatType == "CHANNEL" then
@@ -361,6 +418,7 @@ function CK:Open(eb)
     end
     self.standalone = false
     self.chatAttrs = nil
+    self.whisperTarget = nil
     self.editBox = eb
     local state = self.state
     state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
