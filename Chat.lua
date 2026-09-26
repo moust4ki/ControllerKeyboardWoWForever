@@ -132,7 +132,10 @@ local function slash(msg)
         local v = tonumber(arg)
         if v and v >= 0.4 and v <= 2 then
             s.scale = v
-            if CK.frame then CK.frame:SetScale(v) end
+            if CK.frame then
+                CK.frame:SetScale(v)
+                CK:PositionSendButton()
+            end
         end
         CK:Print("scale: %.2f", s.scale)
     elseif cmd == "invert" then
@@ -194,6 +197,7 @@ events:RegisterEvent("ADDON_LOADED")
 events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("PLAYER_LOGOUT")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
+events:RegisterEvent("PLAYER_REGEN_DISABLED")
 events:RegisterEvent("ADDON_ACTION_BLOCKED")
 events:RegisterEvent("ADDON_ACTION_FORBIDDEN")
 pcall(events.RegisterEvent, events, "GAME_PAD_ACTIVE_CHANGED")
@@ -213,6 +217,8 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
         CK.Predict:Prune()
     elseif event == "GAME_PAD_ACTIVE_CHANGED" then
         CK.gamepadActive = arg1
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        CK:OnCombatStarting()
     elseif event == "PLAYER_REGEN_ENABLED" then
         if CK.buildPending then
             CK.buildPending = false

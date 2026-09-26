@@ -398,6 +398,7 @@ function CK:MakeDragHandle(handle)
     handle:SetScript("OnDragStop", function()
         f:StopMovingOrSizing()
         CK:SavePosition()
+        CK:PositionSendButton()
     end)
     if handle ~= f then
         handle:HookScript("OnEnter", function(h)
@@ -434,6 +435,7 @@ function CK:RestorePosition()
         f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 140)
     end
     f:SetScale(self.db.settings.scale)
+    self:PositionSendButton()
 end
 
 ---------------------------------------------------------------------------

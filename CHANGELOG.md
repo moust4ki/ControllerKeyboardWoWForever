@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- Fix: the keyboard could not open in combat ("ControllerKeyboardFrame:Show()" blocked).
+- Fix: LB / RB / LT / RT could stay captured by the addon until the end of combat when the chat was
+  closed during a fight.
+- In combat, typing works with both sticks (the right stick also picks and inserts suggestions and
+  deletes); LB / RB / LT / RT are back as soon as combat ends.
+
 ## 0.2.0
 
 - New look matching WoW Forever's gamepad UI: dark 8-petal wheel with bronze and gold rims, Friz

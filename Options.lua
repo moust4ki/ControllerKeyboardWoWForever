@@ -135,7 +135,10 @@ function CK:RegisterOptions()
     check(L.OPT_INVERT, function() return s.invertY end, function(v) s.invertY = v end)
     selector(L.OPT_SCALE, nil, function() return format("%d %%", s.scale * 100 + 0.5) end, function(d)
         s.scale = math.min(1.5, math.max(0.5, math.floor((s.scale + d * 0.05) * 100 + 0.5) / 100))
-        if CK.frame then CK.frame:SetScale(s.scale) end
+        if CK.frame then
+            CK.frame:SetScale(s.scale)
+            CK:PositionSendButton()
+        end
     end)
 
     -- Look

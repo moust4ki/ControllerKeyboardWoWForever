@@ -232,6 +232,21 @@ function CK:FinishSend(down)
     end
 end
 
+-- The secure "Send" button is placed over the visible one with screen
+-- coordinates, never anchored to it: a frame a protected frame is anchored to
+-- becomes protected too, and the keyboard could no longer be shown in combat.
+function CK:PositionSendButton()
+    local s, send = self.sendButton, self.frame and self.frame.actions.Send
+    if not (s and send) or InCombatLockdown() or not send:GetLeft() then return end
+    s:SetScale(send:GetEffectiveScale())
+    s:ClearAllPoints()
+    s:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", send:GetLeft(), send:GetBottom())
+    s:SetSize(send:GetWidth(), send:GetHeight())
+end
+
+-- Override bindings can't change in combat: they are set when the keyboard
+-- opens out of combat, removed just before combat starts (PLAYER_REGEN_DISABLED
+-- still allows it) and set again after combat. In combat the sticks keep working.
 function CK:EnableButtons()
     local f = self.frame
     if InCombatLockdown() then return end
@@ -246,31 +261,24 @@ function CK:EnableButtons()
         end
     end
     self.bindingsActive = true
-    self.clearPending = false
-
-    local s = self.sendButton
-    s:ClearAllPoints()
-    s:SetAllPoints(f.actions.Send)
-    s:Show()
+    self:PositionSendButton()
+    self.sendButton:Show()
 end
 
 function CK:DisableButtons()
-    if not self.bindingsActive then return end
-    if InCombatLockdown() then
-        self.clearPending = true
-        return
-    end
+    if not self.bindingsActive or InCombatLockdown() then return end
     ClearOverrideBindings(self.frame)
     self.sendButton:Hide()
     self.sendButton:SetAttribute("macrotext", "")
     self.bindingsActive = false
-    self.clearPending = false
+end
+
+function CK:OnCombatStarting()
+    self:DisableButtons()
 end
 
 function CK:OnCombatEnded()
-    if self.clearPending and not self:IsOpen() then
-        self:DisableButtons()
-    end
+    if self:IsOpen() then self:EnableButtons() end
 end
 
 ---------------------------------------------------------------------------
