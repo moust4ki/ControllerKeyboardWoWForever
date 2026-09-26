@@ -159,6 +159,11 @@ local function slash(msg)
         else
             CK:Print(L.FORGET_CONFIRM)
         end
+    elseif cmd == "glyphs" then
+        CK:ListGlyphAtlases()
+    elseif cmd == "options" or cmd == "config" then
+        -- Opening the settings from addon code could be blocked by the gamepad UI
+        CK:Print(L.OPTIONS_WHERE)
     elseif cmd == "debug" then
         s.debug = not s.debug
         CK.seenSticks = nil
@@ -201,6 +206,7 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
         CK:HookChat()
         -- Build the frames now, never while the chat is open (see Input.lua)
         if InCombatLockdown() then CK.buildPending = true else CK:BuildUI() end
+        CK:RegisterOptions()
         local version = (C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata)(ADDON, "Version")
         CK:Print(L.LOADED, version or "?")
     elseif event == "PLAYER_LOGOUT" then

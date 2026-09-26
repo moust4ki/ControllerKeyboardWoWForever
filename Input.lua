@@ -191,8 +191,16 @@ function CK:CreateButtons()
     s:SetAttribute("macrotext", "")
     s:RegisterForClicks("AnyDown", "AnyUp")
     s:SetFrameStrata("FULLSCREEN_DIALOG")
-    s:SetHighlightTexture("Interface\\Buttons\\WHITE8X8")
-    s:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.12)
+    -- The overlay takes the mouse: light up the visible "Send" button below
+    local function hover(on)
+        local send = CK.frame and CK.frame.actions.Send
+        if send then
+            send.hover = on
+            send:Render()
+        end
+    end
+    s:SetScript("OnEnter", function() hover(true) end)
+    s:SetScript("OnLeave", function() hover(false) end)
     s:SetScript("PreClick", function() CK:PrepareSend() end)
     s:SetScript("PostClick", function(_, _, down) CK:FinishSend(down) end)
     s:Hide()

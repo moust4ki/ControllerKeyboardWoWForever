@@ -25,6 +25,36 @@ if GetLocale() == "frFR" then
     L.SEND_COMBAT = "Clavier ouvert en combat : appuyez sur Entrée pour envoyer."
     L.DRAG_HINT = "Glisser pour déplacer le clavier (/ck lock pour verrouiller)"
     L.LOCKED = "Position verrouillée : %s"
+    L.GESTURE_INSERT = "Insérer"
+    L.GESTURE_WORD = "Mot"
+    L.GESTURE_DELETE = "Effacer"
+    L.HELP_PETAL = "Pétale"
+    L.HELP_LETTER = "Lettre"
+    L.HELP_SUGGESTION = "Suggestion"
+    L.BADGE_SHIFT = "MAJ"
+    L.BADGE_CAPS = "VERR. MAJ"
+    L.FONT_CHAT = "Police du chat"
+    L.LANG_BOTH = "Les deux"
+    L.GLYPHS_NONE = "Aucun atlas de boutons manette trouvé : les glyphes de l'addon sont utilisés."
+    L.GLYPHS_FOUND = "%d atlas de boutons manette trouvés :"
+    L.OPTIONS_WHERE = "Options : Échap > Options > AddOns > Controller Keyboard"
+    L.OPT_SUBTITLE = "Clavier en roue pour écrire dans le chat à la manette ou à la souris."
+    L.OPT_KEYBOARD = "Clavier"
+    L.OPT_LOCK = "Verrouiller la position"
+    L.OPT_AUTO = "Ouvrir automatiquement avec le chat"
+    L.OPT_PAD_ONLY = "Seulement quand la manette est active"
+    L.OPT_INVERT = "Inverser l'axe vertical des sticks"
+    L.OPT_SCALE = "Taille du clavier"
+    L.OPT_LOOK = "Apparence"
+    L.OPT_FONT = "Police"
+    L.OPT_GLYPHS = "Boutons affichés"
+    L.OPT_GAME_GLYPHS = "Utiliser les icônes de boutons du jeu si disponibles"
+    L.OPT_PREDICTION = "Prédiction"
+    L.OPT_LANG = "Langue des suggestions"
+    L.OPT_LEARN = "Apprendre de mes messages"
+    L.OPT_RESET_POS = "Replacer le clavier"
+    L.OPT_FORGET = "Oublier les mots appris"
+    L.OPT_FORGET_CONFIRM = "Cliquer pour confirmer"
     L.HINT = "Stick G : pétale   Stick D : lettre   LB : effacer   RB : espace\nLT : Maj   RT : 123   Croix < > : suggestion   Croix ^ : insérer"
     L.LOADED = "v%s chargé. /ck pour l'aide."
     L.HELP = {
@@ -39,7 +69,9 @@ if GetLocale() == "frFR" then
         "/ck reset - replacer le clavier",
         "/ck stats - statistiques d'apprentissage",
         "/ck forget - oublier tous les mots appris",
+        "/ck glyphs - lister les icônes de boutons manette du jeu",
         "/ck debug - afficher les boutons reçus",
+        "Options : Échap > Options > AddOns > Controller Keyboard",
     }
     L.ON = "|cff40ff40oui|r"
     L.OFF = "|cffff4040non|r"
@@ -62,6 +94,36 @@ else
     L.SEND_COMBAT = "Keyboard opened in combat: press Enter to send."
     L.DRAG_HINT = "Drag to move the keyboard (/ck lock to lock)"
     L.LOCKED = "Position locked: %s"
+    L.GESTURE_INSERT = "Insert"
+    L.GESTURE_WORD = "Word"
+    L.GESTURE_DELETE = "Delete"
+    L.HELP_PETAL = "Petal"
+    L.HELP_LETTER = "Letter"
+    L.HELP_SUGGESTION = "Suggestion"
+    L.BADGE_SHIFT = "SHIFT"
+    L.BADGE_CAPS = "CAPS"
+    L.FONT_CHAT = "Chat font"
+    L.LANG_BOTH = "Both"
+    L.GLYPHS_NONE = "No gamepad button atlas found: the addon's glyphs are used."
+    L.GLYPHS_FOUND = "%d gamepad button atlases found:"
+    L.OPTIONS_WHERE = "Options: Escape > Options > AddOns > Controller Keyboard"
+    L.OPT_SUBTITLE = "Wheel keyboard to type in chat with a gamepad or the mouse."
+    L.OPT_KEYBOARD = "Keyboard"
+    L.OPT_LOCK = "Lock position"
+    L.OPT_AUTO = "Open automatically with the chat"
+    L.OPT_PAD_ONLY = "Only when the gamepad is active"
+    L.OPT_INVERT = "Invert the sticks vertical axis"
+    L.OPT_SCALE = "Keyboard size"
+    L.OPT_LOOK = "Look"
+    L.OPT_FONT = "Font"
+    L.OPT_GLYPHS = "Button glyphs"
+    L.OPT_GAME_GLYPHS = "Use the game's button icons when available"
+    L.OPT_PREDICTION = "Prediction"
+    L.OPT_LANG = "Suggestion language"
+    L.OPT_LEARN = "Learn from my messages"
+    L.OPT_RESET_POS = "Reset keyboard position"
+    L.OPT_FORGET = "Forget learned words"
+    L.OPT_FORGET_CONFIRM = "Click again to confirm"
     L.HINT = "L stick: petal   R stick: letter   LB: delete   RB: space\nLT: Shift   RT: 123   D-pad < >: suggestion   D-pad ^: insert"
     L.LOADED = "v%s loaded. /ck for help."
     L.HELP = {
@@ -76,7 +138,9 @@ else
         "/ck reset - reset keyboard position",
         "/ck stats - learning statistics",
         "/ck forget - forget all learned words",
+        "/ck glyphs - list the game's gamepad button icons",
         "/ck debug - print received buttons",
+        "Options: Escape > Options > AddOns > Controller Keyboard",
     }
     L.ON = "|cff40ff40on|r"
     L.OFF = "|cffff4040off|r"
@@ -102,6 +166,9 @@ local DEFAULTS = {
     scale = 1,
     invertY = false,
     locked = true,
+    font = "friz",
+    glyphStyle = "xbox",
+    gameGlyphs = true,
     debug = false,
 }
 

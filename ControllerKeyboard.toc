@@ -13,6 +13,9 @@ Dict_frFR_next.lua
 Dict_enUS.lua
 Dict_WoW.lua
 Predict.lua
+Glyphs.lua
 Wheel.lua
+UI.lua
 Input.lua
+Options.lua
 Chat.lua

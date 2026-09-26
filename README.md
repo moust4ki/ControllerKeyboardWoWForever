@@ -77,7 +77,27 @@ envoie ; à la souris, le bouton « Envoyer » est un bouton de macro sécurisé
 | `/ck reset` | replacer le clavier |
 | `/ck stats` | statistiques |
 | `/ck forget confirm` | oublier les mots appris |
+| `/ck glyphs` | lister les icônes de boutons manette du jeu |
 | `/ck debug` | afficher les boutons et sticks reçus |
+
+## Options
+
+*Échap > Options > AddOns > Controller Keyboard* : verrouillage de la position, ouverture automatique,
+taille du clavier, police (polices Blizzard : Friz Quadrata, Morpheus, Skurri, Arial Narrow ou celle du
+chat), style des boutons (Xbox / PlayStation), icônes de boutons du jeu, langue des suggestions,
+apprentissage, replacer le clavier, oublier les mots appris.
+
+## Design et textures
+
+Le design vient de Claude Design (roue façon menu manette de WoW Forever). Les textures PNG vont dans
+`design/textures/`, puis sont converties en TGA pour le jeu :
+
+```bash
+python tools/convert_textures.py
+```
+
+`/ck glyphs` liste les icônes de boutons manette présentes dans le client : l'addon les utilise en
+priorité, sinon il prend les glyphes du design.
 
 ## Installation
 
