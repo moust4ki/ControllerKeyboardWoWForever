@@ -23,13 +23,14 @@ au trackpad du Steam Controller.
 | LB (ou X) | effacer (maintenir pour répéter) |
 | RB (ou Y) | espace |
 | Croix ↑ ou clic stick droit | insérer la suggestion |
-| Croix ← → | suggestion précédente / suivante |
+| Croix ← → | canal précédent / suivant (Dire, Groupe, Raid, Guilde, Chuchoter au dernier, Crier) |
 | Croix ↓ | effacer le dernier mot |
 | LT | Maj (1 appui = une majuscule, 2 appuis rapides = verrouillage) |
 | RT ou clic stick gauche | chiffres, accents et symboles |
-| A (ou Start) | envoyer le message (le chat reste ouvert pour le suivant) |
+| A | envoyer le message (le chat reste ouvert pour le suivant) |
 | B | fermer le chat (géré par l'interface manette du jeu) |
-| Select | changer de canal (Dire, Groupe, Raid, Guilde, Crier) |
+
+Start et Select restent à l'interface manette du jeu : l'addon ne les utilise pas.
 
 Le clavier s'ouvre tout seul quand la zone de saisie du chat prend le focus (`/ck auto` pour désactiver,
 `/ck pad` pour ne l'ouvrir que si la manette est l'entrée active). Un raccourci **« Ouvrir/fermer le

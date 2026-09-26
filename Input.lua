@@ -3,7 +3,7 @@ local _, CK = ...
 -- Left stick picks a petal, right stick flicks toward the letter to type.
 -- With the left stick centered, the right stick drives the suggestions.
 --
--- B is deliberately NOT handled: closing the chat from addon code runs
+-- B, Start and Select are deliberately NOT handled: closing the chat from addon code runs
 -- WoW Forever's gamepad UI (FrameControlsManager -> UpdateInteractIcons ->
 -- SetPreferredGamepadInteractTarget) in a tainted context, which the game
 -- forbids. The game's own gamepad UI closes the chat instead.
@@ -14,17 +14,17 @@ local BUTTON_ACTIONS = {
     PADRSHOULDER = "Space",
     PADLTRIGGER = "ToggleShift",
     PADRTRIGGER = "ToggleSymbols",
-    PADDLEFT = "PrevSuggestion",
-    PADDRIGHT = "NextSuggestion",
+    PADDLEFT = "PrevChannel",
+    PADDRIGHT = "NextChannel",
     PADDUP = "AcceptSuggestion",
     PADDDOWN = "DeleteWord",
     PADLSTICK = "ToggleSymbols",
     PADRSTICK = "AcceptSuggestion",
-    PADBACK = "CycleChannel",
 }
 
 -- Buttons that send the message through the secure macro button
-local SEND_KEYS = { "PAD1", "PADFORWARD" }
+-- (Start/Select belong to the game's gamepad UI: never bound)
+local SEND_KEYS = { "PAD1" }
 
 -- Right stick directions -> petal slot (1 left, 2 up, 3 right, 4 down)
 local SLOT_BY_SECTOR = { [0] = 2, [1] = 3, [2] = 4, [3] = 1 }

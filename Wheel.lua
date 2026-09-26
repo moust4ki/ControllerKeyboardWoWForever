@@ -445,10 +445,17 @@ function CK:ToggleSymbols()
     self:UpdateWheel()
 end
 
-local CHANNELS = { "SAY", "PARTY", "RAID", "GUILD", "YELL" }
+local CHANNELS = { "SAY", "PARTY", "RAID", "GUILD", "WHISPER", "YELL" }
+
+local function lastTellTarget()
+    return ChatEdit_GetLastTellTarget and ChatEdit_GetLastTellTarget() or nil
+end
 
 local function channelAvailable(chatType)
-    if chatType == "PARTY" then
+    if chatType == "WHISPER" then
+        local target = lastTellTarget()
+        return target ~= nil and target ~= ""
+    elseif chatType == "PARTY" then
         if IsInGroup then return IsInGroup() end
         return (GetNumPartyMembers and GetNumPartyMembers() or 0) > 0
     elseif chatType == "RAID" then
@@ -460,17 +467,23 @@ local function channelAvailable(chatType)
     return true
 end
 
-function CK:CycleChannel()
+-- delta: 1 = next channel, -1 = previous. Whisper replies to the last whisper.
+function CK:CycleChannel(delta)
     local eb = self.editBox
     if not eb then return end
+    delta = delta or 1
+    local n = #CHANNELS
     local current = eb:GetAttribute("chatType")
-    local index = 0
+    local index = delta > 0 and 0 or n + 1
     for i, t in ipairs(CHANNELS) do
         if t == current then index = i end
     end
-    for step = 1, #CHANNELS do
-        local t = CHANNELS[(index + step - 1) % #CHANNELS + 1]
+    for step = 1, n do
+        local t = CHANNELS[(index - 1 + step * delta) % n + 1]
         if channelAvailable(t) then
+            if t == "WHISPER" then
+                eb:SetAttribute("tellTarget", lastTellTarget())
+            end
             eb:SetAttribute("chatType", t)
             if ChatEdit_UpdateHeader then ChatEdit_UpdateHeader(eb) end
             break
@@ -478,6 +491,9 @@ function CK:CycleChannel()
     end
     self:Refresh()
 end
+
+function CK:NextChannel() self:CycleChannel(1) end
+function CK:PrevChannel() self:CycleChannel(-1) end
 
 -- The message is sent by the secure macro button (see Input.lua): calling the
 -- chat functions from addon code gets blocked by WoW Forever's gamepad UI.
