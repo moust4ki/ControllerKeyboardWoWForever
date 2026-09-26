@@ -2,11 +2,10 @@
 
 ## 0.2.1
 
-- Fix: the keyboard could not open in combat ("ControllerKeyboardFrame:Show()" blocked).
-- Fix: LB / RB / LT / RT could stay captured by the addon until the end of combat when the chat was
-  closed during a fight.
-- In combat, typing works with both sticks (the right stick also picks and inserts suggestions and
-  deletes); LB / RB / LT / RT are back as soon as combat ends.
+- The keyboard is now disabled in combat: the game blocks too many actions during a fight. The chat
+  works as usual, and the keyboard comes back by itself after combat if the chat is still open.
+- Fix: the keyboard could be blocked from opening ("ControllerKeyboardFrame:Show()").
+- Fix: LB / RB / LT / RT could stay captured by the addon until the end of combat.
 
 ## 0.2.0
 

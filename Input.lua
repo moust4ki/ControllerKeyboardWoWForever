@@ -244,9 +244,8 @@ function CK:PositionSendButton()
     s:SetSize(send:GetWidth(), send:GetHeight())
 end
 
--- Override bindings can't change in combat: they are set when the keyboard
--- opens out of combat, removed just before combat starts (PLAYER_REGEN_DISABLED
--- still allows it) and set again after combat. In combat the sticks keep working.
+-- Override bindings can't change in combat: the keyboard (and its bindings)
+-- is closed just before combat starts, when PLAYER_REGEN_DISABLED still allows it.
 function CK:EnableButtons()
     local f = self.frame
     if InCombatLockdown() then return end
@@ -274,11 +273,23 @@ function CK:DisableButtons()
 end
 
 function CK:OnCombatStarting()
+    self.reopenAfterCombat = self:IsOpen() and self.editBox or nil
+    self:Close("combat")
     self:DisableButtons()
 end
 
+-- Back after combat if the chat is still being typed in
 function CK:OnCombatEnded()
-    if self:IsOpen() then self:EnableButtons() end
+    self.combatNotified = false
+    local eb = self.reopenAfterCombat
+    self.reopenAfterCombat = nil
+    if not eb then
+        local active = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()
+        if active and active:HasFocus() then eb = active end
+    end
+    if eb and eb:HasFocus() and not self:IsOpen() then
+        self:Open(eb)
+    end
 end
 
 ---------------------------------------------------------------------------

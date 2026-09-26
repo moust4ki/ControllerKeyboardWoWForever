@@ -16,7 +16,8 @@ bronze et or, police Friz Quadrata, icônes de boutons du jeu.
 
 ## Utilisation à la manette
 
-Le clavier s'ouvre tout seul quand le chat s'ouvre.
+Le clavier s'ouvre tout seul quand le chat s'ouvre. Il est désactivé en combat (le jeu y bloque trop
+d'actions) et revient après le combat si le chat est encore ouvert.
 
 ```
             [a b c d]

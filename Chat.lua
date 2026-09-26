@@ -17,6 +17,10 @@ function CK:OnChatActivated(eb)
     local forced = self.forceOpen
     C_Timer.After(0, function()
         if not eb:HasFocus() then return end
+        if InCombatLockdown() then
+            CK:BlockedByCombat()
+            return
+        end
         if CK:IsOpen() and CK.editBox == eb then return end
         local s = CK.db.settings
         if forced or (s.autoOpen and (not s.onlyWithGamepad or CK:IsGamepadActive())) then

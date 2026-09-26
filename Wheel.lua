@@ -86,10 +86,8 @@ end
 -- Keyboard without the chat (after /ck lock, to place it): A sends with the
 -- secure macro button, B closes
 function CK:OpenStandalone()
-    if not self.frame then
-        if InCombatLockdown() then return end
-        self:BuildUI()
-    end
+    if self:BlockedByCombat() then return end
+    if not self.frame then self:BuildUI() end
     if self:IsOpen() then return end
     self.standalone = true
     self.buffer = ""
@@ -344,12 +342,20 @@ end
 ---------------------------------------------------------------------------
 -- Open / close
 ---------------------------------------------------------------------------
-function CK:Open(eb)
-    if not self.frame then
-        -- Secure buttons can't be created in combat: wait for PLAYER_REGEN_ENABLED
-        if InCombatLockdown() then return end
-        self:BuildUI()
+-- The keyboard is not available in combat: sending from the chat while in
+-- combat got blocked by the game. It reopens after combat if the chat is open.
+function CK:BlockedByCombat()
+    if not InCombatLockdown() then return false end
+    if not self.combatNotified then
+        self.combatNotified = true
+        self:Print(CK.L.COMBAT_UNAVAILABLE)
     end
+    return true
+end
+
+function CK:Open(eb)
+    if self:BlockedByCombat() then return end
+    if not self.frame then self:BuildUI() end
     -- Carry a message typed with the mouse back into the reopened chat
     local carried = self.standalone and self.buffer or nil
     local carriedAttrs = self.standalone and self.chatAttrs or nil

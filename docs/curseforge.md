@@ -58,7 +58,8 @@ l'installation (un `/reload` ne suffit pas pour charger les textures).
 
 ## Compatibilité
 
-Conçu pour **WoW Forever** et son interface manette. Code source et suivi des problèmes :
+Conçu pour **WoW Forever** et son interface manette. Le clavier est désactivé en combat (le jeu y
+bloque trop d'actions) et revient après le combat. Code source et suivi des problèmes :
 [GitHub](https://github.com/moust4ki/ControllerKeyboardWoWForever).
 
 ---
@@ -121,7 +122,8 @@ Install with the CurseForge app, or extract the zip into
 
 ## Compatibility
 
-Made for **WoW Forever** and its gamepad UI. Source code and issues:
+Made for **WoW Forever** and its gamepad UI. The keyboard is disabled in combat (the game blocks too
+many actions there) and comes back after combat. Source code and issues:
 [GitHub](https://github.com/moust4ki/ControllerKeyboardWoWForever).
 
 *Dictionaries derived from FrequencyWords by Hermit Dave (CC-BY-SA-4.0). Code under the MIT license.*
