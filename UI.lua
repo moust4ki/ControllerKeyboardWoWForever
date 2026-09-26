@@ -22,7 +22,6 @@ local C = {
     sugg = { rgb("C8B88A") },
     btn = { rgb("E8D7A8") },
     btnHover = { rgb("FFE45C") },
-    gesture = { rgb("D9C9A0") },
     dark = { rgb("1A1206") },
     capsFill = { rgb("E0B400") },
     border = { rgb("8A7045") },
@@ -320,27 +319,13 @@ function CK:BuildUI()
         f.petals[i] = p
     end
 
-    -- Hub: right stick gestures, or the aimed letter
+    -- Hub: shows the letter aimed with the right stick
     local hub = CK.NewFrame("Frame", nil, wheel)
     hub:SetSize(HUB_SIZE, HUB_SIZE)
     hub:SetPoint("CENTER", wheel, "TOPLEFT", 140, -140)
     hub:SetFrameLevel(wheel:GetFrameLevel() + 20)
     local hubTex = texture(hub, "ck_hub", "BORDER")
     hubTex:SetAllPoints()
-    f.gestures = {}
-    local gold = "|cffffd100"
-    local lines = {
-        gold .. "^|r " .. L.GESTURE_INSERT,
-        gold .. "<|r " .. L.GESTURE_PICK .. " " .. gold .. ">|r",
-        gold .. "v|r " .. L.GESTURE_DELETE,
-    }
-    for n, line in ipairs(lines) do
-        local g = text(hub, 11)
-        g:SetPoint("CENTER", hub, "CENTER", 0, 18 - (n - 1) * 18)
-        g:SetText(line)
-        g:SetTextColor(unpack(C.gesture))
-        f.gestures[n] = g
-    end
     f.aimed = text(hub, 32)
     f.aimed:SetPoint("CENTER")
     f.aimed:SetTextColor(unpack(C.gold))
@@ -558,9 +543,8 @@ function CK:UpdateWheel()
         end
     end
 
-    -- Hub: gestures when no petal is picked, else the aimed letter
+    -- Hub: the aimed letter
     local aimedChar = state.petal and state.aim and layout[state.petal][state.aim]
-    for _, g in ipairs(f.gestures) do g:SetShown(not state.petal) end
     f.aimed:SetShown(aimedChar ~= nil)
     if aimedChar then f.aimed:SetText(self:DisplayChar(aimedChar)) end
 
