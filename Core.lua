@@ -22,7 +22,7 @@ if GetLocale() == "frFR" then
     L.HUB_UP = "Mot"
     L.HUB_DOWN = "Eff."
     L.CAPS = "MAJ"
-    L.HINT = "Stick G : pétale   Stick D : lettre   LB : effacer   RB : espace\nLT : Maj   RT : 123   A : mot   Start : envoyer   Select : canal"
+    L.HINT = "Stick G : pétale   Stick D : lettre   LB : effacer   RB : espace\nLT : Maj   RT : 123   A : envoyer   B : fermer   Select : canal"
     L.LOADED = "v%s chargé. /ck pour l'aide."
     L.HELP = {
         "/ck - ouvrir le clavier",
@@ -55,7 +55,7 @@ else
     L.HUB_UP = "Word"
     L.HUB_DOWN = "Del"
     L.CAPS = "CAPS"
-    L.HINT = "L stick: petal   R stick: letter   LB: delete   RB: space\nLT: Shift   RT: 123   A: word   Start: send   Select: channel"
+    L.HINT = "L stick: petal   R stick: letter   LB: delete   RB: space\nLT: Shift   RT: 123   A: send   B: close   Select: channel"
     L.LOADED = "v%s loaded. /ck for help."
     L.HELP = {
         "/ck - open the keyboard",

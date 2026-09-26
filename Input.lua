@@ -3,7 +3,7 @@ local _, CK = ...
 -- Left stick picks a petal, right stick flicks toward the letter to type.
 -- With the left stick centered, the right stick drives the suggestions.
 local BUTTON_ACTIONS = {
-    PAD1 = "AcceptSuggestion",      -- A / Cross
+    PAD1 = "Send",                  -- A / Cross
     PAD2 = "Cancel",                -- B / Circle
     PAD3 = "Backspace",             -- X / Square
     PAD4 = "Space",                 -- Y / Triangle

@@ -22,13 +22,13 @@ au trackpad du Steam Controller.
 |---|---|
 | LB (ou X) | effacer (maintenir pour répéter) |
 | RB (ou Y) | espace |
-| A, croix ↑ ou clic stick droit | insérer la suggestion |
+| Croix ↑ ou clic stick droit | insérer la suggestion |
 | Croix ← → | suggestion précédente / suivante |
 | Croix ↓ | effacer le dernier mot |
 | LT | Maj (1 appui = une majuscule, 2 appuis rapides = verrouillage) |
 | RT ou clic stick gauche | chiffres, accents et symboles |
 | B | fermer |
-| Start | envoyer |
+| A (ou Start) | envoyer le message |
 | Select | changer de canal (Dire, Groupe, Raid, Guilde, Crier) |
 
 Le clavier s'ouvre tout seul quand la zone de saisie du chat prend le focus (`/ck auto` pour désactiver,
