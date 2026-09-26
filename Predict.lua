@@ -339,12 +339,13 @@ end
 ---------------------------------------------------------------------------
 -- Slash commands
 ---------------------------------------------------------------------------
--- Always suggested first, in this order
-local PINNED_COMMANDS = { "/reload", "/p", "/raid", "/guild", "/w" }
+-- Always suggested first, in this order. The short English commands work in
+-- every client language (/ra = raid; /r = reply to the last whisper).
+local PINNED_COMMANDS = { "/reload", "/p", "/ra", "/g", "/w" }
 
 -- Suggested after the pinned ones and the player's own commands (most used first)
 local BUILTIN_COMMANDS = {
-    "/ck", "/ck lock", "/s", "/r", "/y", "/e", "/inv",
+    "/r", "/ck", "/ck lock", "/s", "/y", "/e", "/inv",
     "/roll", "/afk", "/dnd", "/who", "/dance", "/sit", "/played", "/follow",
     "/assist", "/target", "/logout", "/camp", "/ck debug", "/ck auto",
     "/ck learn", "/ck lang", "/ck scale", "/ck reset", "/ck stats", "/ck invert",
@@ -376,7 +377,7 @@ function P:LearnCommand(text)
     end
 end
 
--- /reload, /p, /raid, /guild, /w first, then learned commands by use, then common ones
+-- /reload, /p, /ra, /g, /w first, then learned commands by use, then common ones
 function P:QueryCommands(text, n)
     local lower = CK.Lower(text)
     local out, seen = {}, {}
