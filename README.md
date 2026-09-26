@@ -41,8 +41,9 @@ actions there, "Not possible in combat") and comes back after combat if the chat
 | D-pad ↑ or right stick click | insert the suggestion |
 | D-pad ↓ | delete the last word |
 
-**A** (send), **X** (channels), **Y** (tab settings), **B** (back), **Start** and **Select** stay with
-the game's gamepad UI: the addon does not use them.
+**A** sends the message (secure macro: `/s`, `/p`, `/g`, `/w`… following the chat channel).
+**B** (back), **X** (channels), **Y** (tab settings), **Start** and **Select** stay with the game's
+gamepad UI.
 
 ## Mouse / Steam Controller
 
@@ -97,6 +98,9 @@ A **"Toggle keyboard"** key binding is also available in *Escape > Key Bindings 
 
 ## Technical notes
 
+- The addon never writes to the game's chat box: text set by an addon is tainted, and when the gamepad
+  UI reads it back its own code gets blocked in combat, over and over until the client freezes. The
+  message lives in the keyboard's bar and is sent through a secure macro button.
 - WoW Forever's gamepad UI forbids addons from closing the chat or opening panels
   (`SetPreferredGamepadInteractTarget` error, which can freeze the client). The addon never closes the
   chat itself, creates its frames outside the gamepad UI's watch, and sends with the mouse through a

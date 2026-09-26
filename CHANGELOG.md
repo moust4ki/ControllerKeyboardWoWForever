@@ -2,6 +2,10 @@
 
 ## 0.2.1
 
+- Fix: crashes and "action blocked" cascades in combat. The keyboard used to type into the game's chat
+  box; that text was then read by WoW Forever's gamepad UI and tainted it. The message now lives in the
+  keyboard's own bar and is sent with A through a secure macro (`/s`, `/p`, `/g`, `/w`…); the game's
+  chat box is never written to. B still closes the chat.
 - The keyboard is now disabled in combat: the game blocks too many actions during a fight. Trying
   to open it shows "Not possible in combat"; the chat works as usual, and the keyboard comes back by
   itself after combat if the chat is still open.

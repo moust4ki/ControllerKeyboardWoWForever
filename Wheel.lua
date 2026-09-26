@@ -42,38 +42,44 @@ CK.state = {
 ---------------------------------------------------------------------------
 -- Text and channel source
 --
--- Normally the wheel types into the chat edit box. WoW Forever's gamepad UI
--- closes the chat on any mouse click: the wheel then keeps the message in its
--- own buffer ("standalone") and sends it with the secure macro button.
+-- The message lives in the keyboard's own buffer and is sent with the secure
+-- macro button. The addon never writes to the chat edit box: text set by an
+-- addon is tainted, and when WoW Forever's gamepad UI reads it back
+-- (ChatFrame1EditBox:GetText()) its own code gets tainted, which is blocked
+-- in combat again and again until the client freezes. The edit box is only
+-- read: its channel, and what is typed on a physical keyboard.
+-- "standalone": a mouse click made the game close the chat, the keyboard
+-- stays open on its own.
 ---------------------------------------------------------------------------
 function CK:GetText()
-    if self.standalone then return self.buffer or "" end
-    return self.editBox and self.editBox:GetText() or ""
+    return self.buffer or ""
 end
 
+-- Channel: the chat's own while it is open, a snapshot once it is closed
 function CK:GetChatAttr(key)
-    if self.standalone then return self.chatAttrs[key] end
+    if self.chatAttrs then return self.chatAttrs[key] end
     return self.editBox and self.editBox:GetAttribute(key)
 end
 
-function CK:SetChatAttr(key, value)
-    if self.standalone then
-        self.chatAttrs[key] = value
-    elseif self.editBox then
-        self.editBox:SetAttribute(key, value)
-    end
-end
-
--- Remember the chat state so it survives the chat being closed by a click
-function CK:SnapshotChat()
-    local eb = self.editBox
-    if not eb then return end
-    self.lastText = eb:GetText() or ""
-    self.lastAttrs = {
-        chatType = eb:GetAttribute("chatType"),
+local function snapshotAttrs(eb)
+    if not eb then return { chatType = "SAY" } end
+    return {
+        chatType = eb:GetAttribute("chatType") or "SAY",
         tellTarget = eb:GetAttribute("tellTarget"),
         channelTarget = eb:GetAttribute("channelTarget"),
     }
+end
+
+function CK:SetChatAttr(key, value)
+    self.chatAttrs = self.chatAttrs or snapshotAttrs(self.editBox)
+    self.chatAttrs[key] = value
+end
+
+-- Text typed on a physical keyboard, or cleared by the game after sending
+function CK:OnChatTextChanged(eb)
+    if eb ~= self.editBox then return end
+    self.buffer = eb:GetText() or ""
+    self:Refresh()
 end
 
 -- True while a mouse button is held over the keyboard (not just hovering:
@@ -104,8 +110,7 @@ end
 function CK:EnterStandalone()
     if self.standalone then return end
     self.standalone = true
-    self.buffer = self.lastText or ""
-    self.chatAttrs = self.lastAttrs or { chatType = "SAY" }
+    self.chatAttrs = self.chatAttrs or snapshotAttrs(self.editBox)
     self.editBox = nil
     if self.db.settings.debug then self:Print("standalone mode") end
     self:EnableButtons()
@@ -150,7 +155,6 @@ function CK:Refresh()
     local f = self.frame
     if not (f and f:IsShown()) then return end
     if not (self.standalone or self.editBox) then return end
-    if not self.standalone then self:SnapshotChat() end
 
     local text = self:GetText()
     self.previewBody = self:GetChannelLabel() .. previewTail(text)
@@ -175,14 +179,7 @@ end
 -- Actions
 ---------------------------------------------------------------------------
 function CK:SetText(text)
-    if self.standalone then
-        self.buffer = text
-    elseif self.editBox then
-        self.editBox:SetText(text)
-        self.editBox:SetCursorPosition(#text)
-    else
-        return
-    end
+    self.buffer = text
     self:Refresh()
 end
 
@@ -298,7 +295,6 @@ function CK:CycleChannel(delta)
                 self:SetChatAttr("tellTarget", lastTellTarget())
             end
             self:SetChatAttr("chatType", t)
-            if self.editBox and ChatEdit_UpdateHeader then ChatEdit_UpdateHeader(self.editBox) end
             break
         end
     end
@@ -358,16 +354,14 @@ end
 function CK:Open(eb)
     if self:BlockedByCombat() then return end
     if not self.frame then self:BuildUI() end
-    -- Carry a message typed with the mouse back into the reopened chat
-    local carried = self.standalone and self.buffer or nil
-    local carriedAttrs = self.standalone and self.chatAttrs or nil
-    self.standalone = false
-    self.editBox = eb
-    if carried and carried ~= "" then
-        eb:SetText(carried)
-        for k, v in pairs(carriedAttrs) do eb:SetAttribute(k, v) end
-        if ChatEdit_UpdateHeader then ChatEdit_UpdateHeader(eb) end
+    -- Keep a message typed with the mouse when the chat is reopened;
+    -- otherwise start from what the chat holds (physical keyboard)
+    if not (self.standalone and self.buffer and self.buffer ~= "") then
+        self.buffer = eb:GetText() or ""
     end
+    self.standalone = false
+    self.chatAttrs = nil
+    self.editBox = eb
     local state = self.state
     state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
     self.frame:Show()
@@ -388,6 +382,7 @@ function CK:Close(reason)
     self.closing = false
     self.standalone = false
     self.buffer = nil
+    self.chatAttrs = nil
     self.editBox = nil
     self.state.petal = nil
     self.state.aim = nil

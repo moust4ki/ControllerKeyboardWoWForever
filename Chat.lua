@@ -66,7 +66,7 @@ function CK:HookChat()
             eb:HookScript("OnTextChanged", function(box)
                 local text = box:GetText()
                 if text and text ~= "" then lastTyped[box] = text end
-                if box == CK.editBox then CK:Refresh() end
+                CK:OnChatTextChanged(box)
             end)
             eb:HookScript("OnEditFocusGained", function(box) CK:OnChatActivated(box) end)
             eb:HookScript("OnEditFocusLost", function(box) CK:OnChatDeactivated(box) end)
@@ -91,6 +91,8 @@ function ControllerKeyboard_Toggle()
         CK:Close("toggle")
         return
     end
+    -- Opening the chat from addon code in combat taints the gamepad UI
+    if CK:BlockedByCombat() then return end
     CK.forceOpen = true
     local active = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()
     if active and active:HasFocus() then
@@ -113,6 +115,7 @@ local function slash(msg)
     if cmd == "" then
         -- The chat edit box is still sending this command: open once it is closed
         C_Timer.After(0, function()
+            if CK:BlockedByCombat() then return end
             CK.forceOpen = true
             ChatFrame_OpenChat("")
             CK.forceOpen = false

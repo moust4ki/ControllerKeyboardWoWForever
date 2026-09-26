@@ -25,7 +25,7 @@ the game's own button icons.
 - **Learning**: your words, message starters and word sequences are remembered, locally.
 - **Mouse and Steam Controller**: everything is clickable; the message is kept even when the game
   closes the chat.
-- **Works with the game's gamepad UI**: A sends, B goes back, X opens channels, as usual.
+- **Works with the game's gamepad UI**: B goes back, X opens channels, as usual.
 - **Options panel**: lock position, size, Blizzard font, Xbox / PlayStation glyphs, suggestion
   language (French, English, both)…
 
@@ -40,7 +40,8 @@ the game's own button icons.
 | LT | shift (double tap: caps lock) |
 | RT | numbers, accents, symbols |
 | D-pad ← → / ↑ / ↓ | suggestion / insert / delete word |
-| A, B, X, Y | handled by the game: send, back, channels, tab |
+| A | send the message |
+| B, X, Y | handled by the game: back, channels, tab |
 
 ## Installation
 
@@ -91,7 +92,7 @@ Friz Quadrata, icônes de boutons du jeu.
   les plus utilisées.
 - **Apprentissage** : vos mots, vos débuts de message et vos enchaînements sont retenus, en local.
 - **Souris et Steam Controller** : tout est cliquable ; le message est conservé même si le jeu ferme le chat.
-- **Intégré à l'interface manette du jeu** : A envoie, B revient, X ouvre les canaux, comme d'habitude.
+- **Intégré à l'interface manette du jeu** : B revient, X ouvre les canaux, comme d'habitude.
 - **Panneau d'options** : verrouillage de la position, taille, police Blizzard, style Xbox / PlayStation,
   langue des suggestions (français, anglais, les deux)…
 
@@ -106,7 +107,8 @@ Friz Quadrata, icônes de boutons du jeu.
 | LT | majuscule (deux appuis : verrouillage) |
 | RT | chiffres, accents, symboles |
 | Croix ← → / ↑ / ↓ | suggestion / insérer / effacer le mot |
-| A, B, X, Y | gérés par le jeu : envoyer, retour, canaux, onglet |
+| A | envoyer le message |
+| B, X, Y | gérés par le jeu : retour, canaux, onglet |
 
 ## Installation
 

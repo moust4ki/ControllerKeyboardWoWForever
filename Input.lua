@@ -221,8 +221,6 @@ function CK:FinishSend(down)
     local slashCommand = text:sub(1, 1) == "/" and down ~= true
     if self.justSent or slashCommand then
         self.justSent = false
-        local eb = self.editBox
-        if eb and eb.AddHistoryLine then eb:AddHistoryLine(text) end
         if not InCombatLockdown() then
             self.sendButton:SetAttribute("macrotext", "")
         end
@@ -253,8 +251,9 @@ function CK:EnableButtons()
     for key in pairs(BUTTON_ACTIONS) do
         SetOverrideBindingClick(f, true, key, bindingButtonName(key))
     end
+    -- A sends the keyboard's buffer (the chat edit box stays empty)
+    SetOverrideBindingClick(f, true, "PAD1", SEND_BUTTON)
     if self.standalone then
-        SetOverrideBindingClick(f, true, "PAD1", SEND_BUTTON)
         for key in pairs(STANDALONE_ACTIONS) do
             SetOverrideBindingClick(f, true, key, bindingButtonName(key))
         end
