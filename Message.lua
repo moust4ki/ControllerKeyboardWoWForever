@@ -3,7 +3,7 @@ local L = CK.L
 
 -- Common core of the keyboard: the message, prediction, chat channels,
 -- sending, opening and closing. The input methods (Wheel.lua: daisywheel,
--- StickKeyboard.lua: one-stick keyboard) only turn the pad into characters.
+-- StickKeyboard.lua: split keyboard) only turn the pad into characters.
 CK.state = {
     layer = "letters",
     shift = false,

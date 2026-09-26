@@ -125,7 +125,7 @@ function CK:UpdateMethod()
     self:UpdateBadge()
 end
 
--- Switch between the daisywheel and the one-stick keyboard, even while open
+-- Switch between the daisywheel and the split keyboard, even while open
 function CK:SetInputMethod(key)
     if not CK.Methods[key] then return end
     self.db.settings.inputMethod = key

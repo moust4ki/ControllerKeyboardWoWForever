@@ -217,11 +217,11 @@ local DEFAULTS = {
     scale = 1,
     invertY = false,
     locked = true,
-    inputMethod = "wheel",   -- "wheel" (daisywheel) or "stick" (one-stick keyboard)
+    inputMethod = "wheel",   -- "wheel" (daisywheel) or "stick" (split keyboard)
     kbLayout = GetLocale() == "frFR" and "azerty" or "qwerty",
-    deadzone = 0.15,         -- one-stick keyboard: left stick dead zone
-    magnet = "medium",       -- one-stick keyboard: none / weak / medium / strong
-    showLine = true,         -- one-stick keyboard: line from the center to the cursor
+    deadzone = 0.15,         -- split keyboard: sticks dead zone
+    magnet = "medium",       -- split keyboard: none / weak / medium / strong
+    showLine = true,         -- split keyboard: lines from the centers to the cursors
     showActions = true,
     font = "friz",
     glyphStyle = "xbox",
