@@ -40,7 +40,8 @@ clavier »** est aussi disponible dans *Échap > Raccourcis > AddOns*. Faites gl
 
 L'interface manette du jeu ferme le chat dès qu'on clique à la souris. Quand un clic sur le clavier ferme
 le chat, le clavier reste ouvert et garde le message : on continue à taper (souris ou manette), puis
-« Envoyer » (ou A) l'envoie sur le canal choisi, et « X » (ou B) ferme le clavier. Si le chat est rouvert,
+« Envoyer » (ou A) l'envoie sur le canal du chat, et « X » (ou B) ferme le clavier. Pour changer de
+canal, choisissez-le dans le chat avant de taper, ou commencez le message par `/p`, `/g`, `/w nom`… Si le chat est rouvert,
 le message y est recopié.
 
 ### Envoi et fermeture du chat

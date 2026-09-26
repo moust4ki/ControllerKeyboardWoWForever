@@ -311,12 +311,11 @@ function CK:BuildUI()
 
     -- Mouse / Steam Controller actions
     local actions = {
-        { "ToggleShift", L.SHIFT, 8, 36 },
-        { "ToggleSymbols", L.SYMBOLS, 47, 36 },
-        { "Space", L.SPACE, 86, 58 },
-        { "Backspace", L.BACKSPACE, 147, 52 },
-        { "CycleChannel", L.CHANNEL, 202, 44 },
-        { "Send", L.SEND, 249, 54 },
+        { "ToggleShift", L.SHIFT, 8, 38 },
+        { "ToggleSymbols", L.SYMBOLS, 49, 38 },
+        { "Space", L.SPACE, 90, 78 },
+        { "Backspace", L.BACKSPACE, 171, 58 },
+        { "Send", L.SEND, 232, 71 },
         { "Close", "X", 306, 26 },
     }
     f.actions = {}
