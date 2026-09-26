@@ -357,13 +357,17 @@ function CK:BuildUI()
         f.actions[method] = buildButton(f, a[3], 406, a[4], 26, a[2], function() CK[method](CK) end)
     end
 
-    -- Help band: gamepad glyphs (A/B/X/Y belong to the game's chat UI)
-    local band = solid(f, "BACKGROUND", 0, 0, 0, 0.35)
-    place(band, f, 0, 438, W, 40)
-    local filet1 = texture(f, "ck_filet", "BORDER")
-    place(filet1, f, 0, 434, W, 8)
-    local filet2 = texture(f, "ck_filet", "BORDER")
-    place(filet2, f, 0, 474, W, 8)
+    -- Help band: gamepad glyphs. In its own frame so it moves up when the
+    -- mouse buttons are hidden (see ApplyLayout)
+    local helpFrame = CK.NewFrame("Frame", nil, f)
+    helpFrame:SetSize(W, 48)
+    f.help = helpFrame
+    local band = solid(helpFrame, "BACKGROUND", 0, 0, 0, 0.35)
+    place(band, helpFrame, 0, 4, W, 40)
+    local filet1 = texture(helpFrame, "ck_filet", "BORDER")
+    place(filet1, helpFrame, 0, 0, W, 8)
+    local filet2 = texture(helpFrame, "ck_filet", "BORDER")
+    place(filet2, helpFrame, 0, 40, W, 8)
     local help = {
         { "LS", L.HELP_PETAL }, { "RS", L.HELP_LETTER }, { "LB", L.BACKSPACE }, { "RB", L.SPACE },
         { "LT", L.SHIFT }, { "RT", L.SYMBOLS }, { "DPAD_UP", L.GESTURE_INSERT }, { "DPAD_LR", L.HELP_CHANNEL },
@@ -371,12 +375,12 @@ function CK:BuildUI()
     f.helpGlyphs = {}
     for n, h in ipairs(help) do
         local col, row = (n - 1) % 4, math.floor((n - 1) / 4)
-        local x, y = 10 + col * 80, 442 + row * 17
-        local g = texture(f, nil, "ARTWORK")
-        place(g, f, x, y, 16, 16)
+        local x, y = 10 + col * 80, 8 + row * 17
+        local g = texture(helpFrame, nil, "ARTWORK")
+        place(g, helpFrame, x, y, 16, 16)
         self:SetGlyph(g, h[1])
         f.helpGlyphs[#f.helpGlyphs + 1] = { tex = g, key = h[1] }
-        local label = text(f, 11)
+        local label = text(helpFrame, 11)
         label:SetPoint("LEFT", g, "RIGHT", 3, 0)
         label:SetText(h[2])
         label:SetTextColor(unpack(C.gold))
@@ -399,6 +403,7 @@ function CK:BuildUI()
     end)
     self:RestorePosition()
     self:UpdateLock()
+    self:ApplyLayout()
 
     -- Debug: report when something else than CK:Close hides the keyboard
     f:HookScript("OnHide", function()
@@ -406,6 +411,20 @@ function CK:BuildUI()
             CK:Print("hidden by: %s", debugstack(3, 4, 0) or "?")
         end
     end)
+end
+
+-- Mouse buttons row (Shift, 123, Space, Delete, Send, X) is optional: when
+-- hidden, the help band moves up and the panel gets shorter
+local ACTIONS_HEIGHT = 32
+
+function CK:ApplyLayout()
+    local f = self.frame
+    if not f then return end
+    local show = self.db.settings.showActions
+    for _, b in pairs(f.actions) do b:SetShown(show) end
+    place(f.help, f, 0, show and 434 or 434 - ACTIONS_HEIGHT)
+    f:SetHeight(show and H or H - ACTIONS_HEIGHT)
+    self:PositionSendButton()
 end
 
 -- Refresh the gamepad glyphs (after changing the glyph style)

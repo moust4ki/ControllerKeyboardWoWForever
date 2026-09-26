@@ -51,6 +51,7 @@ if GetLocale() == "frFR" then
     L.OPT_PAD_ONLY = "Seulement quand la manette est active"
     L.OPT_INVERT = "Inverser l'axe vertical des sticks"
     L.OPT_SCALE = "Taille du clavier"
+    L.OPT_ACTIONS = "Afficher les boutons souris (Maj, 123, Espace, Effacer, Envoyer, X)"
     L.OPT_LOOK = "Apparence"
     L.OPT_FONT = "Police"
     L.OPT_GLYPHS = "Boutons affichés"
@@ -126,6 +127,7 @@ else
     L.OPT_PAD_ONLY = "Only when the gamepad is active"
     L.OPT_INVERT = "Invert the sticks vertical axis"
     L.OPT_SCALE = "Keyboard size"
+    L.OPT_ACTIONS = "Show the mouse buttons (Shift, 123, Space, Delete, Send, X)"
     L.OPT_LOOK = "Look"
     L.OPT_FONT = "Font"
     L.OPT_GLYPHS = "Button glyphs"
@@ -179,6 +181,7 @@ local DEFAULTS = {
     scale = 1,
     invertY = false,
     locked = true,
+    showActions = true,
     font = "friz",
     glyphStyle = "xbox",
     gameGlyphs = true,

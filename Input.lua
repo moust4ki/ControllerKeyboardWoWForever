@@ -240,6 +240,7 @@ function CK:PositionSendButton()
     s:ClearAllPoints()
     s:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", send:GetLeft(), send:GetBottom())
     s:SetSize(send:GetWidth(), send:GetHeight())
+    s:EnableMouse(self.db.settings.showActions)
 end
 
 -- Override bindings can't change in combat: the keyboard (and its bindings)

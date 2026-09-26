@@ -28,7 +28,7 @@ the game's own button icons.
 - **Mouse and Steam Controller**: everything is clickable; the message is kept even when the game
   closes the chat.
 - **Works with the game's gamepad UI**: B goes back, X opens channels, as usual.
-- **Options panel**: lock position, size, Blizzard font, Xbox / PlayStation glyphs, suggestion
+- **Options panel**: lock position, size, optional mouse buttons row, Blizzard font, Xbox / PlayStation glyphs, suggestion
   language (French, English, both)…
 
 ## Gamepad controls
@@ -98,7 +98,7 @@ Friz Quadrata, icônes de boutons du jeu.
 - **Apprentissage** : vos mots, vos débuts de message et vos enchaînements sont retenus, en local.
 - **Souris et Steam Controller** : tout est cliquable ; le message est conservé même si le jeu ferme le chat.
 - **Intégré à l'interface manette du jeu** : B revient, X ouvre les canaux, comme d'habitude.
-- **Panneau d'options** : verrouillage de la position, taille, police Blizzard, style Xbox / PlayStation,
+- **Panneau d'options** : verrouillage de la position, taille, boutons souris optionnels, police Blizzard, style Xbox / PlayStation,
   langue des suggestions (français, anglais, les deux)…
 
 ## Commandes à la manette

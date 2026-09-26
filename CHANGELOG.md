@@ -2,6 +2,7 @@
 
 ## 0.2.1
 
+- Option to hide the mouse buttons row (Shift, 123, Space, Delete, Send, X); the panel gets shorter.
 - Chat channel row: `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`. Switch with D-pad ← → or by hovering with
   the mouse (no click, so the chat keeps its focus); unavailable channels are greyed out and skipped.
   Suggestions are browsed with the right stick.

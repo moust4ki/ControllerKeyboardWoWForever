@@ -133,6 +133,10 @@ function CK:RegisterOptions()
     check(L.OPT_AUTO, function() return s.autoOpen end, function(v) s.autoOpen = v end)
     check(L.OPT_PAD_ONLY, function() return s.onlyWithGamepad end, function(v) s.onlyWithGamepad = v end)
     check(L.OPT_INVERT, function() return s.invertY end, function(v) s.invertY = v end)
+    check(L.OPT_ACTIONS, function() return s.showActions end, function(v)
+        s.showActions = v
+        CK:ApplyLayout()
+    end)
     selector(L.OPT_SCALE, nil, function() return format("%d %%", s.scale * 100 + 0.5) end, function(d)
         s.scale = math.min(1.5, math.max(0.5, math.floor((s.scale + d * 0.05) * 100 + 0.5) / 100))
         if CK.frame then

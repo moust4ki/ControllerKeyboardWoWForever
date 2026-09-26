@@ -77,7 +77,7 @@ touched, so switching never loses the chat focus.
 *Escape > Options > AddOns > Controller Keyboard*:
 
 - lock position, open automatically, only when the gamepad is active;
-- keyboard size, invert the sticks vertical axis;
+- keyboard size, invert the sticks vertical axis, show / hide the mouse buttons row;
 - font (Blizzard fonts: Friz Quadrata, Morpheus, Skurri, Arial Narrow, or the chat font);
 - button style (Xbox / PlayStation) and the game's button icons;
 - suggestion language (French, English, both), learning;
