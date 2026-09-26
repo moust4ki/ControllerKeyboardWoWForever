@@ -339,9 +339,12 @@ end
 ---------------------------------------------------------------------------
 -- Slash commands
 ---------------------------------------------------------------------------
--- Suggested after /reload and the player's own commands (most used first)
+-- Always suggested first, in this order
+local PINNED_COMMANDS = { "/reload", "/p", "/raid", "/guild", "/w" }
+
+-- Suggested after the pinned ones and the player's own commands (most used first)
 local BUILTIN_COMMANDS = {
-    "/ck", "/ck lock", "/s", "/p", "/g", "/ra", "/w", "/r", "/y", "/e", "/inv",
+    "/ck", "/ck lock", "/s", "/r", "/y", "/e", "/inv",
     "/roll", "/afk", "/dnd", "/who", "/dance", "/sit", "/played", "/follow",
     "/assist", "/target", "/logout", "/camp", "/ck debug", "/ck auto",
     "/ck learn", "/ck lang", "/ck scale", "/ck reset", "/ck stats", "/ck invert",
@@ -373,7 +376,7 @@ function P:LearnCommand(text)
     end
 end
 
--- /reload always first, then learned commands by use, then common ones
+-- /reload, /p, /raid, /guild, /w first, then learned commands by use, then common ones
 function P:QueryCommands(text, n)
     local lower = CK.Lower(text)
     local out, seen = {}, {}
@@ -383,7 +386,7 @@ function P:QueryCommands(text, n)
             out[#out + 1] = cmd
         end
     end
-    add("/reload")
+    for _, cmd in ipairs(PINNED_COMMANDS) do add(cmd) end
     local commands = CK.db.commands
     local learned = {}
     for cmd in pairs(commands) do learned[#learned + 1] = cmd end
