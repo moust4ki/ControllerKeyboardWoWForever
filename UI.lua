@@ -176,7 +176,8 @@ function CK:BuildUI()
     place(bar, f, 8, 8, 324, 44)
     nineSlice(bar, "ck_bar", 256, 64, 8, 8, "BORDER")
 
-    f.preview = text(f, 13)
+    -- Children of the bars so they draw above the bar textures
+    f.preview = text(bar, 13)
     place(f.preview, f, 16, 14, 218, 32)
     f.preview:SetJustifyH("LEFT")
     f.preview:SetJustifyV("TOP")
@@ -185,6 +186,7 @@ function CK:BuildUI()
 
     local badge = CK.NewFrame("Frame", nil, f)
     place(badge, f, 240, 21, 58, 18)
+    badge:SetFrameLevel(bar:GetFrameLevel() + 2)
     badge.outline = nineSlice(badge, "ck_btn_normal", 128, 32, 6, 5, "ARTWORK")
     badge.fill = solid(badge, "ARTWORK", C.capsFill[1], C.capsFill[2], C.capsFill[3], 1)
     badge.fill:SetAllPoints()
@@ -195,6 +197,7 @@ function CK:BuildUI()
 
     local grip = CK.NewFrame("Button", nil, f)
     place(grip, f, 302, 17, 26, 26)
+    grip:SetFrameLevel(bar:GetFrameLevel() + 2)
     grip.icon = texture(grip, "ck_move", "ARTWORK")
     grip.icon:SetSize(24, 24)
     grip.icon:SetPoint("CENTER")
@@ -207,10 +210,10 @@ function CK:BuildUI()
     local sbar = CK.NewFrame("Frame", nil, f)
     place(sbar, f, 8, 58, 324, 28)
     nineSlice(sbar, "ck_bar", 256, 64, 8, 8, "BORDER")
-    local lb = texture(f, nil, "ARTWORK")
+    local lb = texture(sbar, nil, "OVERLAY")
     place(lb, f, 12, 61, 22, 22)
     self:SetGlyph(lb, "LB")
-    local rb = texture(f, nil, "ARTWORK")
+    local rb = texture(sbar, nil, "OVERLAY")
     place(rb, f, 306, 61, 22, 22)
     self:SetGlyph(rb, "RB")
 
@@ -218,6 +221,7 @@ function CK:BuildUI()
     for n = 0, 4 do
         local b = CK.NewFrame("Button", nil, f)
         place(b, f, 38 + 54 * n, 59, 50, 26)
+        b:SetFrameLevel(sbar:GetFrameLevel() + 2)
         b.select = nineSlice(b, "ck_select", 128, 32, 10, 10, "ARTWORK")
         b.label = text(b, 12)
         b.label:SetPoint("LEFT", 2, 0)
@@ -330,7 +334,7 @@ function CK:BuildUI()
     place(filet2, f, 0, 446, W, 8)
     local help = {
         { "LS", L.HELP_PETAL }, { "RS", L.HELP_LETTER }, { "LB", L.BACKSPACE }, { "RB", L.SPACE },
-        { "LT", L.SHIFT }, { "RT", L.SYMBOLS }, { "DPAD_LR", L.HELP_SUGGESTION }, { "DPAD_UP", L.GESTURE_INSERT },
+        { "LT", L.SHIFT }, { "RT", L.SYMBOLS }, { "DPAD_UP", L.GESTURE_INSERT }, { "DPAD_LR", L.HELP_SUGGESTION },
     }
     f.helpGlyphs = {}
     for n, h in ipairs(help) do
