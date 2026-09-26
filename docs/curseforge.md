@@ -129,3 +129,15 @@ many actions there) and comes back after combat. Source code and issues:
 [GitHub](https://github.com/moust4ki/ControllerKeyboardWoWForever).
 
 *Dictionaries derived from FrequencyWords by Hermit Dave (CC-BY-SA-4.0). Code under the MIT license.*
+
+---
+
+## Transparence IA / AI disclosure
+
+Cet addon a été développé avec l'aide de l'intelligence artificielle : le code a été écrit avec
+Claude Code (Anthropic) et le design visuel créé avec Claude Design, sous la direction de l'auteur, qui
+a défini les fonctionnalités et testé l'addon en jeu.
+
+*This addon was built with the help of AI: the code was written with Claude Code (Anthropic) and the
+visual design created with Claude Design, directed by the author, who defined the features and tested
+the addon in game.*
