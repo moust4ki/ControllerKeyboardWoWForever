@@ -107,6 +107,7 @@ end
 
 function CK:OnUpdate()
     local now = GetTime()
+    if self.moving then return end
 
     -- Safety net: the chat lost the focus without any event we hooked
     if not (self.editBox and self.editBox:HasFocus()) then

@@ -122,6 +122,9 @@ local function slash(msg)
     elseif cmd == "invert" then
         s.invertY = not s.invertY
         CK:Print("invert: %s", onOff(s.invertY))
+    elseif cmd == "move" then
+        -- Wait for the chat that sent this command to close
+        C_Timer.After(0, function() CK:ToggleMoveMode() end)
     elseif cmd == "reset" then
         CK.db.pos = nil
         s.scale = 1

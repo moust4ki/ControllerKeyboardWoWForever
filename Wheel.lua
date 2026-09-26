@@ -109,14 +109,15 @@ function CK:BuildUI()
     })
     top:SetBackdropColor(0, 0, 0, 0.75)
     top:SetBackdropBorderColor(0.5, 0.5, 0.55, 0.9)
-    top:EnableMouse(true)
-    top:RegisterForDrag("LeftButton")
-    top:SetScript("OnDragStart", function() f:StartMoving() end)
-    top:SetScript("OnDragStop", function()
-        f:StopMovingOrSizing()
-        CK:SavePosition()
-    end)
+    CK:MakeDragHandle(top)
     f.top = top
+
+    -- Move grip (also shows that the keyboard can be dragged)
+    local grip = top:CreateTexture(nil, "OVERLAY")
+    grip:SetTexture("Interface\CURSOR\UI-Cursor-Move")
+    grip:SetSize(18, 18)
+    grip:SetPoint("TOPRIGHT", -6, -6)
+    grip:SetAlpha(0.7)
 
     f.preview = top:CreateFontString(nil, "OVERLAY", "ChatFontNormal")
     f.preview:SetPoint("TOPLEFT", 9, -7)
@@ -125,7 +126,7 @@ function CK:BuildUI()
     f.preview:SetJustifyV("TOP")
 
     f.mode = top:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.mode:SetPoint("TOPRIGHT", -8, -8)
+    f.mode:SetPoint("TOPRIGHT", -28, -8)
 
     -- Suggestions
     f.sugg = {}
@@ -147,6 +148,10 @@ function CK:BuildUI()
 
     local hub = circle(wheel, "BACKGROUND", HUB_SIZE, 0, 0, 0, 0.6)
     hub:SetPoint("CENTER")
+    local hubHandle = CK.NewFrame("Frame", nil, wheel)
+    hubHandle:SetSize(HUB_SIZE, HUB_SIZE)
+    hubHandle:SetPoint("CENTER")
+    CK:MakeDragHandle(hubHandle)
     f.hubHints = {}
     local hubHints = {
         { "<", -20, 0 }, { L.HUB_UP, 0, 18 }, { ">", 20, 0 }, { L.HUB_DOWN, 0, -18 },
@@ -214,6 +219,44 @@ function CK:BuildUI()
 
     self:SetupInput(f)
     self:RestorePosition()
+end
+
+-- Dragging `handle` moves the whole keyboard
+function CK:MakeDragHandle(handle)
+    local f = self.frame
+    handle:EnableMouse(true)
+    handle:RegisterForDrag("LeftButton")
+    handle:SetScript("OnDragStart", function() f:StartMoving() end)
+    handle:SetScript("OnDragStop", function()
+        f:StopMovingOrSizing()
+        CK:SavePosition()
+    end)
+    handle:SetScript("OnEnter", function(h)
+        GameTooltip:SetOwner(h, "ANCHOR_TOP")
+        GameTooltip:SetText(L.DRAG_HINT, 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    handle:SetScript("OnLeave", function() GameTooltip:Hide() end)
+end
+
+-- Show the keyboard without the chat so it can be placed (/ck move)
+function CK:ToggleMoveMode()
+    if not self.frame then
+        if InCombatLockdown() then return end
+        self:BuildUI()
+    end
+    if self.moving then
+        self.moving = false
+        self.frame:Hide()
+        return
+    end
+    if self:IsOpen() then return end
+    self.moving = true
+    self.editBox = nil
+    self.frame:Show()
+    self:UpdateWheel()
+    self.frame.preview:SetText(L.MOVE_MODE)
+    for _, b in ipairs(self.frame.sugg) do b:Hide() end
 end
 
 function CK:SavePosition()
@@ -531,6 +574,10 @@ end
 -- Open / close
 ---------------------------------------------------------------------------
 function CK:Open(eb)
+    if self.moving then
+        self.moving = false
+        if self.frame then self.frame:Hide() end
+    end
     if not self.frame then
         -- Secure buttons can't be created in combat: wait for PLAYER_REGEN_ENABLED
         if InCombatLockdown() then return end
@@ -546,6 +593,7 @@ function CK:Open(eb)
 end
 
 function CK:Close()
+    self.moving = false
     if self.frame and self.frame:IsShown() then
         self.frame:Hide()
         self:DisableButtons()

@@ -23,6 +23,8 @@ if GetLocale() == "frFR" then
     L.HUB_DOWN = "Eff."
     L.CAPS = "MAJ"
     L.SEND_COMBAT = "Clavier ouvert en combat : appuyez sur Entrée pour envoyer."
+    L.DRAG_HINT = "Glisser pour déplacer le clavier"
+    L.MOVE_MODE = "|cffffd200Glissez la barre ou le centre de la roue.|r /ck move pour terminer."
     L.HINT = "Stick G : pétale   Stick D : lettre   LB : effacer   RB : espace\nLT : Maj   RT : 123   Croix < > : suggestion   Croix ^ : insérer"
     L.LOADED = "v%s chargé. /ck pour l'aide."
     L.HELP = {
@@ -33,6 +35,7 @@ if GetLocale() == "frFR" then
         "/ck lang fr|en|both - dictionnaires utilisés",
         "/ck scale 0.8 - taille du clavier",
         "/ck invert - inverser l'axe vertical du stick",
+        "/ck move - afficher le clavier pour le déplacer",
         "/ck reset - replacer le clavier",
         "/ck stats - statistiques d'apprentissage",
         "/ck forget - oublier tous les mots appris",
@@ -57,6 +60,8 @@ else
     L.HUB_DOWN = "Del"
     L.CAPS = "CAPS"
     L.SEND_COMBAT = "Keyboard opened in combat: press Enter to send."
+    L.DRAG_HINT = "Drag to move the keyboard"
+    L.MOVE_MODE = "|cffffd200Drag the bar or the wheel center.|r /ck move when done."
     L.HINT = "L stick: petal   R stick: letter   LB: delete   RB: space\nLT: Shift   RT: 123   D-pad < >: suggestion   D-pad ^: insert"
     L.LOADED = "v%s loaded. /ck for help."
     L.HELP = {
@@ -67,6 +72,7 @@ else
         "/ck lang fr|en|both - dictionaries in use",
         "/ck scale 0.8 - keyboard size",
         "/ck invert - invert the stick vertical axis",
+        "/ck move - show the keyboard to move it",
         "/ck reset - reset keyboard position",
         "/ck stats - learning statistics",
         "/ck forget - forget all learned words",

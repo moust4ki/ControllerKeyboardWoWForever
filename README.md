@@ -34,7 +34,7 @@ l'interface manette du jeu : l'addon ne les utilise pas.
 Le clavier s'ouvre tout seul quand la zone de saisie du chat prend le focus (`/ck auto` pour désactiver,
 `/ck pad` pour ne l'ouvrir que si la manette est l'entrée active). Un raccourci **« Ouvrir/fermer le
 clavier »** est aussi disponible dans *Échap > Raccourcis > AddOns*. Faites glisser la barre de texte
-pour déplacer le clavier.
+(icône de déplacement) ou le centre de la roue pour déplacer le clavier ; la position est mémorisée.
 
 ### Envoi et fermeture du chat
 
@@ -63,6 +63,7 @@ envoie ; à la souris, le bouton « Envoyer » est un bouton de macro sécurisé
 | `/ck lang fr\|en\|both` | dictionnaires utilisés |
 | `/ck scale 0.8` | taille du clavier |
 | `/ck invert` | inverser l'axe vertical du stick |
+| `/ck move` | afficher le clavier sans le chat pour le déplacer (refaire pour terminer) |
 | `/ck reset` | replacer le clavier |
 | `/ck stats` | statistiques |
 | `/ck forget confirm` | oublier les mots appris |
