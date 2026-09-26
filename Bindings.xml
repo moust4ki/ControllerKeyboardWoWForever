@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="CONTROLLERKEYBOARD_TOGGLE" header="CONTROLLERKEYBOARD" category="ADDONS">
+        ControllerKeyboard_Toggle()
+    </Binding>
+</Bindings>

@@ -1,0 +1,16 @@
+## Interface: 16001
+## Title: Controller Keyboard
+## Notes: Visual daisywheel keyboard to type in chat with a gamepad or the mouse, with word prediction.
+## Notes-frFR: Clavier visuel en roue pour écrire dans le chat à la manette ou à la souris, avec prédiction de mots.
+## Author: moust4ki
+## Version: 0.1.0
+## SavedVariables: ControllerKeyboardDB
+## X-Website: https://github.com/moust4ki/ControllerKeyboardWoWForever
+
+Core.lua
+Dict_frFR.lua
+Dict_WoW.lua
+Predict.lua
+Wheel.lua
+Input.lua
+Chat.lua
