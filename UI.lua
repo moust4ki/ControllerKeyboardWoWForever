@@ -232,6 +232,10 @@ function CK:BuildUI()
     local wheel = CK.NewFrame("Frame", nil, f)
     place(wheel, f, WHEEL_X, WHEEL_Y, WHEEL_SIZE, WHEEL_SIZE)
     local disc = texture(wheel, "ck_disc", "BACKGROUND")
+    -- New texture files are only seen after restarting the game (not /reload)
+    if disc:SetTexture(TEX .. "ck_disc") == false then
+        C_Timer.After(2, function() CK:Print(L.TEXTURES_MISSING) end)
+    end
     disc:SetAllPoints()
     f.wheel = wheel
 
@@ -442,7 +446,8 @@ end
 function CK:UpdatePreview()
     local f = self.frame
     if not (f and f:IsShown()) then return end
-    local cursor = self.cursorOn and "|cffffd100||r" or " "
+    -- "||" is an escaped pipe: gold "|" then end of color
+    local cursor = self.cursorOn and "|cffffd100|||r" or " "
     f.preview:SetText((self.previewBody or "") .. cursor)
 end
 
