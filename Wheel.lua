@@ -123,6 +123,8 @@ function CK:GetChannelLabel()
     local label
     if self:GetChatAttr("reply") then
         label = format(CK.L.REPLY_TO, self:GetChatAttr("tellTarget") or "?")
+    elseif self:WhisperNameMode() then
+        label = CK.L.WHISPER_NAME
     elseif chatType == "WHISPER" or chatType == "BN_WHISPER" then
         label = format(CHAT_WHISPER_SEND or "To %s: ", self:GetChatAttr("tellTarget") or "?")
     elseif chatType == "CHANNEL" then
@@ -169,6 +171,9 @@ function CK:Refresh()
     self.state.commandMode = text:sub(1, 1) == "/" and spaces <= 1
     if self.state.commandMode then
         self.state.suggestions = CK.Predict:QueryCommands(text, n)
+    elseif self:WhisperNameMode() and not text:find(" ") then
+        -- Typing the name of a /w: suggest people
+        self.state.suggestions = self:QueryNames(text, n)
     else
         local prefix = text:match(WORD_TAIL) or ""
         local ctx = CK.Predict:Context(text:sub(1, #text - #prefix))
@@ -305,21 +310,71 @@ CK.CHANNEL_LIST = {
       available = function() return (GetChannelName(1) or 0) ~= 0 end,
       attrs = function() return { chatType = "CHANNEL", channelTarget = 1 } end },
     -- /w: the person the chat was opened for, else the last one you whispered
+    -- /w: the person the chat was opened for, else type "Name message"
     { key = "w", label = "/w", color = "WHISPER",
-      available = function(ck)
-          return nonEmpty(ck.whisperTarget) or nonEmpty(lastToldTarget()) or nonEmpty(lastTellTarget())
-      end,
+      available = function() return true end,
       attrs = function(ck)
-          local target = ck.whisperTarget
-          if not nonEmpty(target) then target = lastToldTarget() end
-          if not nonEmpty(target) then target = lastTellTarget() end
-          return { chatType = "WHISPER", tellTarget = target }
+          if nonEmpty(ck.whisperTarget) then
+              return { chatType = "WHISPER", tellTarget = ck.whisperTarget }
+          end
+          return { chatType = "WHISPER" }
       end },
     -- /r: reply to the last person who whispered you
     { key = "r", label = "/r", color = "WHISPER",
       available = function() return nonEmpty(lastTellTarget()) end,
       attrs = function() return { chatType = "WHISPER", tellTarget = lastTellTarget(), reply = true } end },
 }
+
+-- /w without a known target: the message starts with the name
+function CK:WhisperNameMode()
+    local target = self:GetChatAttr("tellTarget")
+    return self:GetChatAttr("chatType") == "WHISPER" and not self:GetChatAttr("reply")
+        and not (target and target ~= "")
+end
+
+-- People to whisper: recent correspondents, group, online friends and guild
+function CK:KnownNames()
+    local list, seen = {}, {}
+    local me = UnitName and UnitName("player")
+    local function add(name)
+        if nonEmpty(name) and name ~= me and not seen[name] then
+            seen[name] = true
+            list[#list + 1] = name
+        end
+    end
+    add(lastTellTarget())
+    add(lastToldTarget())
+    local count = GetNumGroupMembers and GetNumGroupMembers() or 0
+    local unit = inRaid() and "raid" or "party"
+    for i = 1, count do
+        add(UnitName and UnitName(unit .. i))
+    end
+    if C_FriendList and C_FriendList.GetNumFriends then
+        for i = 1, C_FriendList.GetNumFriends() or 0 do
+            local info = C_FriendList.GetFriendInfoByIndex(i)
+            if info and info.connected then add(info.name) end
+        end
+    end
+    if IsInGuild() and GetNumGuildMembers and GetGuildRosterInfo then
+        for i = 1, GetNumGuildMembers() or 0 do
+            local name, _, _, _, _, _, _, _, online = GetGuildRosterInfo(i)
+            if online and name then add(Ambiguate and Ambiguate(name, "guild") or name) end
+        end
+    end
+    return list
+end
+
+function CK:QueryNames(prefix, n)
+    local norm = CK.Normalize(prefix)
+    local out = {}
+    for _, name in ipairs(self:KnownNames()) do
+        if #out >= n then break end
+        if name ~= prefix and CK.Normalize(name):sub(1, #norm) == norm then
+            out[#out + 1] = name
+        end
+    end
+    return out
+end
 
 function CK:ChannelAvailable(i)
     local ch = CK.CHANNEL_LIST[i]
@@ -407,8 +462,10 @@ function CK:BuildMacroText()
     if self:GetChatAttr("reply") then
         return "/r " .. text
     elseif chatType == "WHISPER" then
+        -- No target: the message starts with the name ("Bob hello")
         local target = self:GetChatAttr("tellTarget")
-        return target and ("/w " .. target .. " " .. text)
+        if target and target ~= "" then return "/w " .. target .. " " .. text end
+        return "/w " .. text
     elseif chatType == "CHANNEL" then
         local target = self:GetChatAttr("channelTarget")
         return target and ("/" .. target .. " " .. text)

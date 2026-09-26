@@ -32,6 +32,7 @@ if GetLocale() == "frFR" then
     L.HELP_CHANNEL = "Canal"
     L.HELP_PICK = "Choisir"
     L.REPLY_TO = "Répondre à %s : "
+    L.WHISPER_NAME = "Chuchoter (nom puis message) : "
     L.CHANNEL_NAMES = { "Dire", "Crier", "Groupe", "Raid", "Guilde", "Général (/1)", "Chuchoter", "Répondre" }
     L.CHANNEL_UNAVAILABLE = "indisponible"
     L.BADGE_SHIFT = "MAJ"
@@ -105,6 +106,7 @@ else
     L.HELP_CHANNEL = "Channel"
     L.HELP_PICK = "Select"
     L.REPLY_TO = "Reply to %s: "
+    L.WHISPER_NAME = "Whisper (name then message): "
     L.CHANNEL_NAMES = { "Say", "Yell", "Party", "Raid", "Guild", "General (/1)", "Whisper", "Reply" }
     L.CHANNEL_UNAVAILABLE = "unavailable"
     L.BADGE_SHIFT = "SHIFT"

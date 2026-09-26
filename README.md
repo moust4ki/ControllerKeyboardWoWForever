@@ -58,7 +58,8 @@ A row under the wheel shows `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in t
 to reach for it, so you never switch by mistake: press **D-pad ↓** to make it the active row, then
 **D-pad ← →** (or the right stick); **D-pad ↑** goes back to the suggestions. With the mouse, simply
 **hover** a channel (no click needed). The message is then sent there with A. Unavailable channels are greyed out and skipped (party / raid / guild you are
-not in, `/w` with nobody to whisper, `/r` with nobody to reply to). The game's chat box is never
+not in, `/r` with nobody to reply to). With `/w`, type the name first (`Bob hello`): names of recent
+correspondents, group members, online friends and guild are suggested while you type it. The game's chat box is never
 touched, so switching never loses the chat focus.
 
 ## Prediction
