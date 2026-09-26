@@ -4,12 +4,19 @@ local P = {}
 CK.Predict = P
 
 local USER_WEIGHT = 12     -- score per time the player used a word
-local BIGRAM_WEIGHT = 25   -- score per time the word followed the previous word
+local BIGRAM_WEIGHT = 25   -- per time the word followed the previous word
+local TRIGRAM_WEIGHT = 40  -- per time the word followed the two previous words
+local START_WEIGHT = 20    -- per time a message started with the word
 local WOW_SCORE = 36       -- score of the WoW chat vocabulary (~ rank 250)
+
+-- Filler for the next-word bar when nothing better is known
+local FALLBACK = { "et", "de", "pour", "le", "la", "à", "un" }
 
 local entries = {}         -- word -> { word, norm, dict }
 local buckets = {}         -- first normalized byte -> array of entries
 local numEntries = 0
+local builtinNext = {}     -- word -> { follower -> score }
+local builtinStarts = {}   -- word -> score
 
 local function rankScore(rank)
     -- rank 1 -> 60, 10 -> 50, 100 -> 40, 1000 -> 30, 10000 -> 20
@@ -37,9 +44,28 @@ local function addEntry(word, dictScore)
     return e
 end
 
+local function loadNextWords(data)
+    local rank = 0
+    for word in (data.starts or ""):gmatch("%S+") do
+        rank = rank + 1
+        builtinStarts[word] = math.max(builtinStarts[word] or 0, 40 - 2 * (rank - 1))
+    end
+    for head, list in pairs(data.next or {}) do
+        local t = builtinNext[head] or {}
+        builtinNext[head] = t
+        rank = 0
+        for word in list:gmatch("%S+") do
+            rank = rank + 1
+            t[word] = math.max(t[word] or 0, math.max(15, 45 - 3 * (rank - 1)))
+        end
+    end
+end
+
 function P:Load()
     wipe(entries)
     wipe(buckets)
+    wipe(builtinNext)
+    wipe(builtinStarts)
     numEntries = 0
 
     for lang, enabled in pairs(CK.db.settings.dicts) do
@@ -53,6 +79,9 @@ function P:Load()
                 end
             else
                 CK:Print(CK.L.NO_DICT, lang)
+            end
+            if CK.NextWords and CK.NextWords[lang] then
+                loadNextWords(CK.NextWords[lang])
             end
         end
     end
@@ -70,9 +99,52 @@ function P:NumEntries()
     return numEntries
 end
 
+---------------------------------------------------------------------------
+-- Tokens and context
+---------------------------------------------------------------------------
+-- Lowercase tokens of a sentence; elisions are tokens of their own:
+-- "J'ai un groupe" -> { "j'", "ai", "un", "groupe" }
+function P.Tokenize(sentence)
+    local tokens = {}
+    for token in sentence:gmatch("[%a\128-\255][%a\128-\255'%-]*") do
+        token = CK.Lower(token)
+        local elided, rest = token:match("^(%a%a?')(.+)$")
+        if elided then
+            tokens[#tokens + 1] = elided
+            token = rest
+        end
+        if not token:match("^%a%a?'$") then
+            token = token:gsub("['%-]+$", "")
+        end
+        if token ~= "" then tokens[#tokens + 1] = token end
+    end
+    return tokens
+end
+
+-- Context of the word being typed, from the text before it:
+-- { start = true } at the beginning of a message or sentence,
+-- otherwise { prev = last word, prev2 = the one before }
+function P:Context(before)
+    local sentence = before:match("([^%.!%?]*)$") or ""
+    local tokens = P.Tokenize(sentence)
+    local n = #tokens
+    if n == 0 then return { start = true } end
+    return { prev = tokens[n], prev2 = tokens[n - 1] }
+end
+
+local function isElision(word)
+    return word:sub(-1) == "'"
+end
+
+---------------------------------------------------------------------------
+-- Suggestions
+---------------------------------------------------------------------------
 -- Keep the best `n` words in `out` (sorted by descending score)
 local function consider(out, scores, n, word, score)
     local count = #out
+    for i = 1, count do
+        if out[i] == word then return end
+    end
     if count >= n and score <= scores[count] then return end
     local pos = count + 1
     while pos > 1 and scores[pos - 1] < score do
@@ -94,17 +166,60 @@ local function applyCase(word, prefix)
     return CK.Capitalize(word)
 end
 
--- prefix: the word being typed (may be ""), prev: the word before it (may be nil)
-function P:Query(prefix, prev, n)
+-- Bonus of `word` in this context: the player's habits (starts, pairs and
+-- triplets of words) plus the built-in French sequences
+local function contextBonus(ctx, word)
+    local db = CK.db
+    local bonus = 0
+    if ctx.start then
+        bonus = bonus + START_WEIGHT * (db.starts[word] or 0) + (builtinStarts[word] or 0)
+    elseif ctx.prev then
+        local b = db.bigrams[ctx.prev]
+        if b and b[word] then bonus = bonus + BIGRAM_WEIGHT * b[word] end
+        if ctx.prev2 then
+            local t = db.trigrams[ctx.prev2 .. " " .. ctx.prev]
+            if t and t[word] then bonus = bonus + TRIGRAM_WEIGHT * t[word] end
+        end
+        local nb = builtinNext[ctx.prev]
+        if nb and nb[word] then bonus = bonus + nb[word] end
+    end
+    return bonus
+end
+
+-- Words that may follow in this context (nothing typed yet)
+local function contextCandidates(ctx)
+    local db = CK.db
+    local set = {}
+    local function addAll(t)
+        if t then for word in pairs(t) do set[word] = true end end
+    end
+    if ctx.start then
+        addAll(db.starts)
+        addAll(builtinStarts)
+    elseif ctx.prev then
+        addAll(db.bigrams[ctx.prev])
+        if ctx.prev2 then addAll(db.trigrams[ctx.prev2 .. " " .. ctx.prev]) end
+        addAll(builtinNext[ctx.prev])
+    end
+    return set
+end
+
+-- prefix: the word being typed (may be ""), ctx: from P:Context()
+function P:Query(prefix, ctx, n)
     local out, scores = {}, {}
     local words = CK.db.words
-    local bigrams = prev and CK.db.bigrams[CK.Lower(prev)]
+    ctx = ctx or { start = true }
 
     if prefix == "" then
-        -- Next-word prediction from what the player usually writes
-        if bigrams then
-            for word, count in pairs(bigrams) do
-                consider(out, scores, n, word, count)
+        -- Predict the next word, iPhone style
+        for word in pairs(contextCandidates(ctx)) do
+            local e = entries[word]
+            local score = contextBonus(ctx, word) + 0.1 * (e and e.dict or 0)
+            consider(out, scores, n, word, score)
+        end
+        if not ctx.start then
+            for i = 1, #FALLBACK do
+                consider(out, scores, n, FALLBACK[i], -i)
             end
         end
         return out
@@ -119,10 +234,7 @@ function P:Query(prefix, prev, n)
     for i = 1, #bucket do
         local e = bucket[i]
         if e.word ~= lower and e.norm:sub(1, len) == norm then
-            local score = e.dict + USER_WEIGHT * (words[e.word] or 0)
-            if bigrams and bigrams[e.word] then
-                score = score + BIGRAM_WEIGHT * bigrams[e.word]
-            end
+            local score = e.dict + USER_WEIGHT * (words[e.word] or 0) + contextBonus(ctx, e.word)
             consider(out, scores, n, e.word, score)
         end
     end
@@ -138,11 +250,13 @@ end
 ---------------------------------------------------------------------------
 local lastMsg, lastTime
 
-local function cleanToken(token)
-    token = token:gsub("['%-]+$", "")
-    -- elisions: j'ai -> ai, qu'il -> il, l'autre -> autre
-    token = token:gsub("^%a%a?'", "")
-    return token
+local function bump(t, key, sub)
+    local inner = t[key]
+    if not inner then
+        inner = {}
+        t[key] = inner
+    end
+    inner[sub] = (inner[sub] or 0) + 1
 end
 
 function P:LearnMessage(msg)
@@ -156,24 +270,21 @@ function P:LearnMessage(msg)
 
     msg = msg:gsub("|H.-|h.-|h", " "):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
 
-    local words, bigrams = db.words, db.bigrams
+    local words = db.words
     for sentence in msg:gmatch("[^%.!%?]+") do
-        local prev
-        for token in sentence:gmatch("[%a\128-\255][%a\128-\255'%-]*") do
-            token = CK.Lower(cleanToken(token))
-            if #token >= 2 and #token <= 30 then
+        local tokens = P.Tokenize(sentence)
+        for i, token in ipairs(tokens) do
+            if #token > 30 then break end
+            if not isElision(token) and #token >= 2 then
                 words[token] = (words[token] or 0) + 1
                 addEntry(token)
-                if prev then
-                    local t = bigrams[prev]
-                    if not t then
-                        t = {}
-                        bigrams[prev] = t
-                    end
-                    t[token] = (t[token] or 0) + 1
-                end
-                prev = token
             end
+            if i == 1 then
+                db.starts[token] = (db.starts[token] or 0) + 1
+            end
+            local prev, prev2 = tokens[i - 1], tokens[i - 2]
+            if prev then bump(db.bigrams, prev, token) end
+            if prev2 then bump(db.trigrams, prev2 .. " " .. prev, token) end
         end
     end
 end
@@ -186,28 +297,42 @@ end
 
 -- Drop the least used words when the table grows too big
 function P:Prune()
-    local words, bigrams = CK.db.words, CK.db.bigrams
-    local max = CK.db.settings.maxWords
+    local db = CK.db
+    local words = db.words
+    local max = db.settings.maxWords
     local n = self:NumLearned()
     local threshold = 1
     while n > max and threshold < 1000 do
         for word, count in pairs(words) do
             if count <= threshold then
                 words[word] = nil
-                bigrams[word] = nil
                 n = n - 1
             end
         end
         threshold = threshold + 1
     end
-    for prev, t in pairs(bigrams) do
-        if not words[prev] then
-            bigrams[prev] = nil
-        else
-            for word in pairs(t) do
-                if not words[word] then t[word] = nil end
-            end
+
+    -- Short words ("a", "y") and elisions ("j'") are never stored in `words`
+    -- but are kept as context
+    local function known(word)
+        return words[word] or #word <= 2 or isElision(word)
+    end
+    local function pruneInner(t)
+        local empty = true
+        for word in pairs(t) do
+            if known(word) then empty = false else t[word] = nil end
         end
+        return empty
+    end
+    for prev, t in pairs(db.bigrams) do
+        if not known(prev) or pruneInner(t) then db.bigrams[prev] = nil end
+    end
+    for key, t in pairs(db.trigrams) do
+        local a, b = key:match("^(%S+) (%S+)$")
+        if not (a and known(a) and known(b)) or pruneInner(t) then db.trigrams[key] = nil end
+    end
+    for word in pairs(db.starts) do
+        if not known(word) then db.starts[word] = nil end
     end
 end
 
@@ -271,6 +396,8 @@ end
 function P:Forget()
     wipe(CK.db.words)
     wipe(CK.db.bigrams)
+    wipe(CK.db.trigrams)
+    wipe(CK.db.starts)
     wipe(CK.db.commands)
     self:Load()
 end

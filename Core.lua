@@ -129,6 +129,8 @@ function CK:InitDB()
     end
     db.words = db.words or {}
     db.commands = db.commands or {}
+    db.trigrams = db.trigrams or {}
+    db.starts = db.starts or {}
     db.bigrams = db.bigrams or {}
     self.db = db
 end

@@ -54,9 +54,12 @@ envoie ; à la souris, le bouton « Envoyer » est un bouton de macro sécurisé
 
 - Un dictionnaire français, plus un vocabulaire WoW (lfg, heal, donjon, hdv…).
 - Les accents sont ignorés pendant la recherche : `ca` propose « ça », `ete` propose « été ».
+- **Prédiction du mot suivant** (comme sur iPhone) : dès l'ouverture du chat, l'addon propose vos
+  débuts de message habituels ; après chaque mot, il propose la suite la plus probable en combinant
+  vos enchaînements de 2 et 3 mots et une base d'expressions françaises courantes
+  (« je » -> suis, vais… ; « bonne » -> nuit, soirée… ; « j' » -> ai, arrive…).
 - **Apprentissage** : chaque message que vous envoyez (manette ou clavier) augmente la fréquence de
-  vos mots et mémorise les enchaînements de mots. Après un espace, l'addon propose le mot qui suit
-  habituellement.
+  vos mots, de vos débuts de message et de vos enchaînements de mots.
 - Les données sont stockées localement dans `WTF/.../SavedVariables/ControllerKeyboard.lua`.
 
 ## Commandes

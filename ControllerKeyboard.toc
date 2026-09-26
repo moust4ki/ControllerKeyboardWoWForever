@@ -9,6 +9,7 @@
 
 Core.lua
 Dict_frFR.lua
+Dict_frFR_next.lua
 Dict_enUS.lua
 Dict_WoW.lua
 Predict.lua

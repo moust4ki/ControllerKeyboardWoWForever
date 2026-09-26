@@ -455,7 +455,6 @@ local function previewTail(text)
 end
 
 local WORD_TAIL = "(" .. CK.WORD_CHARS .. "*)$"
-local PREV_WORD = "(" .. CK.WORD_CHARS .. "+)%s+$"
 
 function CK:Refresh()
     local f = self.frame
@@ -474,8 +473,8 @@ function CK:Refresh()
         self.state.suggestions = CK.Predict:QueryCommands(text, n)
     else
         local prefix = text:match(WORD_TAIL) or ""
-        local prev = text:sub(1, #text - #prefix):match(PREV_WORD)
-        self.state.suggestions = CK.Predict:Query(prefix, prev, n)
+        local ctx = CK.Predict:Context(text:sub(1, #text - #prefix))
+        self.state.suggestions = CK.Predict:Query(prefix, ctx, n)
     end
     self.state.selected = 1
     self:UpdateSuggestions()
@@ -533,7 +532,9 @@ function CK:AcceptSuggestion(index)
     end
     local text = self:GetText()
     local prefix = text:match(WORD_TAIL) or ""
-    self:SetText(text:sub(1, #text - #prefix) .. word .. " ")
+    -- No space after an elision: "j'" + "ai"
+    local sep = word:sub(-1) == "'" and "" or " "
+    self:SetText(text:sub(1, #text - #prefix) .. word .. sep)
     return true
 end
 
