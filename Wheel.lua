@@ -219,6 +219,13 @@ function CK:BuildUI()
 
     self:SetupInput(f)
     self:RestorePosition()
+
+    -- Debug: report when something else than CK:Close hides the keyboard
+    f:HookScript("OnHide", function()
+        if CK.db.settings.debug and not CK.closing then
+            CK:Print("hidden by: %s", debugstack(3, 4, 0) or "?")
+        end
+    end)
 end
 
 -- Dragging `handle` moves the whole keyboard
@@ -592,12 +599,17 @@ function CK:Open(eb)
     self:Refresh()
 end
 
-function CK:Close()
+function CK:Close(reason)
+    if self.db.settings.debug and self:IsOpen() then
+        self:Print("close: %s", tostring(reason or "button"))
+    end
+    self.closing = true
     self.moving = false
     if self.frame and self.frame:IsShown() then
         self.frame:Hide()
         self:DisableButtons()
     end
+    self.closing = false
     self.state.petal = nil
     self.state.aim = nil
     self.repeatFn = nil

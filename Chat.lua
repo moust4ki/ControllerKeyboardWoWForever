@@ -27,7 +27,7 @@ end
 
 function CK:OnChatDeactivated(eb)
     if eb == self.editBox then
-        self:Close()
+        self:Close("chat deactivated")
     end
 end
 
@@ -64,7 +64,7 @@ end
 -- Key binding / slash command: open the chat with the keyboard, or close it
 function ControllerKeyboard_Toggle()
     if CK:IsOpen() then
-        CK:Close()
+        CK:Close("toggle")
         return
     end
     CK.forceOpen = true
@@ -117,7 +117,7 @@ local function slash(msg)
         CK:Print("scale: %.2f", s.scale)
     elseif cmd == "input" then
         s.inputMode = s.inputMode == "bind" and "frame" or "bind"
-        CK:Close()
+        CK:Close("input mode")
         CK:Print("input: %s", s.inputMode)
     elseif cmd == "invert" then
         s.invertY = not s.invertY
@@ -191,7 +191,7 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
         CK:OnCombatEnded()
     elseif (event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN") and arg1 == ADDON then
         -- Release the pad at once so the game's popup can be answered safely
-        CK:Close()
+        CK:Close(event)
         CK:Print("|cffff4040%s|r: %s", event, tostring(arg2))
     end
 end)

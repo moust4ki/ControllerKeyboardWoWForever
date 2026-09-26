@@ -111,7 +111,7 @@ function CK:OnUpdate()
 
     -- Safety net: the chat lost the focus without any event we hooked
     if not (self.editBox and self.editBox:HasFocus()) then
-        self:Close()
+        self:Close("focus lost (OnUpdate)")
         return
     end
 
