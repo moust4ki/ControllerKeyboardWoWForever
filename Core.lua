@@ -31,6 +31,22 @@ if GetLocale() == "frFR" then
     L.HELP_LETTER = "Lettre"
     L.HELP_CHANNEL = "Canal"
     L.HELP_PICK = "Choisir"
+    L.HELP_CURSOR = "Curseur"
+    L.HELP_TYPE = "Taper"
+    L.OPT_INPUT = "Saisie"
+    L.OPT_METHOD = "Méthode de saisie"
+    L.METHOD_WHEEL = "Daisywheel"
+    L.METHOD_STICK = "Clavier 1 stick"
+    L.OPT_LAYOUT = "Disposition (clavier 1 stick)"
+    L.OPT_DEADZONE = "Zone morte du stick"
+    L.OPT_MAGNET = "Effet aimant"
+    L.MAGNET_NONE = "Aucun"
+    L.MAGNET_WEAK = "Faible"
+    L.MAGNET_MEDIUM = "Moyen"
+    L.MAGNET_STRONG = "Fort"
+    L.OPT_LINE = "Afficher la ligne du curseur"
+    L.MODE_SET = "Méthode de saisie : %s"
+    L.LAYOUT_SET = "Disposition : %s"
     L.REPLY_TO = "Répondre à %s : "
     L.WHISPER_NAME = "Chuchoter à (nom, puis A) : "
     L.CHANNEL_NAMES = { "Dire", "Crier", "Groupe", "Raid", "Guilde", "Général (/1)", "Chuchoter", "Répondre" }
@@ -68,6 +84,8 @@ if GetLocale() == "frFR" then
         "/ck pad - n'ouvrir automatiquement que si la manette est active (actuel : %s)",
         "/ck learn - apprendre les mots de vos messages (actuel : %s)",
         "/ck lock - verrouiller/déverrouiller la position (actuel : %s)",
+        "/ck mode wheel|stick - daisywheel ou clavier 1 stick",
+        "/ck layout azerty|qwerty - disposition du clavier 1 stick",
         "/ck lang fr|en|both - dictionnaires utilisés",
         "/ck scale 0.8 - taille du clavier",
         "/ck invert - inverser l'axe vertical du stick",
@@ -105,6 +123,22 @@ else
     L.HELP_LETTER = "Letter"
     L.HELP_CHANNEL = "Channel"
     L.HELP_PICK = "Select"
+    L.HELP_CURSOR = "Cursor"
+    L.HELP_TYPE = "Type"
+    L.OPT_INPUT = "Input"
+    L.OPT_METHOD = "Input method"
+    L.METHOD_WHEEL = "Daisywheel"
+    L.METHOD_STICK = "One-stick keyboard"
+    L.OPT_LAYOUT = "Layout (one-stick keyboard)"
+    L.OPT_DEADZONE = "Stick dead zone"
+    L.OPT_MAGNET = "Magnet"
+    L.MAGNET_NONE = "None"
+    L.MAGNET_WEAK = "Weak"
+    L.MAGNET_MEDIUM = "Medium"
+    L.MAGNET_STRONG = "Strong"
+    L.OPT_LINE = "Show the cursor line"
+    L.MODE_SET = "Input method: %s"
+    L.LAYOUT_SET = "Layout: %s"
     L.REPLY_TO = "Reply to %s: "
     L.WHISPER_NAME = "Whisper to (name, then A): "
     L.CHANNEL_NAMES = { "Say", "Yell", "Party", "Raid", "Guild", "General (/1)", "Whisper", "Reply" }
@@ -142,6 +176,8 @@ else
         "/ck pad - only auto-open when the gamepad is active (current: %s)",
         "/ck learn - learn words from your messages (current: %s)",
         "/ck lock - lock/unlock the position (current: %s)",
+        "/ck mode wheel|stick - daisywheel or one-stick keyboard",
+        "/ck layout azerty|qwerty - one-stick keyboard layout",
         "/ck lang fr|en|both - dictionaries in use",
         "/ck scale 0.8 - keyboard size",
         "/ck invert - invert the stick vertical axis",
@@ -178,6 +214,10 @@ local DEFAULTS = {
     invertY = false,
     locked = true,
     inputMethod = "wheel",   -- "wheel" (daisywheel) or "stick" (one-stick keyboard)
+    kbLayout = GetLocale() == "frFR" and "azerty" or "qwerty",
+    deadzone = 0.15,         -- one-stick keyboard: left stick dead zone
+    magnet = "medium",       -- one-stick keyboard: none / weak / medium / strong
+    showLine = true,         -- one-stick keyboard: line from the center to the cursor
     showActions = true,
     font = "friz",
     glyphStyle = "xbox",

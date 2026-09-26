@@ -148,6 +148,17 @@ local function slash(msg)
     elseif cmd == "invert" then
         s.invertY = not s.invertY
         CK:Print("invert: %s", onOff(s.invertY))
+    elseif cmd == "mode" then
+        local key = ({ wheel = "wheel", roue = "wheel", stick = "stick", clavier = "stick" })[arg]
+        if key then CK:SetInputMethod(key) end
+        local m = CK.db.settings.inputMethod
+        CK:Print(L.MODE_SET, m == "stick" and L.METHOD_STICK or L.METHOD_WHEEL)
+    elseif cmd == "layout" then
+        if arg == "azerty" or arg == "qwerty" then
+            s.kbLayout = arg
+            CK:UpdateMethod()
+        end
+        CK:Print(L.LAYOUT_SET, s.kbLayout:upper())
     elseif cmd == "lock" then
         s.locked = not s.locked
         CK:UpdateLock()

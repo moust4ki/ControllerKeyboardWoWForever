@@ -61,30 +61,43 @@ function CK:RegisterOptions()
     panel:Hide()
     self.optionsPanel = panel
 
+    -- The options don't fit on one screen: scroll with the mouse wheel
+    local scroll = CK.NewFrame("ScrollFrame", nil, panel)
+    scroll:SetAllPoints()
+    local content = CK.NewFrame("Frame", nil, scroll)
+    content:SetSize(640, 900)
+    scroll:SetScrollChild(content)
+    scroll:EnableMouseWheel(true)
+    scroll:SetScript("OnMouseWheel", function(sf, delta)
+        local max = math.max(0, content:GetHeight() - sf:GetHeight())
+        sf:SetVerticalScroll(math.min(max, math.max(0, sf:GetVerticalScroll() - delta * 40)))
+    end)
+    panel:SetScript("OnSizeChanged", function(_, w) if w and w > 0 then content:SetWidth(w) end end)
+
     local refreshers = {}
     local y = -16
 
-    local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, y)
     title:SetText("Controller Keyboard")
     y = y - 24
-    local sub = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    local sub = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     sub:SetPoint("TOPLEFT", 16, y)
     sub:SetText(L.OPT_SUBTITLE)
     y = y - 30
 
     local function header(label)
-        local h = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+        local h = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
         h:SetPoint("TOPLEFT", 16, y)
         h:SetText(label)
         y = y - 24
     end
 
     local function check(label, get, set)
-        local cb = CK.NewFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+        local cb = CK.NewFrame("CheckButton", nil, content, "UICheckButtonTemplate")
         cb:SetSize(26, 26)
         cb:SetPoint("TOPLEFT", 20, y)
-        local text = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+        local text = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
         text:SetPoint("LEFT", cb, "RIGHT", 4, 1)
         text:SetText(label)
         cb:SetScript("OnClick", function(b) set(b:GetChecked() and true or false) end)
@@ -94,17 +107,17 @@ function CK:RegisterOptions()
 
     -- "Label   [<]  value  [>]"
     local function selector(label, count, getText, step)
-        local text = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+        local text = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
         text:SetPoint("TOPLEFT", 24, y - 4)
         text:SetText(label)
-        local prev = CK.NewFrame("Button", nil, panel, "UIPanelButtonTemplate")
+        local prev = CK.NewFrame("Button", nil, content, "UIPanelButtonTemplate")
         prev:SetSize(26, 22)
         prev:SetPoint("TOPLEFT", 220, y)
         prev:SetText("<")
-        local value = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+        local value = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
         value:SetPoint("LEFT", prev, "RIGHT", 6, 0)
         value:SetWidth(150)
-        local nextB = CK.NewFrame("Button", nil, panel, "UIPanelButtonTemplate")
+        local nextB = CK.NewFrame("Button", nil, content, "UIPanelButtonTemplate")
         nextB:SetSize(26, 22)
         nextB:SetPoint("LEFT", value, "RIGHT", 6, 0)
         nextB:SetText(">")
@@ -116,7 +129,7 @@ function CK:RegisterOptions()
     end
 
     local function button(label, x, onClick)
-        local b = CK.NewFrame("Button", nil, panel, "UIPanelButtonTemplate")
+        local b = CK.NewFrame("Button", nil, content, "UIPanelButtonTemplate")
         b:SetSize(190, 24)
         b:SetPoint("TOPLEFT", x, y)
         b:SetText(label)
@@ -143,6 +156,39 @@ function CK:RegisterOptions()
             CK.frame:SetScale(s.scale)
             CK:PositionSendButton()
         end
+    end)
+
+    -- Input method
+    y = y - 6
+    header(L.OPT_INPUT)
+    local METHODS = {
+        { key = "wheel", name = L.METHOD_WHEEL },
+        { key = "stick", name = L.METHOD_STICK },
+    }
+    selector(L.OPT_METHOD, #METHODS, function() return METHODS[indexOf(METHODS, s.inputMethod)].name end, function(d)
+        local i = (indexOf(METHODS, s.inputMethod) - 1 + d) % #METHODS + 1
+        CK:SetInputMethod(METHODS[i].key)
+    end)
+    local LAYOUTS = { { key = "azerty", name = "AZERTY" }, { key = "qwerty", name = "QWERTY" } }
+    selector(L.OPT_LAYOUT, #LAYOUTS, function() return LAYOUTS[indexOf(LAYOUTS, s.kbLayout)].name end, function(d)
+        local i = (indexOf(LAYOUTS, s.kbLayout) - 1 + d) % #LAYOUTS + 1
+        s.kbLayout = LAYOUTS[i].key
+        CK:UpdateMethod()
+    end)
+    selector(L.OPT_DEADZONE, nil, function() return format("%d %%", s.deadzone * 100 + 0.5) end, function(d)
+        s.deadzone = math.min(0.40, math.max(0.05, math.floor((s.deadzone + d * 0.05) * 100 + 0.5) / 100))
+    end)
+    local MAGNETS = {
+        { key = "none", name = L.MAGNET_NONE }, { key = "weak", name = L.MAGNET_WEAK },
+        { key = "medium", name = L.MAGNET_MEDIUM }, { key = "strong", name = L.MAGNET_STRONG },
+    }
+    selector(L.OPT_MAGNET, #MAGNETS, function() return MAGNETS[indexOf(MAGNETS, s.magnet)].name end, function(d)
+        local i = (indexOf(MAGNETS, s.magnet) - 1 + d) % #MAGNETS + 1
+        s.magnet = MAGNETS[i].key
+    end)
+    check(L.OPT_LINE, function() return s.showLine end, function(v)
+        s.showLine = v
+        CK:UpdateMethod()
     end)
 
     -- Look
@@ -200,11 +246,12 @@ function CK:RegisterOptions()
         end
     end)
     y = y - 34
-    local stats = panel:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+    local stats = content:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     stats:SetPoint("TOPLEFT", 24, y)
     refreshers[#refreshers + 1] = function()
         stats:SetText(format(L.STATS, CK.Predict:NumLearned(), CK.Predict:NumEntries()))
     end
+    content:SetHeight(-y + 40)
 
     panel:SetScript("OnShow", function()
         for _, refresh in ipairs(refreshers) do refresh() end
