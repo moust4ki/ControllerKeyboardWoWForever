@@ -2,6 +2,9 @@
 
 ## 0.2.1
 
+- Chat channel row: `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`. Switch with D-pad ← → or by hovering with
+  the mouse (no click, so the chat keeps its focus); unavailable channels are greyed out and skipped.
+  Suggestions are browsed with the right stick.
 - Fix: crashes and "action blocked" cascades in combat. The keyboard used to type into the game's chat
   box; that text was then read by WoW Forever's gamepad UI and tainted it. The message now lives in the
   keyboard's own bar and is sent with A through a secure macro (`/s`, `/p`, `/g`, `/w`…); the game's

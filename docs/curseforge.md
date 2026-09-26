@@ -20,6 +20,8 @@ the game's own button icons.
   - accents ignored while searching;
   - next word from your habits and common phrases;
   - suggestions as soon as the chat opens.
+- **Chat channel row**: `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`, switched with the D-pad or by hovering
+  with the mouse, without losing the chat focus.
 - **Slash command autocomplete**: `/` suggests `/reload`, `/p`, `/ra`, `/g`, `/w`, then your most used
   commands.
 - **Learning**: your words, message starters and word sequences are remembered, locally.
@@ -39,7 +41,8 @@ the game's own button icons.
 | LB / RB | delete / space |
 | LT | shift (double tap: caps lock) |
 | RT | numbers, accents, symbols |
-| D-pad ← → / ↑ / ↓ | suggestion / insert / delete word |
+| D-pad ← → | chat channel (/s /p /ra /g /1 /w /r) |
+| D-pad ↑ / ↓ | insert suggestion / delete word |
 | A | send the message |
 | B, X, Y | handled by the game: back, channels, tab |
 
@@ -88,6 +91,8 @@ Friz Quadrata, icônes de boutons du jeu.
   - mot suivant d'après vos habitudes et des expressions courantes (« je » → suis, vais… ; « bonne » →
     nuit, soirée…) ;
   - propositions dès l'ouverture du chat, avant même de taper.
+- **Rangée de canaux** : `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r`, à la croix ou au survol de la souris,
+  sans perdre le focus du chat.
 - **Autocomplétion des commandes** : `/` propose `/reload`, `/p`, `/ra`, `/g`, `/w`, puis vos commandes
   les plus utilisées.
 - **Apprentissage** : vos mots, vos débuts de message et vos enchaînements sont retenus, en local.
@@ -106,7 +111,8 @@ Friz Quadrata, icônes de boutons du jeu.
 | LB / RB | effacer / espace |
 | LT | majuscule (deux appuis : verrouillage) |
 | RT | chiffres, accents, symboles |
-| Croix ← → / ↑ / ↓ | suggestion / insérer / effacer le mot |
+| Croix ← → | canal (/s /p /ra /g /1 /w /r) |
+| Croix ↑ / ↓ | insérer la suggestion / effacer le mot |
 | A | envoyer le message |
 | B, X, Y | gérés par le jeu : retour, canaux, onglet |
 
