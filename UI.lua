@@ -5,7 +5,7 @@ local L = CK.L
 -- 340 x 456 panel, coordinates in px from its top-left corner (y goes down).
 local TEX = "Interface\\AddOns\\ControllerKeyboard\\textures\\"
 local W, H = 340, 484
-local WHEEL_X, WHEEL_Y, WHEEL_SIZE = 30, 120, 280
+local WHEEL_X, WHEEL_Y, WHEEL_SIZE = 30, 92, 280
 local PETAL_R, PETAL_SIZE, PETAL_SEL = 96, 76, 81
 local HUB_SIZE = 92
 -- Character offsets in a petal: left, top, right, bottom (y down)
@@ -93,6 +93,9 @@ local function nineSlice(frame, file, texW, texH, texCorner, corner, layer)
             p:SetTexture(TEX .. name)
             p:SetTexCoord(unpack(p.coords))
         end
+    end
+    function slice:SetVertexColor(r, g, b)
+        for _, p in ipairs(self.parts) do p:SetVertexColor(r, g, b) end
     end
     function slice:SetShown(shown)
         for _, p in ipairs(self.parts) do p:SetShown(shown) end
@@ -206,21 +209,22 @@ function CK:BuildUI()
     self:MakeDragHandle(grip)
     f.grip = grip
 
-    -- Channel row: hover (no click, the game would close the chat) or D-pad < >
+    -- Channel row, under the wheel: D-pad down to reach it, then < >, or hover
+    -- with the mouse (no click, the game would close the chat)
     local cbar = CK.NewFrame("Frame", nil, f)
-    place(cbar, f, 8, 58, 324, 26)
-    nineSlice(cbar, "ck_bar", 256, 64, 8, 8, "BORDER")
+    place(cbar, f, 8, 376, 324, 26)
+    f.cbarSlice = nineSlice(cbar, "ck_bar", 256, 64, 8, 8, "BORDER")
     local chanLeft = texture(cbar, nil, "OVERLAY")
-    place(chanLeft, f, 12, 60, 22, 22)
+    place(chanLeft, f, 12, 378, 22, 22)
     self:SetGlyph(chanLeft, "DPAD_LEFT")
     local chanRight = texture(cbar, nil, "OVERLAY")
-    place(chanRight, f, 306, 60, 22, 22)
+    place(chanRight, f, 306, 378, 22, 22)
     self:SetGlyph(chanRight, "DPAD_RIGHT")
     f.chanLeft, f.chanRight = chanLeft, chanRight
     f.channels = {}
     for i, ch in ipairs(CK.CHANNEL_LIST) do
         local b = CK.NewFrame("Button", nil, f)
-        place(b, f, 38 + 38 * (i - 1), 59, 36, 24)
+        place(b, f, 38 + 38 * (i - 1), 377, 36, 24)
         b:SetFrameLevel(cbar:GetFrameLevel() + 2)
         b.select = nineSlice(b, "ck_select", 128, 32, 10, 8, "ARTWORK")
         b.label = text(b, 12)
@@ -241,19 +245,19 @@ function CK:BuildUI()
 
     -- Suggestions bar
     local sbar = CK.NewFrame("Frame", nil, f)
-    place(sbar, f, 8, 86, 324, 28)
-    nineSlice(sbar, "ck_bar", 256, 64, 8, 8, "BORDER")
+    place(sbar, f, 8, 58, 324, 28)
+    f.sbarSlice = nineSlice(sbar, "ck_bar", 256, 64, 8, 8, "BORDER")
     local lb = texture(sbar, nil, "OVERLAY")
-    place(lb, f, 12, 89, 22, 22)
+    place(lb, f, 12, 61, 22, 22)
     self:SetGlyph(lb, "RS")
     local rb = texture(sbar, nil, "OVERLAY")
-    place(rb, f, 306, 89, 22, 22)
+    place(rb, f, 306, 61, 22, 22)
     self:SetGlyph(rb, "RS")
 
     f.sugg = {}
     for n = 0, 4 do
         local b = CK.NewFrame("Button", nil, f)
-        place(b, f, 38 + 54 * n, 87, 50, 26)
+        place(b, f, 38 + 54 * n, 59, 50, 26)
         b:SetFrameLevel(sbar:GetFrameLevel() + 2)
         b.select = nineSlice(b, "ck_select", 128, 32, 10, 10, "ARTWORK")
         b.label = text(b, 12)
@@ -327,7 +331,7 @@ function CK:BuildUI()
     local gold = "|cffffd100"
     local lines = {
         gold .. "^|r " .. L.GESTURE_INSERT,
-        gold .. "<|r " .. L.GESTURE_WORD .. " " .. gold .. ">|r",
+        gold .. "<|r " .. L.GESTURE_PICK .. " " .. gold .. ">|r",
         gold .. "v|r " .. L.GESTURE_DELETE,
     }
     for n, line in ipairs(lines) do
@@ -370,7 +374,7 @@ function CK:BuildUI()
     place(filet2, helpFrame, 0, 40, W, 8)
     local help = {
         { "LS", L.HELP_PETAL }, { "RS", L.HELP_LETTER }, { "LB", L.BACKSPACE }, { "RB", L.SPACE },
-        { "LT", L.SHIFT }, { "RT", L.SYMBOLS }, { "DPAD_UP", L.GESTURE_INSERT }, { "DPAD_LR", L.HELP_CHANNEL },
+        { "LT", L.SHIFT }, { "RT", L.SYMBOLS }, { "DPAD_DOWN", L.HELP_CHANNEL }, { "DPAD_LR", L.HELP_PICK },
     }
     f.helpGlyphs = {}
     for n, h in ipairs(help) do
@@ -404,6 +408,7 @@ function CK:BuildUI()
     self:RestorePosition()
     self:UpdateLock()
     self:ApplyLayout()
+    self:UpdateRows()
 
     -- Debug: report when something else than CK:Close hides the keyboard
     f:HookScript("OnHide", function()
@@ -431,10 +436,7 @@ end
 function CK:UpdateGlyphs()
     local f = self.frame
     if not f then return end
-    self:SetGlyph(f.lbGlyph, "RS")
-    self:SetGlyph(f.rbGlyph, "RS")
-    self:SetGlyph(f.chanLeft, "DPAD_LEFT")
-    self:SetGlyph(f.chanRight, "DPAD_RIGHT")
+    self:UpdateRows()
     for _, g in ipairs(f.helpGlyphs) do self:SetGlyph(g.tex, g.key) end
 end
 
@@ -590,6 +592,29 @@ function CK:UpdateWheel()
     symbols.label:SetText(state.layer == "symbols" and L.LETTERS or L.SYMBOLS)
     symbols:SetActive(state.layer == "symbols")
     f.actions.ToggleShift:SetActive(state.shift or state.caps)
+end
+
+-- Active row: full light and < > glyphs at its ends. The other one is
+-- dimmed and shows the D-pad direction that activates it.
+function CK:UpdateRows()
+    local f = self.frame
+    if not (f and f.channels) then return end
+    local channels = self.state.activeRow == "channels"
+    local on, off = 1, 0.55
+
+    local c = channels and on or off
+    f.cbarSlice:SetVertexColor(c, c, c)
+    for _, b in ipairs(f.channels) do b:SetAlpha(channels and 1 or 0.6) end
+    self:SetGlyph(f.chanLeft, channels and "DPAD_LEFT" or "DPAD_DOWN")
+    self:SetGlyph(f.chanRight, "DPAD_RIGHT")
+    f.chanRight:SetShown(channels)
+
+    local sg = channels and off or on
+    f.sbarSlice:SetVertexColor(sg, sg, sg)
+    for _, b in ipairs(f.sugg) do b:SetAlpha(channels and 0.6 or 1) end
+    self:SetGlyph(f.lbGlyph, channels and "DPAD_UP" or "DPAD_LEFT")
+    self:SetGlyph(f.rbGlyph, "DPAD_RIGHT")
+    f.rbGlyph:SetShown(not channels)
 end
 
 function CK:UpdateChannels()

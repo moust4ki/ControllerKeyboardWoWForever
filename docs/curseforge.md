@@ -37,12 +37,12 @@ the game's own button icons.
 |---|---|
 | Left stick | pick a petal |
 | Right stick | type the aimed letter |
-| Right stick (left stick centered) | ← → pick a suggestion, ↑ insert it, ↓ delete |
+| Right stick (left stick centered) | ← → move in the active row, ↑ insert the suggestion, ↓ delete |
 | LB / RB | delete / space |
 | LT | shift (double tap: caps lock) |
 | RT | numbers, accents, symbols |
-| D-pad ← → | chat channel (/s /p /ra /g /1 /w /r) |
-| D-pad ↑ / ↓ | insert suggestion / delete word |
+| D-pad ↓ / ↑ | channel row (under the wheel) / suggestions row |
+| D-pad ← → | move in the active row (suggestion or channel) |
 | A | send the message |
 | B, X, Y | handled by the game: back, channels, tab |
 
@@ -107,12 +107,12 @@ Friz Quadrata, icônes de boutons du jeu.
 |---|---|
 | Stick gauche | choisir un pétale |
 | Stick droit | taper la lettre visée |
-| Stick droit (stick gauche au centre) | ← → choisir une suggestion, ↑ l'insérer, ↓ effacer |
+| Stick droit (stick gauche au centre) | ← → se déplacer dans la rangée active, ↑ insérer, ↓ effacer |
 | LB / RB | effacer / espace |
 | LT | majuscule (deux appuis : verrouillage) |
 | RT | chiffres, accents, symboles |
-| Croix ← → | canal (/s /p /ra /g /1 /w /r) |
-| Croix ↑ / ↓ | insérer la suggestion / effacer le mot |
+| Croix ↓ / ↑ | rangée des canaux (sous la roue) / rangée des suggestions |
+| Croix ← → | se déplacer dans la rangée active (suggestion ou canal) |
 | A | envoyer le message |
 | B, X, Y | gérés par le jeu : retour, canaux, onglet |
 

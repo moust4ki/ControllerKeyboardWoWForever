@@ -29,7 +29,8 @@ actions there, "Not possible in combat") and comes back after combat if the chat
 
 - **Left stick**: pick a petal.
 - **Right stick**: flick toward the letter to type (left / top / right / bottom of the petal).
-- **Left stick centered**: the right stick drives the suggestions (← → pick, ↑ insert, ↓ delete).
+- **Left stick centered**: the right stick moves in the active row (← →), ↑ inserts the suggestion,
+  ↓ deletes.
 
 | Button | Action |
 |---|---|
@@ -37,9 +38,9 @@ actions there, "Not possible in combat") and comes back after combat if the chat
 | RB | space |
 | LT | shift (tap = one capital, double tap = caps lock) |
 | RT or left stick click | numbers, accents and symbols |
-| D-pad ← → | previous / next chat channel |
-| D-pad ↑ or right stick click | insert the suggestion |
-| D-pad ↓ | delete the last word |
+| D-pad ↓ / ↑ | go to the channel row (under the wheel) / back to the suggestions |
+| D-pad ← → | move in the active row: suggestion, or chat channel |
+| Right stick click | insert the suggestion |
 
 **A** sends the message (secure macro: `/s`, `/p`, `/g`, `/w`… following the chat channel).
 **B** (back), **X** (channels), **Y** (tab settings), **Start** and **Select** stay with the game's
@@ -53,9 +54,10 @@ gamepad UI closes the chat on the first click: the keyboard then stays open and 
 
 ## Chat channels
 
-A row under the text bar shows `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel colors. Press
-**D-pad ← →** or simply **hover** a channel with the mouse (no click needed) to switch: the message is
-then sent there with A. Unavailable channels are greyed out and skipped (party / raid / guild you are
+A row under the wheel shows `/s`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel colors. You have
+to reach for it, so you never switch by mistake: press **D-pad ↓** to make it the active row, then
+**D-pad ← →** (or the right stick); **D-pad ↑** goes back to the suggestions. With the mouse, simply
+**hover** a channel (no click needed). The message is then sent there with A. Unavailable channels are greyed out and skipped (party / raid / guild you are
 not in, `/w` with nobody to whisper, `/r` with nobody to reply to). The game's chat box is never
 touched, so switching never loses the chat focus.
 

@@ -34,6 +34,9 @@ if GetLocale() == "frFR" then
     L.HELP_LETTER = "Lettre"
     L.HELP_SUGGESTION = "Suggestion"
     L.HELP_CHANNEL = "Canal"
+    L.HELP_ROW = "Rangée"
+    L.HELP_PICK = "Choisir"
+    L.GESTURE_PICK = "Choisir"
     L.REPLY_TO = "Répondre à %s : "
     L.CHANNEL_NAMES = { "Dire", "Groupe", "Raid", "Guilde", "Général (/1)", "Chuchoter", "Répondre" }
     L.CHANNEL_UNAVAILABLE = "indisponible"
@@ -110,6 +113,9 @@ else
     L.HELP_LETTER = "Letter"
     L.HELP_SUGGESTION = "Suggestion"
     L.HELP_CHANNEL = "Channel"
+    L.HELP_ROW = "Row"
+    L.HELP_PICK = "Select"
+    L.GESTURE_PICK = "Select"
     L.REPLY_TO = "Reply to %s: "
     L.CHANNEL_NAMES = { "Say", "Party", "Raid", "Guild", "General (/1)", "Whisper", "Reply" }
     L.CHANNEL_UNAVAILABLE = "unavailable"

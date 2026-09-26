@@ -12,10 +12,10 @@ local BUTTON_ACTIONS = {
     PADRSHOULDER = "Space",
     PADLTRIGGER = "ToggleShift",
     PADRTRIGGER = "ToggleSymbols",
-    PADDLEFT = "PrevChannel",
-    PADDRIGHT = "NextChannel",
-    PADDUP = "AcceptSuggestion",
-    PADDDOWN = "DeleteWord",
+    PADDLEFT = "NavPrev",
+    PADDRIGHT = "NavNext",
+    PADDUP = "FocusSuggestions",
+    PADDDOWN = "FocusChannels",
     PADLSTICK = "ToggleSymbols",
     PADRSTICK = "AcceptSuggestion",
 }
@@ -27,10 +27,10 @@ local STANDALONE_ACTIONS = { PAD2 = "Close" }
 -- Right stick directions -> petal slot (1 left, 2 up, 3 right, 4 down)
 local SLOT_BY_SECTOR = { [0] = 2, [1] = 3, [2] = 4, [3] = 1 }
 -- Right stick with no petal selected
-local NEUTRAL_FLICK = { "PrevSuggestion", "AcceptSuggestion", "NextSuggestion", "Backspace" }
+local NEUTRAL_FLICK = { "NavPrev", "AcceptSuggestion", "NavNext", "Backspace" }
 
 -- Actions repeated while the button (or stick) is held
-local REPEATABLE = { Backspace = true, PrevSuggestion = true, NextSuggestion = true }
+local REPEATABLE = { Backspace = true, NavPrev = true, NavNext = true }
 local REPEAT_DELAY, REPEAT_RATE = 0.45, 0.08
 
 local LEFT_IN, LEFT_OUT = 0.5, 0.35      -- petal selection deadzone (with hysteresis)

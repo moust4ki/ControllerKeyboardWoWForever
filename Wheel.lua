@@ -101,6 +101,7 @@ function CK:OpenStandalone()
     self.editBox = nil
     local state = self.state
     state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
+    state.activeRow = "suggestions"
     self.frame:Show()
     self:EnableButtons()
     self:UpdateWheel()
@@ -176,6 +177,7 @@ function CK:Refresh()
     self.state.selected = 1
     self:UpdateSuggestions()
     self:UpdateChannels()
+    self:UpdateRows()
 end
 
 ---------------------------------------------------------------------------
@@ -359,6 +361,25 @@ end
 function CK:NextChannel() self:CycleChannel(1) end
 function CK:PrevChannel() self:CycleChannel(-1) end
 
+-- D-pad down / up picks the active row (channels under the wheel, or the
+-- suggestions above it); left /
+-- right, and the right stick with no petal picked, move inside it
+function CK:SetActiveRow(row)
+    self.state.activeRow = row
+    self:UpdateRows()
+end
+
+function CK:FocusChannels() self:SetActiveRow("channels") end
+function CK:FocusSuggestions() self:SetActiveRow("suggestions") end
+
+function CK:NavPrev()
+    if self.state.activeRow == "channels" then self:PrevChannel() else self:PrevSuggestion() end
+end
+
+function CK:NavNext()
+    if self.state.activeRow == "channels" then self:NextChannel() else self:NextSuggestion() end
+end
+
 -- The message is sent by the secure macro button (see Input.lua): calling the
 -- chat functions from addon code gets blocked by WoW Forever's gamepad UI.
 local SLASH = {
@@ -422,6 +443,7 @@ function CK:Open(eb)
     self.editBox = eb
     local state = self.state
     state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
+    state.activeRow = "suggestions"
     self.frame:Show()
     self:EnableButtons()
     self:UpdateWheel()
