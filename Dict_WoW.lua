@@ -29,4 +29,6 @@ pvp pve bg bgs goulet arathi alterac champ bataille duel
 heal-moi rez-moi inv-moi
 ready rdy go wait attendez stop
 merci thx ty thanks np
+mdr lol ptdr xd jsp jpp tkt stp svp slt bjr bsr cc coucou dsl pk pq bcp mtn tlm
+qqn qqch osef oklm wesh ouais nan bref ok okay
 ]]

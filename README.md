@@ -68,5 +68,11 @@ python tools/build_dict.py en
 ```
 
 Le script télécharge la liste de fréquences [FrequencyWords](https://github.com/hermitdave/FrequencyWords)
-(OpenSubtitles, CC-BY-SA-4.0) et génère `Dict_frFR.lua` / `Dict_enUS.lua`. Pour activer l'anglais,
-ajouter `Dict_enUS.lua` dans `ControllerKeyboard.toc`.
+(OpenSubtitles, CC-BY-SA-4.0) et génère `Dict_frFR.lua` / `Dict_enUS.lua` (12 000 mots chacun).
+L'anglais est chargé mais désactivé par défaut : `/ck lang both` pour l'activer.
+
+## Licence
+
+Code sous licence MIT (voir `LICENSE`). Les fichiers `Dict_frFR.lua` et `Dict_enUS.lua` sont dérivés de
+FrequencyWords (Hermit Dave) et restent sous licence
+[CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/).
