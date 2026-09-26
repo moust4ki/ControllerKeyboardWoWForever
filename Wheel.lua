@@ -1,9 +1,12 @@
 local _, CK = ...
 local L = CK.L
 
--- 8 petals, clockwise from the top. Each petal holds 4 characters placed
--- left, top, right, bottom: the right stick flicks toward the one to type.
--- The frames are built in UI.lua.
+-- Input method "daisywheel": the left stick picks one of 8 petals, the right
+-- stick flicks toward one of its 4 characters (left, top, right, bottom).
+CK.Methods = CK.Methods or {}
+local M = { key = "wheel", width = 340, areaWidth = 280, height = 280 }
+CK.Methods.wheel = M
+
 local LAYOUTS = {
     letters = {
         { "a", "b", "c", "d" },
@@ -28,539 +31,171 @@ local LAYOUTS = {
 }
 CK.LAYOUTS = LAYOUTS
 
-CK.state = {
-    layer = "letters",
-    shift = false,
-    caps = false,
-    petal = nil,
-    aim = nil,
-    suggestions = {},
-    selected = 1,
-    lastShift = 0,
+-- Pad buttons of this method (D-pad, A, B and right stick click are common)
+M.buttons = {
+    PADLSHOULDER = "Backspace",
+    PADRSHOULDER = "Space",
+    PADLTRIGGER = "ToggleShift",
+    PADRTRIGGER = "ToggleSymbols",
+    PADLSTICK = "ToggleSymbols",
 }
 
----------------------------------------------------------------------------
--- Text and channel source
---
--- The message lives in the keyboard's own buffer and is sent with the secure
--- macro button. The addon never writes to the chat edit box: text set by an
--- addon is tainted, and when WoW Forever's gamepad UI reads it back
--- (ChatFrame1EditBox:GetText()) its own code gets tainted, which is blocked
--- in combat again and again until the client freezes. The edit box is only
--- read: its channel, and what is typed on a physical keyboard.
--- "standalone": a mouse click made the game close the chat, the keyboard
--- stays open on its own.
----------------------------------------------------------------------------
-function CK:GetText()
-    return self.buffer or ""
-end
-
--- Channel: the chat's own while it is open, a snapshot once it is closed
-function CK:GetChatAttr(key)
-    if self.chatAttrs then return self.chatAttrs[key] end
-    return self.editBox and self.editBox:GetAttribute(key)
-end
-
-local function snapshotAttrs(eb)
-    if not eb then return { chatType = "SAY" } end
+function M:Help()
     return {
-        chatType = eb:GetAttribute("chatType") or "SAY",
-        tellTarget = eb:GetAttribute("tellTarget"),
-        channelTarget = eb:GetAttribute("channelTarget"),
+        { "LS", L.HELP_PETAL }, { "RS", L.HELP_LETTER }, { "LB", L.BACKSPACE }, { "RB", L.SPACE },
+        { "LT", L.SHIFT }, { "RT", L.SYMBOLS },
     }
 end
 
-function CK:SetChatAttr(key, value)
-    self.chatAttrs = self.chatAttrs or snapshotAttrs(self.editBox)
-    self.chatAttrs[key] = value
+local PETAL_R, PETAL_SIZE, PETAL_SEL = 96, 76, 81
+local HUB_SIZE = 92
+-- Character offsets in a petal: left, top, right, bottom (y down)
+local CHAR_OFF = { { -20, 0 }, { 0, -20 }, { 20, 0 }, { 0, 20 } }
+local LEFT_IN, LEFT_OUT = 0.5, 0.35      -- petal selection deadzone (with hysteresis)
+
+local function sector(x, y, count)
+    local fromNorth = (90 - math.deg(math.atan2(y, x))) % 360
+    local size = 360 / count
+    return math.floor((fromNorth + size / 2) / size) % count
 end
 
--- Text typed on a physical keyboard, or cleared by the game after sending
-function CK:OnChatTextChanged(eb)
-    if eb ~= self.editBox then return end
-    self.buffer = eb:GetText() or ""
-    self:Refresh()
-end
-
--- True while a mouse button is held over the keyboard (not just hovering:
--- sending with A while the cursor rests on the wheel must still close it)
-function CK:IsClickingWheel()
-    return self.frame and self.frame:IsMouseOver()
-        and (IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton"))
-end
-
--- Keyboard without the chat (after /ck lock, to place it): A sends with the
--- secure macro button, B closes
-function CK:OpenStandalone()
-    if self:BlockedByCombat() then return end
-    if not self.frame then self:BuildUI() end
-    if self:IsOpen() then return end
-    self.standalone = true
-    self.buffer = ""
-    self.chatAttrs = { chatType = "SAY" }
-    self.editBox = nil
-    local state = self.state
-    state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
-    state.activeRow = "suggestions"
-    self.frame:Show()
-    self:EnableButtons()
-    self:UpdateWheel()
-    self:Refresh()
-end
-
-function CK:EnterStandalone()
-    if self.standalone then return end
-    self.standalone = true
-    self.chatAttrs = self.chatAttrs or snapshotAttrs(self.editBox)
-    self.editBox = nil
-    if self.db.settings.debug then self:Print("standalone mode") end
-    self:EnableButtons()
-    self:Refresh()
-end
-
-function CK:GetChannelLabel()
-    local chatType = self:GetChatAttr("chatType") or "SAY"
-    local label
-    if self:GetChatAttr("reply") then
-        label = format(CK.L.REPLY_TO, self:GetChatAttr("tellTarget") or "?")
-    elseif self:WhisperNameMode() then
-        label = CK.L.WHISPER_NAME
-    elseif chatType == "WHISPER" or chatType == "BN_WHISPER" then
-        label = format(CHAT_WHISPER_SEND or "To %s: ", self:GetChatAttr("tellTarget") or "?")
-    elseif chatType == "CHANNEL" then
-        local target = self:GetChatAttr("channelTarget")
-        local _, name = GetChannelName(target or 0)
-        label = (name or tostring(target or "")) .. ": "
-    else
-        label = _G["CHAT_" .. chatType .. "_SEND"] or (chatType .. ": ")
+function M:Build(area)
+    local K = CK.UIKit
+    local disc = K.texture(area, "ck_disc", "BACKGROUND")
+    -- New texture files are only seen after restarting the game (not /reload)
+    if disc:SetTexture(K.TEX .. "ck_disc") == false then
+        C_Timer.After(2, function() CK:Print(L.TEXTURES_MISSING) end)
     end
-    local info = ChatTypeInfo and ChatTypeInfo[chatType]
-    if info then
-        label = format("|cff%02x%02x%02x%s|r", info.r * 255, info.g * 255, info.b * 255, label)
+    disc:SetAllPoints()
+
+    self.petals = {}
+    for i = 1, 8 do
+        local a = (i - 1) * math.pi / 4
+        local px, py = 140 + PETAL_R * math.sin(a), 140 - PETAL_R * math.cos(a)
+        local p = CK.NewFrame("Frame", nil, area)
+        p:SetPoint("CENTER", area, "TOPLEFT", px, -py)
+        p:SetSize(PETAL_SIZE, PETAL_SIZE)
+        p.slot = K.texture(p, "ck_slot", "BORDER")
+        p.slot:SetAllPoints()
+        p.glow = K.texture(p, "ck_slot_glow", "ARTWORK")
+        p.glow:SetAllPoints()
+        p.glow:Hide()
+        p.keys = {}
+        for j = 1, 4 do
+            local k = CK.NewFrame("Button", nil, p)
+            k:SetSize(26, 26)
+            k.hl = K.texture(k, "ck_hl", "ARTWORK")
+            k.hl:SetSize(32, 32)
+            k.hl:SetPoint("CENTER")
+            k.hl:Hide()
+            k.hover = K.texture(k, "ck_hl_hover", "ARTWORK")
+            k.hover:SetSize(32, 32)
+            k.hover:SetPoint("CENTER")
+            k.hover:Hide()
+            k.label = K.text(k, 16)
+            k.label:SetPoint("CENTER", 0, 1)
+            k:SetScript("OnClick", function() CK:TypeSlot(i, j) end)
+            k:SetScript("OnEnter", function()
+                M.hoverPetal, M.hoverChar = i, j
+                M:Update()
+            end)
+            k:SetScript("OnLeave", function()
+                M.hoverPetal, M.hoverChar = nil, nil
+                M:Update()
+            end)
+            p.keys[j] = k
+        end
+        self.petals[i] = p
     end
-    return label
+
+    -- Hub: shows the letter aimed with the right stick
+    local hub = CK.NewFrame("Frame", nil, area)
+    hub:SetSize(HUB_SIZE, HUB_SIZE)
+    hub:SetPoint("CENTER", area, "TOPLEFT", 140, -140)
+    hub:SetFrameLevel(area:GetFrameLevel() + 20)
+    local hubTex = K.texture(hub, "ck_hub", "BORDER")
+    hubTex:SetAllPoints()
+    self.aimed = K.text(hub, 32)
+    self.aimed:SetPoint("CENTER")
+    self.aimed:SetTextColor(unpack(K.C.gold))
+    self.aimed:SetShadowColor(0, 0, 0, 1)
 end
 
--- Keep the end of long messages visible
-local MAX_PREVIEW = 80
-local function previewTail(text)
-    if #text <= MAX_PREVIEW then return text end
-    local start = #text - MAX_PREVIEW + 1
-    while start <= #text do
-        local b = text:byte(start)
-        if b < 128 or b >= 192 then break end
-        start = start + 1
-    end
-    return "..." .. text:sub(start)
-end
-
-local WORD_TAIL = "(" .. CK.WORD_CHARS .. "*)$"
-
-function CK:Refresh()
-    local f = self.frame
-    if not (f and f:IsShown()) then return end
-    if not (self.standalone or self.editBox) then return end
-
-    local text = self:GetText()
-    self.previewBody = self:GetChannelLabel() .. previewTail(text)
-    self:UpdatePreview()
-
-    -- "/re" -> /reload, "/ck l" -> /ck lock: command and at most one argument
-    local n = self.db.settings.numSuggestions
-    local _, spaces = text:gsub(" ", "")
-    self.state.commandMode = text:sub(1, 1) == "/" and spaces <= 1
-    if self.state.commandMode then
-        self.state.suggestions = CK.Predict:QueryCommands(text, n)
-    elseif self:WhisperNameMode() then
-        -- Typing the name of a /w (names may hold a space): suggest people
-        self.state.suggestions = self:QueryNames(text, n)
-    else
-        local prefix = text:match(WORD_TAIL) or ""
-        local ctx = CK.Predict:Context(text:sub(1, #text - #prefix))
-        self.state.suggestions = CK.Predict:Query(prefix, ctx, n)
-    end
-    self.state.selected = 1
-    self:UpdateSuggestions()
-    self:UpdateChannels()
-    self:UpdateRows()
-end
-
----------------------------------------------------------------------------
--- Actions
----------------------------------------------------------------------------
-function CK:SetText(text)
-    self.buffer = text
-    self:Refresh()
-end
-
-function CK:InsertText(text)
-    self:SetText(self:GetText() .. text)
+function M:Reset()
+    self.petal = nil
 end
 
 function CK:TypeSlot(petal, slot)
-    local ch = LAYOUTS[self.state.layer][petal][slot]
-    if not ch then return end
-    self:InsertText(self:DisplayChar(ch))
-    if self.state.shift and not self.state.caps then
-        self.state.shift = false
-        self:UpdateWheel()
+    self:TypeChar(LAYOUTS[self.state.layer][petal][slot])
+end
+
+function M:OnLeftStick(x, y)
+    local len = math.sqrt(x * x + y * y)
+    local petal
+    if len >= LEFT_IN or (self.petal and len >= LEFT_OUT) then
+        petal = sector(x, y, 8) + 1
+    end
+    if petal ~= self.petal then
+        self.petal = petal
+        self:Update()
     end
 end
 
-function CK:Space()
-    self:InsertText(" ")
-end
-
-function CK:Backspace()
-    local text = self:GetText()
-    -- Nothing left to delete in a /w message: back to choosing the name
-    if text == "" and self:GetChatAttr("chatType") == "WHISPER" and not self:GetChatAttr("reply")
-        and self:GetChatAttr("tellTarget") then
-        self.whisperTarget = nil
-        self:SetChatAttr("tellTarget", nil)
-        self:Refresh()
-        return
-    end
-    self:SetText(CK.DropLastChar(text))
-end
-
-function CK:DeleteWord()
-    local text = self:GetText():gsub("%s+$", "")
-    text = text:gsub("[^%s]+$", "")
-    self:SetText(text)
-end
-
-function CK:AcceptSuggestion(index)
-    local word = self.state.suggestions[index or self.state.selected]
-    if not word then return false end
-    if self.state.commandMode then
-        self:SetText(word .. " ")
-        return true
-    end
-    if self:WhisperNameMode() then
-        self:ConfirmWhisperTarget(word)
-        return true
-    end
-    local text = self:GetText()
-    local prefix = text:match(WORD_TAIL) or ""
-    -- No space after an elision: "j'" + "ai"
-    local sep = word:sub(-1) == "'" and "" or " "
-    self:SetText(text:sub(1, #text - #prefix) .. word .. sep)
+-- Right stick flick: the aimed character when a petal is picked, otherwise
+-- the common navigation (see CK:SetRightStick)
+function M:OnFlick(aim)
+    if not self.petal then return false end
+    CK:TypeSlot(self.petal, aim)
     return true
 end
 
-function CK:SelectSuggestion(delta)
-    local n = #self.state.suggestions
-    if n == 0 then return end
-    self.state.selected = (self.state.selected - 1 + delta) % n + 1
-    self:UpdateSuggestions()
-end
+function M:Update()
+    if not self.petals then return end
+    local K = CK.UIKit
+    local state = CK.state
+    local layout = LAYOUTS[state.layer]
+    local baseLevel = self.area:GetFrameLevel() + 1
 
-function CK:NextSuggestion() self:SelectSuggestion(1) end
-function CK:PrevSuggestion() self:SelectSuggestion(-1) end
+    for i, p in ipairs(self.petals) do
+        local selected = self.petal == i
+        local hovered = self.hoverPetal == i
+        local dimmed = self.petal and not selected
+        local size = selected and PETAL_SEL or PETAL_SIZE
+        local scale = selected and 1.06 or 1
+        p:SetSize(size, size)
+        p:SetFrameLevel(baseLevel + (selected and 10 or (hovered and 5 or 0)))
+        local shade = dimmed and 0.45 or 1
+        p.slot:SetVertexColor(shade, shade, shade, 1)
+        p.glow:SetShown(selected or hovered)
+        p.glow:SetAlpha(selected and 1 or 0.5)
 
--- Tap: one capital letter. Double tap: caps lock. Tap again: off.
-function CK:ToggleShift()
-    local state = self.state
-    local now = GetTime()
-    if state.caps then
-        state.caps, state.shift = false, false
-    elseif state.shift and now - state.lastShift < 0.4 then
-        state.caps = true
-    else
-        state.shift = not state.shift
-    end
-    state.lastShift = now
-    self:UpdateWheel()
-end
-
-function CK:ToggleSymbols()
-    self.state.layer = self.state.layer == "letters" and "symbols" or "letters"
-    self:UpdateWheel()
-end
-
--- Channel row: the keyboard keeps its own channel (the game's chat box is
--- never touched) and A sends with the matching command
-local function lastTellTarget()
-    return ChatEdit_GetLastTellTarget and ChatEdit_GetLastTellTarget() or nil
-end
-
-local function lastToldTarget()
-    return ChatEdit_GetLastToldTarget and ChatEdit_GetLastToldTarget() or nil
-end
-
-local function nonEmpty(v)
-    return v ~= nil and v ~= ""
-end
-
-local function inGroup()
-    if IsInGroup then return IsInGroup() end
-    return (GetNumPartyMembers and GetNumPartyMembers() or 0) > 0
-end
-
-local function inRaid()
-    if IsInRaid then return IsInRaid() end
-    return (GetNumRaidMembers and GetNumRaidMembers() or 0) > 0
-end
-
-CK.CHANNEL_LIST = {
-    { key = "s", label = "/s", color = "SAY",
-      available = function() return true end,
-      attrs = function() return { chatType = "SAY" } end },
-    { key = "y", label = "/y", color = "YELL",
-      available = function() return true end,
-      attrs = function() return { chatType = "YELL" } end },
-    { key = "p", label = "/p", color = "PARTY",
-      available = inGroup,
-      attrs = function() return { chatType = "PARTY" } end },
-    { key = "ra", label = "/ra", color = "RAID",
-      available = inRaid,
-      attrs = function() return { chatType = "RAID" } end },
-    { key = "g", label = "/g", color = "GUILD",
-      available = function() return IsInGuild() end,
-      attrs = function() return { chatType = "GUILD" } end },
-    { key = "1", label = "/1", color = "CHANNEL1",
-      available = function() return (GetChannelName(1) or 0) ~= 0 end,
-      attrs = function() return { chatType = "CHANNEL", channelTarget = 1 } end },
-    -- /w: the person the chat was opened for, else the last one you whispered
-    -- /w: the person the chat was opened for, else type "Name message"
-    { key = "w", label = "/w", color = "WHISPER",
-      available = function() return true end,
-      attrs = function(ck)
-          if nonEmpty(ck.whisperTarget) then
-              return { chatType = "WHISPER", tellTarget = ck.whisperTarget }
-          end
-          return { chatType = "WHISPER" }
-      end },
-    -- /r: reply to the last person who whispered you
-    { key = "r", label = "/r", color = "WHISPER",
-      available = function() return nonEmpty(lastTellTarget()) end,
-      attrs = function() return { chatType = "WHISPER", tellTarget = lastTellTarget(), reply = true } end },
-}
-
--- /w without a known target: the message starts with the name
-function CK:WhisperNameMode()
-    local target = self:GetChatAttr("tellTarget")
-    return self:GetChatAttr("chatType") == "WHISPER" and not self:GetChatAttr("reply")
-        and not (target and target ~= "")
-end
-
--- People to whisper: recent correspondents, group, online friends and guild
-function CK:KnownNames()
-    local list, seen = {}, {}
-    local me = UnitName and UnitName("player")
-    local function add(name)
-        if nonEmpty(name) and name ~= me and not seen[name] then
-            seen[name] = true
-            list[#list + 1] = name
+        for j, k in ipairs(p.keys) do
+            k:ClearAllPoints()
+            k:SetPoint("CENTER", p, "CENTER", CHAR_OFF[j][1] * scale, -CHAR_OFF[j][2] * scale)
+            k:SetAlpha(dimmed and 0.45 or 1)
+            local aimed = selected and state.aim == j
+            local mouse = hovered and self.hoverChar == j
+            k.hl:SetShown(aimed)
+            k.hover:SetShown(mouse and not aimed)
+            k.label:SetFont(CK:GetFontPath(), selected and 17 or 16, "")
+            k.label:SetText(CK:DisplayChar(layout[i][j]))
+            if aimed then
+                k.label:SetTextColor(unpack(K.C.dark))
+                k.label:SetShadowColor(0, 0, 0, 0)
+            else
+                k.label:SetShadowColor(0, 0, 0, 0.9)
+                if mouse then
+                    k.label:SetTextColor(1, 1, 1)
+                elseif selected then
+                    k.label:SetTextColor(unpack(K.C.goldActive))
+                else
+                    k.label:SetTextColor(unpack(K.C.gold))
+                end
+            end
         end
     end
-    add(lastTellTarget())
-    add(lastToldTarget())
-    local count = GetNumGroupMembers and GetNumGroupMembers() or 0
-    local unit = inRaid() and "raid" or "party"
-    for i = 1, count do
-        add(UnitName and UnitName(unit .. i))
-    end
-    if C_FriendList and C_FriendList.GetNumFriends then
-        for i = 1, C_FriendList.GetNumFriends() or 0 do
-            local info = C_FriendList.GetFriendInfoByIndex(i)
-            if info and info.connected then add(info.name) end
-        end
-    end
-    if IsInGuild() and GetNumGuildMembers and GetGuildRosterInfo then
-        for i = 1, GetNumGuildMembers() or 0 do
-            local name, _, _, _, _, _, _, _, online = GetGuildRosterInfo(i)
-            if online and name then add(Ambiguate and Ambiguate(name, "guild") or name) end
-        end
-    end
-    return list
-end
 
--- Matching known names; what was typed is offered last so any name can be used
-function CK:QueryNames(prefix, n)
-    local typed = prefix:gsub("^%s+", ""):gsub("%s+$", "")
-    local norm = CK.Normalize(typed)
-    local out, exact = {}, false
-    for _, name in ipairs(self:KnownNames()) do
-        if #out >= n - 1 then break end
-        local nn = CK.Normalize(name)
-        if nn:sub(1, #norm) == norm then
-            out[#out + 1] = name
-            if nn == norm then exact = true end
-        end
-    end
-    if typed ~= "" and not exact then out[#out + 1] = typed end
-    return out
-end
-
--- Pick the /w recipient; the buffer then holds the message
-function CK:ConfirmWhisperTarget(name)
-    name = (name or ""):gsub("^%s+", ""):gsub("%s+$", "")
-    if name == "" then return end
-    self.whisperTarget = name
-    self:SetChatAttr("tellTarget", name)
-    self:SetText("")
-end
-
-function CK:ChannelAvailable(i)
-    local ch = CK.CHANNEL_LIST[i]
-    return ch and ch.available(self) and true or false
-end
-
-local KEY_BY_CHATTYPE = { SAY = "s", YELL = "y", PARTY = "p", RAID = "ra", GUILD = "g", WHISPER = "w" }
-
--- Index of the current channel in CHANNEL_LIST (nil for other channels)
-function CK:CurrentChannelIndex()
-    local chatType = self:GetChatAttr("chatType") or "SAY"
-    local key
-    if self:GetChatAttr("reply") then
-        key = "r"
-    elseif chatType == "CHANNEL" then
-        key = tostring(self:GetChatAttr("channelTarget"))
-    else
-        key = KEY_BY_CHATTYPE[chatType]
-    end
-    for i, ch in ipairs(CK.CHANNEL_LIST) do
-        if ch.key == key then return i end
-    end
-end
-
-function CK:SetChannel(i)
-    if not (self.standalone or self.editBox) or not self:ChannelAvailable(i) then return end
-    -- Remember who the chat was opened for before switching away from them
-    if not self.chatAttrs and self.editBox and self.editBox:GetAttribute("chatType") == "WHISPER" then
-        self.whisperTarget = self.editBox:GetAttribute("tellTarget")
-    end
-    self.chatAttrs = CK.CHANNEL_LIST[i].attrs(self)
-    self:Refresh()
-end
-
--- delta: 1 = next available channel, -1 = previous
-function CK:CycleChannel(delta)
-    delta = delta or 1
-    local n = #CK.CHANNEL_LIST
-    local index = self:CurrentChannelIndex() or (delta > 0 and 0 or n + 1)
-    for step = 1, n do
-        local i = (index - 1 + step * delta) % n + 1
-        if self:ChannelAvailable(i) then
-            self:SetChannel(i)
-            return
-        end
-    end
-end
-
-function CK:NextChannel() self:CycleChannel(1) end
-function CK:PrevChannel() self:CycleChannel(-1) end
-
--- D-pad down / up picks the active row (channels under the wheel, or the
--- suggestions above it); left /
--- right, and the right stick with no petal picked, move inside it
-function CK:SetActiveRow(row)
-    self.state.activeRow = row
-    self:UpdateRows()
-end
-
-function CK:FocusChannels() self:SetActiveRow("channels") end
-function CK:FocusSuggestions() self:SetActiveRow("suggestions") end
-
-function CK:NavPrev()
-    if self.state.activeRow == "channels" then self:PrevChannel() else self:PrevSuggestion() end
-end
-
-function CK:NavNext()
-    if self.state.activeRow == "channels" then self:NextChannel() else self:NextSuggestion() end
-end
-
--- The message is sent by the secure macro button (see Input.lua): calling the
--- chat functions from addon code gets blocked by WoW Forever's gamepad UI.
-local SLASH = {
-    SAY = "/s", YELL = "/y", PARTY = "/p", RAID = "/ra", GUILD = "/g",
-    OFFICER = "/o", INSTANCE_CHAT = "/i", RAID_WARNING = "/rw", EMOTE = "/e",
-}
-
-function CK:BuildMacroText()
-    if not (self.standalone or self.editBox) then return end
-    local text = self:GetText():gsub("[\r\n]", " ")
-    if text:match("^%s*$") then return end
-    if text:sub(1, 1) == "/" then return text end
-
-    local chatType = self:GetChatAttr("chatType") or "SAY"
-    if self:GetChatAttr("reply") then
-        return "/r " .. text
-    elseif chatType == "WHISPER" then
-        -- Sent directly by CK:SendWhisper (names may hold a space)
-        return nil
-    elseif chatType == "CHANNEL" then
-        local target = self:GetChatAttr("channelTarget")
-        return target and ("/" .. target .. " " .. text)
-    end
-    local cmd = SLASH[chatType]
-    return cmd and (cmd .. " " .. text)
-end
-
--- Only reached when the secure button is not over the "Send" button (the
--- keyboard was opened in combat): press Enter instead.
-function CK:Send()
-    self:Print(L.SEND_COMBAT)
-end
-
----------------------------------------------------------------------------
--- Open / close
----------------------------------------------------------------------------
--- The keyboard is not available in combat: sending from the chat while in
--- combat got blocked by the game. It reopens after combat if the chat is open.
-function CK:BlockedByCombat()
-    if not InCombatLockdown() then return false end
-    -- Red message in the middle of the screen, like the game's own errors
-    if UIErrorsFrame then
-        UIErrorsFrame:AddMessage(CK.L.COMBAT_UNAVAILABLE, 1, 0.1, 0.1, 1)
-    else
-        self:Print(CK.L.COMBAT_UNAVAILABLE)
-    end
-    return true
-end
-
-function CK:Open(eb)
-    if self:BlockedByCombat() then return end
-    if not self.frame then self:BuildUI() end
-    -- Keep a message typed with the mouse when the chat is reopened;
-    -- otherwise start from what the chat holds (physical keyboard)
-    if not (self.standalone and self.buffer and self.buffer ~= "") then
-        self.buffer = eb:GetText() or ""
-    end
-    self.standalone = false
-    self.chatAttrs = nil
-    self.whisperTarget = nil
-    self.editBox = eb
-    local state = self.state
-    state.layer, state.shift, state.caps, state.petal, state.aim = "letters", false, false, nil, nil
-    state.activeRow = "suggestions"
-    self.frame:Show()
-    self:EnableButtons()
-    self:UpdateWheel()
-    self:Refresh()
-end
-
-function CK:Close(reason)
-    if self.db.settings.debug and self:IsOpen() then
-        self:Print("close: %s", tostring(reason or "button"))
-    end
-    self.closing = true
-    if self.frame and self.frame:IsShown() then
-        self.frame:Hide()
-        self:DisableButtons()
-    end
-    self.closing = false
-    self.standalone = false
-    self.buffer = nil
-    self.chatAttrs = nil
-    self.editBox = nil
-    self.state.petal = nil
-    self.state.aim = nil
-    self.repeatFn = nil
-end
-
-function CK:IsOpen()
-    return self.frame and self.frame:IsShown()
+    local aimedChar = self.petal and state.aim and layout[self.petal][state.aim]
+    self.aimed:SetShown(aimedChar ~= nil)
+    if aimedChar then self.aimed:SetText(CK:DisplayChar(aimedChar)) end
 end

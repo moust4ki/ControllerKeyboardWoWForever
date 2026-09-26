@@ -1,15 +1,12 @@
 local _, CK = ...
 local L = CK.L
 
--- Layout from the Claude Design spec (Controller Keyboard.dc.html):
--- 340 x 456 panel, coordinates in px from its top-left corner (y goes down).
+-- Common panel (Claude Design spec, Controller Keyboard.dc.html): input bar,
+-- suggestions, the input method's area, channel row, mouse buttons and help
+-- band. Coordinates are in px from the panel's top-left corner (y goes down);
+-- the width and the method area height come from the active input method.
 local TEX = "Interface\\AddOns\\ControllerKeyboard\\textures\\"
-local W, H = 340, 484
-local WHEEL_X, WHEEL_Y, WHEEL_SIZE = 30, 92, 280
-local PETAL_R, PETAL_SIZE, PETAL_SEL = 96, 76, 81
-local HUB_SIZE = 92
--- Character offsets in a petal: left, top, right, bottom (y down)
-local CHAR_OFF = { { -20, 0 }, { 0, -20 }, { 20, 0 }, { 0, 20 } }
+local AREA_Y = 92
 
 local function rgb(hex)
     return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255
@@ -28,7 +25,7 @@ local C = {
 }
 
 ---------------------------------------------------------------------------
--- Helpers
+-- Helpers (shared with the input methods through CK.UIKit)
 ---------------------------------------------------------------------------
 local function texture(parent, file, layer, sub)
     local t = parent:CreateTexture(nil, layer or "ARTWORK", nil, sub or 0)
@@ -109,12 +106,52 @@ local function solid(parent, layer, r, g, b, a)
     return t
 end
 
+CK.UIKit = {
+    TEX = TEX, C = C,
+    texture = texture, place = place, text = text, nineSlice = nineSlice, solid = solid,
+}
+
+---------------------------------------------------------------------------
+-- Input methods
+---------------------------------------------------------------------------
+function CK:GetMethod()
+    return CK.Methods[self.db and self.db.settings.inputMethod] or CK.Methods.wheel
+end
+
+-- Redraw the active input method and the Shift / 123 state
+function CK:UpdateMethod()
+    if not self.frame then return end
+    self:GetMethod():Update()
+    self:UpdateBadge()
+end
+
+-- Switch between the daisywheel and the one-stick keyboard, even while open
+function CK:SetInputMethod(key)
+    if not CK.Methods[key] then return end
+    self.db.settings.inputMethod = key
+    if not self.frame then return end
+    self:GetMethod():Reset()
+    self:Layout()
+    self:UpdateHelp()
+    self:UpdateMethod()
+    if self.bindingsActive then self:EnableButtons() end
+end
+
 ---------------------------------------------------------------------------
 -- Construction
 ---------------------------------------------------------------------------
-local function buildButton(parent, x, y, w, h, label, onClick)
+local ACTIONS = {
+    -- method, label, x and width on the 340 px panel (scaled to the width)
+    { "ToggleShift", "SHIFT", 8, 38 },
+    { "ToggleSymbols", "SYMBOLS", 49, 38 },
+    { "Space", "SPACE", 90, 78 },
+    { "Backspace", "BACKSPACE", 171, 58 },
+    { "Send", "SEND", 232, 71 },
+    { "Close", nil, 306, 26 },
+}
+
+local function buildButton(parent, label, onClick)
     local b = CK.NewFrame("Button", nil, parent)
-    place(b, parent, x, y, w, h)
     b.slice = nineSlice(b, "ck_btn_normal", 128, 32, 6, 6, "ARTWORK")
     b.label = text(b, 11)
     b.label:SetPoint("CENTER", 0, 0)
@@ -141,12 +178,13 @@ local function buildButton(parent, x, y, w, h, label, onClick)
     b:Render()
     return b
 end
+CK.UIKit.buildButton = buildButton
 
 function CK:BuildUI()
     if self.frame then return end
 
     local f = CK.NewFrame("Frame", "ControllerKeyboardFrame", UIParent)
-    f:SetSize(W, H)
+    f:SetSize(340, 484)
     f:SetFrameStrata("DIALOG")
     f:SetClampedToScreen(true)
     f:SetMovable(true)
@@ -175,19 +213,17 @@ function CK:BuildUI()
 
     -- Input bar: channel + text + blinking cursor, mode badge, move grip
     local bar = CK.NewFrame("Frame", nil, f)
-    place(bar, f, 8, 8, 324, 44)
     nineSlice(bar, "ck_bar", 256, 64, 8, 8, "BORDER")
+    f.bar = bar
 
     -- Children of the bars so they draw above the bar textures
     f.preview = text(bar, 13)
-    place(f.preview, f, 16, 14, 218, 32)
     f.preview:SetJustifyH("LEFT")
     f.preview:SetJustifyV("TOP")
     f.preview:SetWordWrap(true)
     if f.preview.SetMaxLines then f.preview:SetMaxLines(2) end
 
     local badge = CK.NewFrame("Frame", nil, f)
-    place(badge, f, 240, 21, 58, 18)
     badge:SetFrameLevel(bar:GetFrameLevel() + 2)
     badge.outline = nineSlice(badge, "ck_btn_normal", 128, 32, 6, 5, "ARTWORK")
     badge.fill = solid(badge, "ARTWORK", C.capsFill[1], C.capsFill[2], C.capsFill[3], 1)
@@ -198,7 +234,6 @@ function CK:BuildUI()
     f.badge = badge
 
     local grip = CK.NewFrame("Button", nil, f)
-    place(grip, f, 302, 17, 26, 26)
     grip:SetFrameLevel(bar:GetFrameLevel() + 2)
     grip.icon = texture(grip, "ck_move", "ARTWORK")
     grip.icon:SetSize(24, 24)
@@ -208,22 +243,44 @@ function CK:BuildUI()
     self:MakeDragHandle(grip)
     f.grip = grip
 
-    -- Channel row, under the wheel: D-pad down to reach it, then < >, or hover
-    -- with the mouse (no click, the game would close the chat)
+    -- Suggestions bar
+    local sbar = CK.NewFrame("Frame", nil, f)
+    f.sbar = sbar
+    f.sbarSlice = nineSlice(sbar, "ck_bar", 256, 64, 8, 8, "BORDER")
+    f.lbGlyph = texture(sbar, nil, "OVERLAY")
+    f.rbGlyph = texture(sbar, nil, "OVERLAY")
+    f.sugg = {}
+    for n = 1, 5 do
+        local b = CK.NewFrame("Button", nil, f)
+        b:SetFrameLevel(sbar:GetFrameLevel() + 2)
+        b.select = nineSlice(b, "ck_select", 128, 32, 10, 10, "ARTWORK")
+        b.label = text(b, 12)
+        b.label:SetPoint("LEFT", 2, 0)
+        b.label:SetPoint("RIGHT", -2, 0)
+        b.label:SetWordWrap(false)
+        b:SetScript("OnClick", function() CK:AcceptSuggestion(n) end)
+        b:Hide()
+        f.sugg[n] = b
+    end
+
+    -- Input methods, each in its own area (only the active one is shown)
+    for _, method in pairs(CK.Methods) do
+        method.area = CK.NewFrame("Frame", nil, f)
+        method.area:SetSize(method.areaWidth, method.height)
+        method:Build(method.area)
+        method.area:Hide()
+    end
+
+    -- Channel row, under the input method: D-pad down to reach it, then < >,
+    -- or hover with the mouse (no click, the game would close the chat)
     local cbar = CK.NewFrame("Frame", nil, f)
-    place(cbar, f, 8, 376, 324, 26)
+    f.cbar = cbar
     f.cbarSlice = nineSlice(cbar, "ck_bar", 256, 64, 8, 8, "BORDER")
-    local chanLeft = texture(cbar, nil, "OVERLAY")
-    place(chanLeft, f, 12, 378, 22, 22)
-    self:SetGlyph(chanLeft, "DPAD_LEFT")
-    local chanRight = texture(cbar, nil, "OVERLAY")
-    place(chanRight, f, 306, 378, 22, 22)
-    self:SetGlyph(chanRight, "DPAD_RIGHT")
-    f.chanLeft, f.chanRight = chanLeft, chanRight
+    f.chanLeft = texture(cbar, nil, "OVERLAY")
+    f.chanRight = texture(cbar, nil, "OVERLAY")
     f.channels = {}
     for i, ch in ipairs(CK.CHANNEL_LIST) do
         local b = CK.NewFrame("Button", nil, f)
-        place(b, f, 38 + 33 * (i - 1), 377, 32, 24)
         b:SetFrameLevel(cbar:GetFrameLevel() + 2)
         b.select = nineSlice(b, "ck_select", 128, 32, 10, 8, "ARTWORK")
         b.label = text(b, 12)
@@ -242,139 +299,27 @@ function CK:BuildUI()
         f.channels[i] = b
     end
 
-    -- Suggestions bar
-    local sbar = CK.NewFrame("Frame", nil, f)
-    place(sbar, f, 8, 58, 324, 28)
-    f.sbarSlice = nineSlice(sbar, "ck_bar", 256, 64, 8, 8, "BORDER")
-    local lb = texture(sbar, nil, "OVERLAY")
-    place(lb, f, 12, 61, 22, 22)
-    self:SetGlyph(lb, "RS")
-    local rb = texture(sbar, nil, "OVERLAY")
-    place(rb, f, 306, 61, 22, 22)
-    self:SetGlyph(rb, "RS")
-
-    f.sugg = {}
-    for n = 0, 4 do
-        local b = CK.NewFrame("Button", nil, f)
-        place(b, f, 38 + 54 * n, 59, 50, 26)
-        b:SetFrameLevel(sbar:GetFrameLevel() + 2)
-        b.select = nineSlice(b, "ck_select", 128, 32, 10, 10, "ARTWORK")
-        b.label = text(b, 12)
-        b.label:SetPoint("LEFT", 2, 0)
-        b.label:SetPoint("RIGHT", -2, 0)
-        b.label:SetWordWrap(false)
-        b:SetScript("OnClick", function() CK:AcceptSuggestion(n + 1) end)
-        b:Hide()
-        f.sugg[n + 1] = b
-    end
-
-    -- Wheel
-    local wheel = CK.NewFrame("Frame", nil, f)
-    place(wheel, f, WHEEL_X, WHEEL_Y, WHEEL_SIZE, WHEEL_SIZE)
-    local disc = texture(wheel, "ck_disc", "BACKGROUND")
-    -- New texture files are only seen after restarting the game (not /reload)
-    if disc:SetTexture(TEX .. "ck_disc") == false then
-        C_Timer.After(2, function() CK:Print(L.TEXTURES_MISSING) end)
-    end
-    disc:SetAllPoints()
-    f.wheel = wheel
-
-    f.petals = {}
-    for i = 1, 8 do
-        local a = (i - 1) * math.pi / 4
-        local px, py = 140 + PETAL_R * math.sin(a), 140 - PETAL_R * math.cos(a)
-        local p = CK.NewFrame("Frame", nil, wheel)
-        p:SetPoint("CENTER", wheel, "TOPLEFT", px, -py)
-        p:SetSize(PETAL_SIZE, PETAL_SIZE)
-        p.slot = texture(p, "ck_slot", "BORDER")
-        p.slot:SetAllPoints()
-        p.glow = texture(p, "ck_slot_glow", "ARTWORK")
-        p.glow:SetAllPoints()
-        p.glow:Hide()
-        p.keys = {}
-        for j = 1, 4 do
-            local k = CK.NewFrame("Button", nil, p)
-            k:SetSize(26, 26)
-            k.hl = texture(k, "ck_hl", "ARTWORK")
-            k.hl:SetSize(32, 32)
-            k.hl:SetPoint("CENTER")
-            k.hl:Hide()
-            k.hover = texture(k, "ck_hl_hover", "ARTWORK")
-            k.hover:SetSize(32, 32)
-            k.hover:SetPoint("CENTER")
-            k.hover:Hide()
-            k.label = text(k, 16)
-            k.label:SetPoint("CENTER", 0, 1)
-            k:SetScript("OnClick", function() CK:TypeSlot(i, j) end)
-            k:SetScript("OnEnter", function()
-                CK.state.hoverPetal, CK.state.hoverChar = i, j
-                CK:UpdateWheel()
-            end)
-            k:SetScript("OnLeave", function()
-                CK.state.hoverPetal, CK.state.hoverChar = nil, nil
-                CK:UpdateWheel()
-            end)
-            p.keys[j] = k
-        end
-        f.petals[i] = p
-    end
-
-    -- Hub: shows the letter aimed with the right stick
-    local hub = CK.NewFrame("Frame", nil, wheel)
-    hub:SetSize(HUB_SIZE, HUB_SIZE)
-    hub:SetPoint("CENTER", wheel, "TOPLEFT", 140, -140)
-    hub:SetFrameLevel(wheel:GetFrameLevel() + 20)
-    local hubTex = texture(hub, "ck_hub", "BORDER")
-    hubTex:SetAllPoints()
-    f.aimed = text(hub, 32)
-    f.aimed:SetPoint("CENTER")
-    f.aimed:SetTextColor(unpack(C.gold))
-    f.aimed:SetShadowColor(0, 0, 0, 1)
-
     -- Mouse / Steam Controller actions
-    local actions = {
-        { "ToggleShift", L.SHIFT, 8, 38 },
-        { "ToggleSymbols", L.SYMBOLS, 49, 38 },
-        { "Space", L.SPACE, 90, 78 },
-        { "Backspace", L.BACKSPACE, 171, 58 },
-        { "Send", L.SEND, 232, 71 },
-        { "Close", "X", 306, 26 },
-    }
     f.actions = {}
-    for _, a in ipairs(actions) do
+    for _, a in ipairs(ACTIONS) do
         local method = a[1]
-        f.actions[method] = buildButton(f, a[3], 406, a[4], 26, a[2], function() CK[method](CK) end)
+        f.actions[method] = buildButton(f, a[2] and L[a[2]] or "X", function() CK[method](CK) end)
     end
 
-    -- Help band: gamepad glyphs. In its own frame so it moves up when the
-    -- mouse buttons are hidden (see ApplyLayout)
+    -- Help band: gamepad glyphs. In its own frame so it follows the layout
     local helpFrame = CK.NewFrame("Frame", nil, f)
-    helpFrame:SetSize(W, 48)
     f.help = helpFrame
-    local band = solid(helpFrame, "BACKGROUND", 0, 0, 0, 0.35)
-    place(band, helpFrame, 0, 4, W, 40)
-    local filet1 = texture(helpFrame, "ck_filet", "BORDER")
-    place(filet1, helpFrame, 0, 0, W, 8)
-    local filet2 = texture(helpFrame, "ck_filet", "BORDER")
-    place(filet2, helpFrame, 0, 40, W, 8)
-    local help = {
-        { "LS", L.HELP_PETAL }, { "RS", L.HELP_LETTER }, { "LB", L.BACKSPACE }, { "RB", L.SPACE },
-        { "LT", L.SHIFT }, { "RT", L.SYMBOLS }, { "DPAD_DOWN", L.HELP_CHANNEL }, { "DPAD_LR", L.HELP_PICK },
-    }
-    f.helpGlyphs = {}
-    for n, h in ipairs(help) do
-        local col, row = (n - 1) % 4, math.floor((n - 1) / 4)
-        local x, y = 10 + col * 80, 8 + row * 17
+    f.helpBand = solid(helpFrame, "BACKGROUND", 0, 0, 0, 0.35)
+    f.helpFilet1 = texture(helpFrame, "ck_filet", "BORDER")
+    f.helpFilet2 = texture(helpFrame, "ck_filet", "BORDER")
+    f.helpEntries = {}
+    for n = 1, 8 do
         local g = texture(helpFrame, nil, "ARTWORK")
-        place(g, helpFrame, x, y, 16, 16)
-        self:SetGlyph(g, h[1])
-        f.helpGlyphs[#f.helpGlyphs + 1] = { tex = g, key = h[1] }
         local label = text(helpFrame, 11)
         label:SetPoint("LEFT", g, "RIGHT", 3, 0)
-        label:SetText(h[2])
         label:SetTextColor(unpack(C.gold))
+        f.helpEntries[n] = { tex = g, label = label }
     end
-    f.lbGlyph, f.rbGlyph = lb, rb
 
     -- Blinking cursor (0.53 s on / off)
     f:HookScript("OnShow", function()
@@ -390,10 +335,12 @@ function CK:BuildUI()
             CK:UpdatePreview()
         end
     end)
+    self:Layout()
+    self:UpdateHelp()
     self:RestorePosition()
     self:UpdateLock()
-    self:ApplyLayout()
     self:UpdateRows()
+    self:UpdateMethod()
 
     -- Debug: report when something else than CK:Close hides the keyboard
     f:HookScript("OnHide", function()
@@ -403,18 +350,86 @@ function CK:BuildUI()
     end)
 end
 
--- Mouse buttons row (Shift, 123, Space, Delete, Send, X) is optional: when
--- hidden, the help band moves up and the panel gets shorter
-local ACTIONS_HEIGHT = 32
-
-function CK:ApplyLayout()
+---------------------------------------------------------------------------
+-- Layout: follows the active method's size and the mouse buttons option
+---------------------------------------------------------------------------
+function CK:Layout()
     local f = self.frame
     if not f then return end
+    local method = self:GetMethod()
+    local w, mh = method.width, method.height
+    f:SetWidth(w)
+
+    place(f.bar, f, 8, 8, w - 16, 44)
+    place(f.preview, f, 16, 14, w - 122, 32)
+    place(f.badge, f, w - 100, 21, 58, 18)
+    place(f.grip, f, w - 38, 17, 26, 26)
+
+    place(f.sbar, f, 8, 58, w - 16, 28)
+    place(f.lbGlyph, f, 12, 61, 22, 22)
+    place(f.rbGlyph, f, w - 34, 61, 22, 22)
+    local step = (w - 76) / #f.sugg
+    for n, b in ipairs(f.sugg) do
+        place(b, f, 38 + step * (n - 1), 59, step - 4, 26)
+    end
+
+    for _, m in pairs(CK.Methods) do m.area:SetShown(m == method) end
+    place(method.area, f, (w - method.areaWidth) / 2, AREA_Y, method.areaWidth, mh)
+
+    local cy = AREA_Y + mh + 4
+    place(f.cbar, f, 8, cy, w - 16, 26)
+    place(f.chanLeft, f, 12, cy + 2, 22, 22)
+    place(f.chanRight, f, w - 34, cy + 2, 22, 22)
+    local cstep = (w - 76) / #f.channels
+    for i, b in ipairs(f.channels) do
+        place(b, f, 38 + cstep * (i - 1), cy + 1, cstep - 1, 24)
+    end
+
+    -- Mouse buttons row is optional: when hidden, the help band moves up
     local show = self.db.settings.showActions
-    for _, b in pairs(f.actions) do b:SetShown(show) end
-    place(f.help, f, 0, show and 434 or 434 - ACTIONS_HEIGHT)
-    f:SetHeight(show and H or H - ACTIONS_HEIGHT)
+    local ay = cy + 30
+    local sx = (w - 16) / 324
+    for _, a in ipairs(ACTIONS) do
+        local b = f.actions[a[1]]
+        place(b, f, 8 + (a[3] - 8) * sx, ay, a[4] * sx, 26)
+        b:SetShown(show)
+    end
+
+    local hy = show and (ay + 28) or (cy + 26)
+    place(f.help, f, 0, hy, w, 48)
+    place(f.helpBand, f.help, 0, 4, w, 40)
+    place(f.helpFilet1, f.help, 0, 0, w, 8)
+    place(f.helpFilet2, f.help, 0, 40, w, 8)
+    local col = (w - 20) / 4
+    for n, e in ipairs(f.helpEntries) do
+        place(e.tex, f.help, 10 + ((n - 1) % 4) * col, 8 + math.floor((n - 1) / 4) * 17, 16, 16)
+    end
+    f:SetHeight(hy + 50)
     self:PositionSendButton()
+end
+
+-- Kept for the options / older callers: the mouse buttons row changed
+function CK:ApplyLayout()
+    self:Layout()
+end
+
+-- Help band: the method's own buttons, then the D-pad (common to all)
+function CK:UpdateHelp()
+    local f = self.frame
+    if not f then return end
+    local list = self:GetMethod():Help()
+    list[#list + 1] = { "DPAD_DOWN", L.HELP_CHANNEL }
+    list[#list + 1] = { "DPAD_LR", L.HELP_PICK }
+    for n, e in ipairs(f.helpEntries) do
+        local h = list[n]
+        e.key = h and h[1]
+        e.tex:SetShown(h ~= nil)
+        e.label:SetShown(h ~= nil)
+        if h then
+            self:SetGlyph(e.tex, h[1])
+            e.label:SetText(h[2])
+        end
+    end
 end
 
 -- Refresh the gamepad glyphs (after changing the glyph style)
@@ -422,7 +437,9 @@ function CK:UpdateGlyphs()
     local f = self.frame
     if not f then return end
     self:UpdateRows()
-    for _, g in ipairs(f.helpGlyphs) do self:SetGlyph(g.tex, g.key) end
+    for _, e in ipairs(f.helpEntries) do
+        if e.key then self:SetGlyph(e.tex, e.key) end
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -497,58 +514,10 @@ function CK:UpdatePreview()
     f.preview:SetText((self.previewBody or "") .. cursor)
 end
 
-function CK:UpdateWheel()
+-- Mode badge (MAJ / 123 outlined, caps lock filled) and mouse buttons state
+function CK:UpdateBadge()
     local f = self.frame
-    if not f then return end
     local state = self.state
-    local layout = CK.LAYOUTS[state.layer]
-    local baseLevel = f.wheel:GetFrameLevel() + 1
-
-    for i, p in ipairs(f.petals) do
-        local selected = state.petal == i
-        local hovered = state.hoverPetal == i
-        local dimmed = state.petal and not selected
-        local size = selected and PETAL_SEL or PETAL_SIZE
-        local scale = selected and 1.06 or 1
-        p:SetSize(size, size)
-        p:SetFrameLevel(baseLevel + (selected and 10 or (hovered and 5 or 0)))
-        local shade = dimmed and 0.45 or 1
-        p.slot:SetVertexColor(shade, shade, shade, 1)
-        p.glow:SetShown(selected or hovered)
-        p.glow:SetAlpha(selected and 1 or 0.5)
-
-        for j, k in ipairs(p.keys) do
-            k:ClearAllPoints()
-            k:SetPoint("CENTER", p, "CENTER", CHAR_OFF[j][1] * scale, -CHAR_OFF[j][2] * scale)
-            k:SetAlpha(dimmed and 0.45 or 1)
-            local aimed = selected and state.aim == j
-            local mouse = hovered and state.hoverChar == j
-            k.hl:SetShown(aimed)
-            k.hover:SetShown(mouse and not aimed)
-            k.label:SetFont(CK:GetFontPath(), selected and 17 or 16, "")
-            k.label:SetText(self:DisplayChar(layout[i][j]))
-            if aimed then
-                k.label:SetTextColor(unpack(C.dark))
-                k.label:SetShadowColor(0, 0, 0, 0)
-            else
-                k.label:SetShadowColor(0, 0, 0, 0.9)
-                if mouse then
-                    k.label:SetTextColor(1, 1, 1)
-                elseif selected then
-                    k.label:SetTextColor(unpack(C.goldActive))
-                else
-                    k.label:SetTextColor(unpack(C.gold))
-                end
-            end
-        end
-    end
-
-    -- Hub: the aimed letter
-    local aimedChar = state.petal and state.aim and layout[state.petal][state.aim]
-    f.aimed:SetShown(aimedChar ~= nil)
-    if aimedChar then f.aimed:SetText(self:DisplayChar(aimedChar)) end
-
-    -- Mode badge: MAJ / 123 outlined, caps lock filled
     local badge = f.badge
     local label
     if state.caps then

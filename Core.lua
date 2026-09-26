@@ -177,6 +177,7 @@ local DEFAULTS = {
     scale = 1,
     invertY = false,
     locked = true,
+    inputMethod = "wheel",   -- "wheel" (daisywheel) or "stick" (one-stick keyboard)
     showActions = true,
     font = "friz",
     glyphStyle = "xbox",

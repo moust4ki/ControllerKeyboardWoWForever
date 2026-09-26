@@ -1,39 +1,31 @@
 local _, CK = ...
 
--- Left stick picks a petal, right stick flicks toward the letter to type.
--- With the left stick centered, the right stick drives the suggestions.
---
--- A (send), B (back), X (chat channels), Y (tab settings), Start and Select
--- belong to the game's own gamepad chat UI and are never bound here. It also
--- avoids closing the chat from addon code, which WoW Forever's gamepad UI
--- forbids (SetPreferredGamepadInteractTarget).
-local BUTTON_ACTIONS = {
-    PADLSHOULDER = "Backspace",
-    PADRSHOULDER = "Space",
-    PADLTRIGGER = "ToggleShift",
-    PADRTRIGGER = "ToggleSymbols",
+-- Pad buttons. Each input method has its own table (CK.Methods[x].buttons);
+-- these ones are common. A sends through the secure macro button. B empties
+-- the message while there is one; with an empty message it is left to the
+-- game's gamepad UI, which closes the chat (the addon must never do it).
+-- X, Y, Start and Select always belong to the game.
+local COMMON_ACTIONS = {
     PADDLEFT = "NavPrev",
     PADDRIGHT = "NavNext",
     PADDUP = "FocusSuggestions",
     PADDDOWN = "FocusChannels",
-    PADLSTICK = "ToggleSymbols",
     PADRSTICK = "AcceptSuggestion",
 }
 
 -- Once a mouse click closed the chat, the game's chat UI is gone: A sends
--- through the secure macro button and B closes the wheel.
+-- through the secure macro button and B closes the keyboard.
 local STANDALONE_ACTIONS = { PAD2 = "Close" }
 
--- Right stick directions -> petal slot (1 left, 2 up, 3 right, 4 down)
+-- Right stick directions -> slot (1 left, 2 up, 3 right, 4 down)
 local SLOT_BY_SECTOR = { [0] = 2, [1] = 3, [2] = 4, [3] = 1 }
--- Right stick with no petal selected
+-- Right stick navigation (when the method does not use the flick itself)
 local NEUTRAL_FLICK = { "NavPrev", "AcceptSuggestion", "NavNext", "Backspace" }
 
 -- Actions repeated while the button (or stick) is held
 local REPEATABLE = { Backspace = true, NavPrev = true, NavNext = true }
 local REPEAT_DELAY, REPEAT_RATE = 0.45, 0.08
 
-local LEFT_IN, LEFT_OUT = 0.5, 0.35      -- petal selection deadzone (with hysteresis)
 local RIGHT_AIM, RIGHT_FIRE, RIGHT_RESET = 0.3, 0.75, 0.4
 
 local function sector(x, y, count)
@@ -44,15 +36,7 @@ end
 
 function CK:SetLeftStick(x, y)
     if self.db.settings.invertY then y = -y end
-    local len = math.sqrt(x * x + y * y)
-    local petal
-    if len >= LEFT_IN or (self.state.petal and len >= LEFT_OUT) then
-        petal = sector(x, y, 8) + 1
-    end
-    if petal ~= self.state.petal then
-        self.state.petal = petal
-        self:UpdateWheel()
-    end
+    self:GetMethod():OnLeftStick(x, y)
 end
 
 function CK:SetRightStick(x, y)
@@ -66,7 +50,7 @@ function CK:SetRightStick(x, y)
     end
     if aim ~= state.aim then
         state.aim = aim
-        self:UpdateWheel()
+        self:UpdateMethod()
     end
 
     if self.rightFired then
@@ -76,9 +60,8 @@ function CK:SetRightStick(x, y)
         end
     elseif aim and len >= RIGHT_FIRE then
         self.rightFired = true
-        if state.petal then
-            self:TypeSlot(state.petal, aim)
-        else
+        local method = self:GetMethod()
+        if not (method.OnFlick and method:OnFlick(aim)) then
             self:RunAction(NEUTRAL_FLICK[aim], "RIGHTSTICK")
         end
     end
@@ -93,20 +76,32 @@ function CK:RunAction(action, button)
     end
 end
 
+function CK:ButtonAction(button)
+    if button == "PAD2" then
+        return self.standalone and STANDALONE_ACTIONS.PAD2 or "CancelMessage"
+    end
+    return self:GetMethod().buttons[button] or COMMON_ACTIONS[button]
+end
+
 function CK:OnPadButton(button)
     if self.db.settings.debug then
         self:Print("button %s", tostring(button))
     end
-    local action = BUTTON_ACTIONS[button] or (self.standalone and STANDALONE_ACTIONS[button])
+    self.padDown = self.padDown or {}
+    self.padDown[button] = true
+    local action = self:ButtonAction(button)
     if action then
         self:RunAction(action, button)
     end
 end
 
 function CK:OnPadButtonUp(button)
+    if self.padDown then self.padDown[button] = nil end
     if button == self.repeatButton then
         self.repeatFn = nil
     end
+    -- B released after emptying the message: now leave it to the game
+    if button == "PAD2" then self:UpdateCancelBinding() end
 end
 
 function CK:OnUpdate()
@@ -168,9 +163,16 @@ end
 local SEND_BUTTON = "ControllerKeyboardSendButton"
 
 function CK:CreateButtons()
-    local keys = {}
-    for key in pairs(BUTTON_ACTIONS) do keys[#keys + 1] = key end
-    for key in pairs(STANDALONE_ACTIONS) do keys[#keys + 1] = key end
+    -- One hidden button per pad button any method may use, plus B
+    local keys, seen = {}, {}
+    local function add(key)
+        if not seen[key] then seen[key] = true; keys[#keys + 1] = key end
+    end
+    for key in pairs(COMMON_ACTIONS) do add(key) end
+    for _, method in pairs(CK.Methods) do
+        for key in pairs(method.buttons) do add(key) end
+    end
+    add("PAD2")
     for _, key in ipairs(keys) do
         local b = CK.NewFrame("Button", bindingButtonName(key))
         b:SetSize(1, 1)
@@ -274,24 +276,44 @@ function CK:EnableButtons()
     local f = self.frame
     if InCombatLockdown() then return end
     ClearOverrideBindings(f)
-    for key in pairs(BUTTON_ACTIONS) do
+    self.cancelBound = false
+    for key in pairs(COMMON_ACTIONS) do
+        SetOverrideBindingClick(f, true, key, bindingButtonName(key))
+    end
+    for key in pairs(self:GetMethod().buttons) do
         SetOverrideBindingClick(f, true, key, bindingButtonName(key))
     end
     -- A sends the keyboard's buffer (the chat edit box stays empty)
     SetOverrideBindingClick(f, true, "PAD1", SEND_BUTTON)
     if self.standalone then
-        for key in pairs(STANDALONE_ACTIONS) do
-            SetOverrideBindingClick(f, true, key, bindingButtonName(key))
-        end
+        SetOverrideBindingClick(f, true, "PAD2", bindingButtonName("PAD2"))
     end
     self.bindingsActive = true
+    self:UpdateCancelBinding()
     self:PositionSendButton()
     self.sendButton:Show()
+end
+
+-- B is bound only while the message holds text: B then empties it, and the
+-- next B (empty message) goes to the game, which closes the chat. Changed on
+-- release so the game never sees the second half of the same press.
+function CK:UpdateCancelBinding()
+    if not self.bindingsActive or self.standalone or InCombatLockdown() then return end
+    if self.padDown and self.padDown.PAD2 then return end
+    local want = self:GetText() ~= ""
+    if want == self.cancelBound then return end
+    if want then
+        SetOverrideBindingClick(self.frame, true, "PAD2", bindingButtonName("PAD2"))
+    else
+        SetOverrideBinding(self.frame, true, "PAD2", nil)
+    end
+    self.cancelBound = want
 end
 
 function CK:DisableButtons()
     if not self.bindingsActive or InCombatLockdown() then return end
     ClearOverrideBindings(self.frame)
+    self.cancelBound = false
     self.sendButton:Hide()
     self.sendButton:SetAttribute("macrotext", "")
     self.bindingsActive = false

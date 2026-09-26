@@ -152,7 +152,7 @@ function CK:RegisterOptions()
         local i = (indexOf(CK.FONTS, s.font) - 1 + d) % #CK.FONTS + 1
         s.font = CK.FONTS[i].key
         CK:ApplyFont()
-        CK:UpdateWheel()
+        CK:UpdateMethod()
     end)
     selector(L.OPT_GLYPHS, #GLYPH_STYLES, function() return GLYPH_STYLES[indexOf(GLYPH_STYLES, s.glyphStyle)].name end, function(d)
         local i = (indexOf(GLYPH_STYLES, s.glyphStyle) - 1 + d) % #GLYPH_STYLES + 1
