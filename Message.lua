@@ -382,6 +382,7 @@ function CK:ConfirmWhisperTarget(name)
     if name == "" then return end
     self.whisperTarget = name
     self:SetChatAttr("tellTarget", name)
+    self:ApplyStickyChannel()
     self:SetText("")
 end
 
@@ -415,7 +416,25 @@ function CK:SetChannel(i)
         self.whisperTarget = self.editBox:GetAttribute("tellTarget")
     end
     self.chatAttrs = CK.CHANNEL_LIST[i].attrs(self)
+    self:ApplyStickyChannel()
     self:Refresh()
+end
+
+-- Make the chosen channel the chat's own "sticky" channel, as typing /p in the
+-- chat would: every following message goes there, including text typed by a
+-- physical keyboard or a dictation tool. Only the channel attributes are set
+-- (never the chat's text, which would taint the gamepad UI), out of combat.
+-- /w waits until its recipient is known.
+function CK:ApplyStickyChannel()
+    if not self.db.settings.stickyChannel or InCombatLockdown() then return end
+    local eb = self.editBox or self.lastEditBox or ChatFrame1EditBox
+    local attrs = self.chatAttrs
+    if not (eb and attrs and attrs.chatType) then return end
+    if attrs.chatType == "WHISPER" and not (attrs.tellTarget and attrs.tellTarget ~= "") then return end
+    eb:SetAttribute("chatType", attrs.chatType)
+    eb:SetAttribute("stickyType", attrs.chatType)
+    if attrs.chatType == "WHISPER" then eb:SetAttribute("tellTarget", attrs.tellTarget) end
+    if attrs.chatType == "CHANNEL" then eb:SetAttribute("channelTarget", attrs.channelTarget) end
 end
 
 -- delta: 1 = next available channel, -1 = previous
@@ -515,6 +534,7 @@ function CK:Open(eb)
     self.chatAttrs = nil
     self.whisperTarget = nil
     self.editBox = eb
+    self.lastEditBox = eb
     local state = self.state
     state.layer, state.shift, state.caps, state.aim = "letters", false, false, nil
     state.activeRow = "suggestions"

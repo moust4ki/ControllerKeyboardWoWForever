@@ -92,8 +92,12 @@ colors. You have to reach for it, so you never switch by mistake: press **D-pad 
 active row, then **D-pad ← →** (or the right stick in the daisywheel); **D-pad ↑** goes back to the
 suggestions. With the mouse, simply **hover** a channel (no click needed). The message is then sent
 there with A. Unavailable channels are greyed out and skipped (party / raid / guild you are not in,
-`/r` with nobody to reply to). The game's chat box is never touched, so switching never loses the
-chat focus.
+`/r` with nobody to reply to). Switching never loses the chat focus.
+
+The chosen channel also becomes the chat's own sticky channel, as if you had typed `/p` in the
+game: every following message goes there, including text typed on a physical keyboard or by a
+dictation tool, and the keyboard reopens on it. Only the channel is set, never the chat's text, and
+never in combat; this can be turned off in the options.
 
 With `/w`, first pick the recipient: type the name (names may contain a space) and insert a
 suggestion (recent correspondents, group members, online friends, guild) or press A to confirm what

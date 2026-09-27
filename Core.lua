@@ -76,6 +76,7 @@ if GetLocale() == "frFR" then
     L.SIZE_LARGE = "Grande"
     L.SIZE_XL = "Très grande"
     L.OPT_ACTIONS = "Afficher les boutons souris (Maj, 123, Espace, Effacer, Envoyer, X)"
+    L.OPT_STICKY = "Le canal choisi devient celui du chat (comme taper /p en jeu)"
     L.OPT_LOOK = "Apparence"
     L.OPT_FONT = "Police"
     L.OPT_GLYPHS = "Boutons affichés"
@@ -178,6 +179,7 @@ else
     L.SIZE_LARGE = "Large"
     L.SIZE_XL = "Extra large"
     L.OPT_ACTIONS = "Show the mouse buttons (Shift, 123, Space, Delete, Send, X)"
+    L.OPT_STICKY = "The chosen channel becomes the chat's own (like typing /p in game)"
     L.OPT_LOOK = "Look"
     L.OPT_FONT = "Font"
     L.OPT_GLYPHS = "Button glyphs"
@@ -240,6 +242,7 @@ local DEFAULTS = {
     magnet = "medium",       -- split keyboard: none / weak / medium / strong
     showLine = true,         -- split keyboard: lines from the centers to the cursors
     showActions = true,
+    stickyChannel = true,    -- the channel row also sets the chat's own sticky channel
     font = "friz",
     glyphStyle = "xbox",
     gameGlyphs = true,

@@ -35,7 +35,9 @@ switched at any time in the options.
   - suggestions as soon as the chat opens, before you type anything.
 - **Learning**: your words, message starters and word sequences are remembered, locally.
 - **Chat channel row**: `/s`, `/y`, `/p`, `/ra`, `/g`, `/1`, `/w`, `/r` in their channel colors,
-  switched with the D-pad or by hovering with the mouse. Unavailable channels are greyed out.
+  switched with the D-pad or by hovering with the mouse. Unavailable channels are greyed out. The
+  chosen channel sticks for the whole chat, like typing `/p` in game, so a physical keyboard or a
+  dictation tool writes there too.
 - **Whispers**: pick the recipient from suggested names (recent correspondents, group, friends,
   guild) or type any name, including names with a space, then write the message.
 - **Slash command autocomplete**: `/` suggests `/reload`, `/p`, `/ra`, `/g`, `/w`, then your most

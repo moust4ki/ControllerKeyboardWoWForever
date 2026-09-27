@@ -249,6 +249,7 @@ function CK:RegisterOptions()
         CK.Predict:Load()
     end)
     check(L.OPT_LEARN, function() return s.learn end, function(v) s.learn = v end)
+    check(L.OPT_STICKY, function() return s.stickyChannel end, function(v) s.stickyChannel = v end)
 
     -- Actions
     y = y - 10
