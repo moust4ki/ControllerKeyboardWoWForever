@@ -10,7 +10,7 @@ local COMMON_ACTIONS = {
     PADDRIGHT = "NavNext",
     PADDUP = "FocusSuggestions",
     PADDDOWN = "FocusChannels",
-    PADRSTICK = "AcceptSuggestion",
+    PADRSTICK = "RowSelect",
 }
 
 -- Once a mouse click closed the chat, the game's chat UI is gone: A sends
@@ -20,7 +20,7 @@ local STANDALONE_ACTIONS = { PAD2 = "Close" }
 -- Right stick directions -> slot (1 left, 2 up, 3 right, 4 down)
 local SLOT_BY_SECTOR = { [0] = 2, [1] = 3, [2] = 4, [3] = 1 }
 -- Right stick navigation (when the method does not use the flick itself)
-local NEUTRAL_FLICK = { "NavPrev", "AcceptSuggestion", "NavNext", "Backspace" }
+local NEUTRAL_FLICK = { "NavPrev", "RowSelect", "NavNext", "Backspace" }
 
 -- Actions repeated while the button (or stick) is held
 local REPEATABLE = { Backspace = true, NavPrev = true, NavNext = true }

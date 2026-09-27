@@ -59,7 +59,7 @@ switched at any time in the options.
 | B | clear the message (on an empty message: the game's back, closes the chat) |
 | D-pad ↓ / ↑ | channel row / suggestions row |
 | D-pad ← → | move in the active row |
-| Right stick click | insert the suggestion |
+| Right stick click | insert the suggestion (on the channel row: confirm the channel) |
 
 X, Y, Start and Select stay with the game's gamepad UI.
 

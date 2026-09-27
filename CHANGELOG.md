@@ -2,6 +2,8 @@
 
 ## 0.4.1
 
+- Right stick click on the channel row confirms the channel and goes back to the suggestions, without
+  inserting a suggestion.
 - The channel picked in the channel row becomes the chat's own sticky channel, as if `/p` had been
   typed in the game: following messages go there too, including text from a physical keyboard or a
   dictation tool (Handy…), and the keyboard reopens on it. Option to turn it off.

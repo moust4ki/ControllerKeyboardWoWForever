@@ -465,6 +465,17 @@ end
 function CK:FocusChannels() self:SetActiveRow("channels") end
 function CK:FocusSuggestions() self:SetActiveRow("suggestions") end
 
+-- Right stick click (or flick up): on the channel row, confirm the channel
+-- (already applied while moving) and go back to the suggestions, without
+-- inserting anything; on the suggestions row, insert the selected one
+function CK:RowSelect()
+    if self.state.activeRow == "channels" then
+        self:SetActiveRow("suggestions")
+    else
+        self:AcceptSuggestion()
+    end
+end
+
 function CK:NavPrev()
     if self.state.activeRow == "channels" then self:PrevChannel() else self:PrevSuggestion() end
 end

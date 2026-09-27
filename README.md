@@ -29,7 +29,7 @@ Choose the input method in the options or with `/ck mode wheel|stick`.
 | B | empty the message; with an empty message, B is the game's own and closes the chat |
 | D-pad ↓ / ↑ | go to the channel row / back to the suggestions |
 | D-pad ← → | move in the active row: suggestion, or chat channel |
-| Right stick click | insert the suggestion |
+| Right stick click | suggestions row: insert the suggestion; channel row: confirm the channel and go back to the suggestions |
 
 **X** (channels), **Y** (tab settings), **Start** and **Select** stay with the game's gamepad UI.
 
