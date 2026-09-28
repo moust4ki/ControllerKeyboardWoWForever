@@ -31,20 +31,10 @@ end
 -- Only plain check buttons, "< value >" selectors and buttons: no dropdowns or
 -- StaticPopups, which go through WoW Forever's gamepad UI and can be blocked.
 ---------------------------------------------------------------------------
-local LANGS = {
-    { key = "fr", name = "Français" },
-    { key = "en", name = "English" },
-    { key = "both", name = L.LANG_BOTH },
-}
 local GLYPH_STYLES = {
     { key = "xbox", name = "Xbox (A B X Y)" },
     { key = "playstation", name = "PlayStation" },
 }
-
-local function currentLang(s)
-    if s.dicts.frFR and s.dicts.enUS then return "both" end
-    return s.dicts.enUS and "en" or "fr"
-end
 
 local function indexOf(list, key)
     for i, item in ipairs(list) do
@@ -189,7 +179,11 @@ function CK:RegisterOptions()
         local i = (indexOf(METHODS, s.inputMethod) - 1 + d) % #METHODS + 1
         CK:SetInputMethod(METHODS[i].key)
     end)
-    local LAYOUTS = { { key = "azerty", name = "AZERTY" }, { key = "qwerty", name = "QWERTY" } }
+    local LAYOUTS = {
+        { key = "azerty", name = "AZERTY" }, { key = "qwerty", name = "QWERTY" },
+        { key = "qwertz", name = "QWERTZ" }, { key = "qwerty_es", name = "QWERTY (español)" },
+        { key = "qwerty_it", name = "QWERTY (italiano)" },
+    }
     selector(L.OPT_LAYOUT, #LAYOUTS, function() return LAYOUTS[indexOf(LAYOUTS, s.kbLayout)].name end, function(d)
         local i = (indexOf(LAYOUTS, s.kbLayout) - 1 + d) % #LAYOUTS + 1
         s.kbLayout = LAYOUTS[i].key
@@ -241,12 +235,9 @@ function CK:RegisterOptions()
     -- Prediction
     y = y - 6
     header(L.OPT_PREDICTION)
-    selector(L.OPT_LANG, #LANGS, function() return LANGS[indexOf(LANGS, currentLang(s))].name end, function(d)
-        local i = (indexOf(LANGS, currentLang(s)) - 1 + d) % #LANGS + 1
-        local key = LANGS[i].key
-        s.dicts.frFR = key == "fr" or key == "both"
-        s.dicts.enUS = key == "en" or key == "both"
-        CK.Predict:Load()
+    selector(L.OPT_LANG, #CK.LANGUAGES, function() return CK:GetLanguage().name end, function(d)
+        local i = (indexOf(CK.LANGUAGES, s.lang) - 1 + d) % #CK.LANGUAGES + 1
+        CK:SetLanguage(CK.LANGUAGES[i].key)
     end)
     check(L.OPT_LEARN, function() return s.learn end, function(v) s.learn = v end)
     check(L.OPT_STICKY, function() return s.stickyChannel end, function(v) s.stickyChannel = v end)

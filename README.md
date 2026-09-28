@@ -7,6 +7,12 @@ Everything is also clickable with the mouse, so it works with the Steam Controll
 The look follows WoW Forever's gamepad UI: bronze and gold rims, Friz Quadrata font, the game's own
 button icons.
 
+## Languages
+
+The interface is translated into English, French, German, Spanish and Italian, following the game
+client's language. Suggestions and keyboard layout also follow it by default: a German client gets
+QWERTZ and the German dictionary.
+
 ## Installation
 
 1. Download the repository (*Code > Download ZIP*) and extract it, or grab the zip from CurseForge.
@@ -57,8 +63,9 @@ Choose the input method in the options or with `/ck mode wheel|stick`.
 
 ### Split keyboard
 
-A full AZERTY or QWERTY keyboard (option, `/ck layout azerty|qwerty`), with a numbers / accents /
-symbols layer (é è ê à â ç ù û î ô ë ï œ…), cut in two halves: the **left stick** drives a cursor on
+A full keyboard (AZERTY, QWERTY, QWERTZ, Spanish QWERTY with ñ or Italian QWERTY; option or
+`/ck layout azerty|qwerty|qwertz|es|it`), with a numbers / accents / symbols layer whose accents follow
+the language (é è à ç… / ä ö ü ß / á é í ó ú ñ ¿ ¡ / à è é ì ò ù), cut in two halves: the **left stick** drives a cursor on
 the left half (columns 1-5), the **right stick** on the right half (columns 6-10). Each stick's
 **tilt is its cursor's position** around the center of its half: released, the cursor is at the
 center; push fully to reach an edge or a corner. The keys near the middle of the keyboard are at the
@@ -105,8 +112,9 @@ you typed; then type the message. Deleting on an empty message goes back to the 
 
 ## Prediction
 
-- **Word completion**: English and French dictionaries of 12,000 words each, plus WoW slang (lfg,
-  heal, dungeon…). Defaults to the client's language, changeable in the options. Accents are ignored
+- **Word completion**: English, French, German, Spanish and Italian dictionaries of 12,000 words
+  each, plus WoW slang (lfg, heal, dungeon…). Defaults to the client's language, changeable in the
+  options (or French + English). Accents are ignored
   while searching: `ca` suggests "ça", `ete` suggests "été".
 - **Next word, iPhone style**: your usual message starters as soon as the chat opens; after each word,
   the most likely next word from your own 2 and 3 word sequences, plus built-in common French phrases.
@@ -127,7 +135,7 @@ you typed; then type the message. Deleting on an empty message goes back to the 
   other value; invert the sticks vertical axis, show / hide the mouse buttons row;
 - font (Blizzard fonts: Friz Quadrata, Morpheus, Skurri, Arial Narrow, or the chat font);
 - button style (Xbox / PlayStation) and the game's button icons;
-- suggestion language (French, English, both), learning;
+- suggestion language (French, English, German, Spanish, Italian, or French + English), learning;
 - reset position, forget learned words.
 
 ## Commands
@@ -137,11 +145,11 @@ you typed; then type the message. Deleting on an empty message goes back to the 
 | `/ck` | open the keyboard |
 | `/ck lock` | lock / unlock the position (unlocking shows the keyboard to place it) |
 | `/ck mode wheel\|stick` | daisywheel or split keyboard |
-| `/ck layout azerty\|qwerty` | split keyboard layout |
+| `/ck layout azerty\|qwerty\|qwertz\|es\|it` | split keyboard layout |
 | `/ck auto` | open automatically with the chat |
 | `/ck pad` | only open automatically when the gamepad is active |
 | `/ck learn` | turn learning on / off |
-| `/ck lang fr\|en\|both` | suggestion language |
+| `/ck lang fr\|en\|de\|es\|it\|both` | suggestion and accent language |
 | `/ck scale 0.8` | keyboard size |
 | `/ck invert` | invert the sticks vertical axis |
 | `/ck reset` | reset the keyboard position |
@@ -180,7 +188,7 @@ Dictionaries ([FrequencyWords](https://github.com/hermitdave/FrequencyWords) fre
 OpenSubtitles):
 
 ```bash
-python tools/build_dict.py fr
+python tools/build_dict.py fr    # or en, de, es, it
 ```
 
 CurseForge / release package (`dist/ControllerKeyboard-<version>.zip`, page description in
@@ -192,8 +200,8 @@ python tools/package.py
 
 ## License
 
-Code under the MIT license (see `LICENSE`). `Dict_frFR.lua` and `Dict_enUS.lua` are derived from
-FrequencyWords (Hermit Dave) and remain under the
+Code under the MIT license (see `LICENSE`). The `Dict_*.lua` word lists (French, English, German,
+Spanish, Italian) are derived from FrequencyWords (Hermit Dave) and remain under the
 [CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/) license.
 
 ## AI disclosure

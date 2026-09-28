@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.2
+
+- German, Spanish and Italian: dictionaries (12,000 words each), keyboard layouts for the split
+  keyboard (QWERTZ with ö ä ü ß, Spanish QWERTY with ñ, Italian QWERTY), and the accents of the 123
+  layer follow the language (ä ö ü ß / á é í ó ú ñ ¿ ¡ / à è é ì ò ù). A single language setting
+  replaces the French / English switches; the old setting is converted.
+- Interface translated into German, Spanish and Italian.
+- Language and layout default to the game client's language.
+- Fix: words with "à" (città, voilà…) could be cut in two in the suggestions.
+- Spanish ¿ and ¡ no longer block the word search.
+
 ## 0.4.1
 
 - Right stick click on the channel row confirms the channel and goes back to the suggestions, without

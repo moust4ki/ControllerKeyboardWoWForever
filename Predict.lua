@@ -44,9 +44,12 @@ local function addEntry(word, dictScore)
     return e
 end
 
+-- Spaces are matched with an explicit class (space, tab, CR, LF), never with
+-- %s: depending on the locale %s also matches byte 0xA0, the second byte of
+-- "a grave" in UTF-8, which cut words like "citta" (with an accent) in two
 local function loadNextWords(data)
     local rank = 0
-    for word in (data.starts or ""):gmatch("%S+") do
+    for word in (data.starts or ""):gmatch("[^ \t\r\n]+") do
         rank = rank + 1
         builtinStarts[word] = math.max(builtinStarts[word] or 0, 40 - 2 * (rank - 1))
     end
@@ -54,7 +57,7 @@ local function loadNextWords(data)
         local t = builtinNext[head] or {}
         builtinNext[head] = t
         rank = 0
-        for word in list:gmatch("%S+") do
+        for word in list:gmatch("[^ \t\r\n]+") do
             rank = rank + 1
             t[word] = math.max(t[word] or 0, math.max(15, 45 - 3 * (rank - 1)))
         end
@@ -73,7 +76,7 @@ function P:Load()
             local list = CK.Dicts[lang]
             if list then
                 local rank = 0
-                for word in list:gmatch("%S+") do
+                for word in list:gmatch("[^ \t\r\n]+") do
                     rank = rank + 1
                     addEntry(word, rankScore(rank))
                 end
@@ -86,7 +89,7 @@ function P:Load()
         end
     end
     if CK.Dicts.wow then
-        for word in CK.Dicts.wow:gmatch("%S+") do
+        for word in CK.Dicts.wow:gmatch("[^ \t\r\n]+") do
             addEntry(word, WOW_SCORE)
         end
     end
@@ -107,7 +110,7 @@ end
 function P.Tokenize(sentence)
     local tokens = {}
     for token in sentence:gmatch("[%a\128-\255][%a\128-\255'%-]*") do
-        token = CK.Lower(token)
+        token = CK.Lower(token):gsub("^\194[\161\191]", "")
         local elided, rest = token:match("^(%a%a?')(.+)$")
         if elided then
             tokens[#tokens + 1] = elided
@@ -328,7 +331,7 @@ function P:Prune()
         if not known(prev) or pruneInner(t) then db.bigrams[prev] = nil end
     end
     for key, t in pairs(db.trigrams) do
-        local a, b = key:match("^(%S+) (%S+)$")
+        local a, b = key:match("^([^ \t\r\n]+) ([^ \t\r\n]+)$")
         if not (a and known(a) and known(b)) or pruneInner(t) then db.trigrams[key] = nil end
     end
     for word in pairs(db.starts) do
@@ -364,13 +367,13 @@ local CHAT_COMMANDS = {
 function P:LearnCommand(text)
     local db = CK.db
     if not (db and db.settings.learn) then return end
-    local cmd, rest = text:match("^(/%S+)%s*(.-)%s*$")
+    local cmd, rest = text:match("^(/[^ \t\r\n]+)[ \t\r\n]*(.-)[ \t\r\n]*$")
     if not cmd or #cmd > 30 then return end
     cmd = CK.Lower(cmd)
     local commands = db.commands
     commands[cmd] = (commands[cmd] or 0) + 1
     -- "/ck lock": remember a single short argument, not chat messages
-    local arg = rest:match("^(%S+)$")
+    local arg = rest:match("^([^ \t\r\n]+)$")
     if arg and #arg <= 15 and not CHAT_COMMANDS[cmd] and not cmd:match("^/%d+$") then
         local full = cmd .. " " .. CK.Lower(arg)
         commands[full] = (commands[full] or 0) + 1

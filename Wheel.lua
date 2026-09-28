@@ -31,6 +31,23 @@ local LAYOUTS = {
 }
 CK.LAYOUTS = LAYOUTS
 
+-- Petals 4 to 6 of the 123 layer hold the accents of the language
+local accentLayouts = {}
+local function layoutFor(layer)
+    if layer ~= "symbols" then return LAYOUTS.letters end
+    local accents = CK:Accents()
+    local layout = accentLayouts[accents]
+    if not layout then
+        layout = {}
+        for i, petal in ipairs(LAYOUTS.symbols) do layout[i] = petal end
+        for p = 0, 2 do
+            layout[4 + p] = { accents[p * 4 + 1], accents[p * 4 + 2], accents[p * 4 + 3], accents[p * 4 + 4] }
+        end
+        accentLayouts[accents] = layout
+    end
+    return layout
+end
+
 -- Pad buttons of this method (D-pad, A, B and right stick click are common)
 M.buttons = {
     PADLSHOULDER = "Backspace",
@@ -126,7 +143,7 @@ function M:Reset()
 end
 
 function CK:TypeSlot(petal, slot)
-    self:TypeChar(LAYOUTS[self.state.layer][petal][slot])
+    self:TypeChar(layoutFor(self.state.layer)[petal][slot])
 end
 
 function M:OnLeftStick(x, y)
@@ -153,7 +170,7 @@ function M:Update()
     if not self.petals then return end
     local K = CK.UIKit
     local state = CK.state
-    local layout = LAYOUTS[state.layer]
+    local layout = layoutFor(state.layer)
     local baseLevel = self.area:GetFrameLevel() + 1
 
     for i, p in ipairs(self.petals) do

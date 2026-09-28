@@ -6,6 +6,7 @@ a list of "word count" lines sorted by frequency.
 Usage:
     python tools/build_dict.py fr            # downloads fr_50k.txt -> Dict_frFR.lua
     python tools/build_dict.py en            # downloads en_50k.txt -> Dict_enUS.lua
+    python tools/build_dict.py de|es|it      # German, Spanish, Italian
     python tools/build_dict.py fr --input my_list.txt --size 15000
 """
 import argparse
@@ -14,8 +15,17 @@ import urllib.request
 from pathlib import Path
 
 SOURCE = "https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/{lang}/{lang}_50k.txt"
-LOCALES = {"fr": "frFR", "en": "enUS"}
-WORD = re.compile(r"^[a-zàâäáçéèêëîïíôöóùûüúÿñœæ]+(['-][a-zàâäáçéèêëîïíôöóùûüúÿñœæ]+)*$")
+LOCALES = {"fr": "frFR", "en": "enUS", "de": "deDE", "es": "esES", "it": "itIT"}
+LETTERS = "a-zàâäáçéèêëîïíìôöóòùûüúÿñœæß"
+WORD = re.compile(rf"^[{LETTERS}]+(['-][{LETTERS}]+)*$")
+# Real one-letter words; other single letters are noise
+SINGLE = {
+    "fr": {"a", "à", "y"},
+    "en": {"a", "i"},
+    "de": set(),
+    "es": {"a", "y", "o", "e", "u"},
+    "it": {"a", "e", "o", "è", "i"},
+}
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -44,7 +54,7 @@ def main():
         if w in seen or not WORD.match(w):
             continue
         # single letters are noise, except real one-letter words
-        if len(w) == 1 and w not in ("a", "à", "y", "i"):
+        if len(w) == 1 and w not in SINGLE[args.lang]:
             continue
         seen.add(w)
         words.append(w)

@@ -110,7 +110,7 @@ local function onOff(v) return v and L.ON or L.OFF end
 
 local function slash(msg)
     local s = CK.db.settings
-    local cmd, arg = (msg or ""):lower():match("^%s*(%S*)%s*(.-)%s*$")
+    local cmd, arg = (msg or ""):lower():match("^[ \t\r\n]*([^ \t\r\n]*)[ \t\r\n]*(.-)[ \t\r\n]*$")
 
     if cmd == "" then
         -- The chat edit box is still sending this command: open once it is closed
@@ -130,11 +130,11 @@ local function slash(msg)
         s.learn = not s.learn
         CK:Print("learn: %s", onOff(s.learn))
     elseif cmd == "lang" then
-        s.dicts.frFR = arg == "fr" or arg == "both"
-        s.dicts.enUS = arg == "en" or arg == "both"
-        if not (s.dicts.frFR or s.dicts.enUS) then s.dicts.frFR = true end
-        CK.Predict:Load()
-        CK:Print("fr: %s  en: %s", onOff(s.dicts.frFR), onOff(s.dicts.enUS))
+        local key = arg == "both" and "fren" or arg
+        for _, lang in ipairs(CK.LANGUAGES) do
+            if lang.key == key then CK:SetLanguage(key) end
+        end
+        CK:Print(L.LANG_SET, CK:GetLanguage().name)
     elseif cmd == "scale" then
         local v = tonumber(arg)
         if v and v >= 0.4 and v <= 2 then
@@ -154,11 +154,13 @@ local function slash(msg)
         local m = CK.db.settings.inputMethod
         CK:Print(L.MODE_SET, m == "stick" and L.METHOD_STICK or L.METHOD_WHEEL)
     elseif cmd == "layout" then
-        if arg == "azerty" or arg == "qwerty" then
-            s.kbLayout = arg
+        local key = ({ azerty = "azerty", qwerty = "qwerty", qwertz = "qwertz",
+            es = "qwerty_es", it = "qwerty_it" })[arg]
+        if key then
+            s.kbLayout = key
             CK:UpdateMethod()
         end
-        CK:Print(L.LAYOUT_SET, s.kbLayout:upper())
+        CK:Print(L.LAYOUT_SET, s.kbLayout)
     elseif cmd == "lock" then
         s.locked = not s.locked
         CK:UpdateLock()

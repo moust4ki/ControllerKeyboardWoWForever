@@ -22,6 +22,7 @@ SOFTWARE.
 
 ---
 
-Dict_frFR.lua and Dict_enUS.lua are derived from FrequencyWords by Hermit Dave
+Dict_frFR.lua, Dict_enUS.lua, Dict_deDE.lua, Dict_esES.lua and Dict_itIT.lua are derived
+from FrequencyWords by Hermit Dave
 (https://github.com/hermitdave/FrequencyWords) and are licensed under
 CC-BY-SA-4.0 (https://creativecommons.org/licenses/by-sa/4.0/).

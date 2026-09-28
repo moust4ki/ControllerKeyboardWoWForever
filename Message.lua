@@ -131,6 +131,11 @@ end
 
 local WORD_TAIL = "(" .. CK.WORD_CHARS .. "*)$"
 
+-- The word being typed, without a leading Spanish ¿ or ¡ (they stay in the text)
+local function wordTail(text)
+    return ((text:match(WORD_TAIL) or ""):gsub("^\194[\161\191]", ""))
+end
+
 function CK:Refresh()
     local f = self.frame
     if not (f and f:IsShown()) then return end
@@ -150,7 +155,7 @@ function CK:Refresh()
         -- Typing the name of a /w (names may hold a space): suggest people
         self.state.suggestions = self:QueryNames(text, n)
     else
-        local prefix = text:match(WORD_TAIL) or ""
+        local prefix = wordTail(text)
         local ctx = CK.Predict:Context(text:sub(1, #text - #prefix))
         self.state.suggestions = CK.Predict:Query(prefix, ctx, n)
     end
@@ -207,8 +212,8 @@ function CK:CancelMessage()
 end
 
 function CK:DeleteWord()
-    local text = self:GetText():gsub("%s+$", "")
-    text = text:gsub("[^%s]+$", "")
+    local text = self:GetText():gsub("[ \t\r\n]+$", "")
+    text = text:gsub("[^ \t\r\n]+$", "")
     self:SetText(text)
 end
 
@@ -224,7 +229,7 @@ function CK:AcceptSuggestion(index)
         return true
     end
     local text = self:GetText()
-    local prefix = text:match(WORD_TAIL) or ""
+    local prefix = wordTail(text)
     -- No space after an elision: "j'" + "ai"
     local sep = word:sub(-1) == "'" and "" or " "
     self:SetText(text:sub(1, #text - #prefix) .. word .. sep)
@@ -361,7 +366,7 @@ end
 
 -- Matching known names; what was typed is offered last so any name can be used
 function CK:QueryNames(prefix, n)
-    local typed = prefix:gsub("^%s+", ""):gsub("%s+$", "")
+    local typed = prefix:gsub("^[ \t\r\n]+", ""):gsub("[ \t\r\n]+$", "")
     local norm = CK.Normalize(typed)
     local out, exact = {}, false
     for _, name in ipairs(self:KnownNames()) do
@@ -378,7 +383,7 @@ end
 
 -- Pick the /w recipient; the buffer then holds the message
 function CK:ConfirmWhisperTarget(name)
-    name = (name or ""):gsub("^%s+", ""):gsub("%s+$", "")
+    name = (name or ""):gsub("^[ \t\r\n]+", ""):gsub("[ \t\r\n]+$", "")
     if name == "" then return end
     self.whisperTarget = name
     self:SetChatAttr("tellTarget", name)
@@ -494,7 +499,7 @@ local SLASH = {
 function CK:BuildMacroText()
     if not (self.standalone or self.editBox) then return end
     local text = self:GetText():gsub("[\r\n]", " ")
-    if text:match("^%s*$") then return end
+    if text:match("^[ \t\r\n]*$") then return end
     if text:sub(1, 1) == "/" then return text end
 
     local chatType = self:GetChatAttr("chatType") or "SAY"

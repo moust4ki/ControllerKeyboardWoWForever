@@ -232,7 +232,7 @@ function CK:SendWhisper()
         return
     end
     local text = self:GetText():gsub("[\r\n]", " ")
-    if text:match("^%s*$") then return end
+    if text:match("^[ \t\r\n]*$") then return end
     -- PreClick runs on both press and release: send once
     local now = GetTime()
     if self.lastWhisper == text and now - (self.lastWhisperTime or 0) < 0.5 then return end

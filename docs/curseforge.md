@@ -17,19 +17,19 @@ A wheel of 8 petals with 4 characters each. The left stick picks a petal, the ri
 toward the letter. Two gestures per letter, thumbs never leave the sticks.
 
 **Split keyboard**
-A full AZERTY or QWERTY keyboard cut in two halves. The left stick moves a cursor on the left half,
+A full AZERTY, QWERTY, QWERTZ, Spanish or Italian keyboard cut in two halves. The left stick moves a cursor on the left half,
 the right stick on the right half: each stick's tilt is its cursor's position, released = center.
 LT types the left key, RT the right one. Large keys, a magnet so the highlight never flickers, and
 a linear stick response with an optional gentle or fast curve.
 
-Both methods have a numbers / accents / symbols layer (é è ê à ç ù â ô î û ë ï œ…) and can be
-switched at any time in the options.
+Both methods have a numbers / accents / symbols layer whose accents follow the language
+(é è à ç… / ä ö ü ß / á é í ó ú ñ ¿ ¡ / à è é ì ò ù), and can be switched at any time in the options.
 
 ## Features
 
 - **Smartphone-style prediction**
-  - word completion with English and French dictionaries (12,000 words each, client language by
-    default) plus WoW slang: lfg, heal, dungeon…
+  - word completion in English, French, German, Spanish and Italian (12,000 words each, client
+    language by default) plus WoW slang: lfg, heal, dungeon…
   - accents ignored while searching: `ca` suggests "ça";
   - next word prediction from your own habits and common phrases;
   - suggestions as soon as the chat opens, before you type anything.
@@ -82,6 +82,11 @@ X, Y, Start and Select stay with the game's gamepad UI.
 | LB / RB | delete / space |
 | Left stick click | numbers, accents, symbols |
 
+## Languages
+
+Interface in English, French, German, Spanish and Italian. Suggestions and keyboard layout follow
+the game client's language by default.
+
 ## Installation
 
 Install with the CurseForge app, or extract the zip into
@@ -92,7 +97,8 @@ Install with the CurseForge app, or extract the zip into
 
 - `/ck`: open the keyboard
 - `/ck mode wheel|stick`: daisywheel or split keyboard
-- `/ck layout azerty|qwerty`: split keyboard layout
+- `/ck layout azerty|qwerty|qwertz|es|it`: split keyboard layout
+- `/ck lang fr|en|de|es|it|both`: suggestion and accent language
 - `/ck lock`: lock / unlock the position (unlocking shows the keyboard to move it)
 - `/ck scale 1.2`: any size (the options offer 4 presets)
 - `/ck help`: all commands

@@ -3,7 +3,7 @@
 ## Notes: Visual daisywheel keyboard to type in chat with a gamepad or the mouse, with word prediction.
 ## Notes-frFR: Clavier visuel en roue pour écrire dans le chat à la manette ou à la souris, avec prédiction de mots.
 ## Author: moust4ki
-## Version: 0.4.1
+## Version: 0.4.2
 ## SavedVariables: ControllerKeyboardDB
 ## X-Website: https://github.com/moust4ki/ControllerKeyboardWoWForever
 
@@ -11,6 +11,9 @@ Core.lua
 Dict_frFR.lua
 Dict_frFR_next.lua
 Dict_enUS.lua
+Dict_deDE.lua
+Dict_esES.lua
+Dict_itIT.lua
 Dict_WoW.lua
 Predict.lua
 Glyphs.lua

@@ -28,6 +28,8 @@ end
 -- Keys: a character, or { k = special key, w = width in key units }
 local function special(k, w) return { k = k, w = w } end
 local SHIFT, BACK, LAYER, SPACE = special("SHIFT", 1.5), special("BACK", 1.5), special("LAYER", 1), special("SPACE", 4)
+-- A key of the 123 layer showing the language's n-th accent (CK:Accents())
+local function accent(n) return { acc = n } end
 
 local LAYOUTS = {
     azerty = {
@@ -42,10 +44,28 @@ local LAYOUTS = {
         { SHIFT, "z", "x", "c", "v", "b", "n", "m", BACK },
         { LAYER, ",", "-", SPACE, ".", "?", "!" },
     },
+    qwertz = {
+        { "q", "w", "e", "r", "t", "z", "u", "i", "o", "p" },
+        { "a", "s", "d", "f", "g", "h", "j", "k", "l", "ö" },
+        { SHIFT, "y", "x", "c", "v", "b", "n", "m", BACK },
+        { LAYER, "ä", "ü", SPACE, "ß", ".", "," },
+    },
+    qwerty_es = {
+        { "q", "w", "e", "r", "t", "y", "u", "i", "o", "p" },
+        { "a", "s", "d", "f", "g", "h", "j", "k", "l", "ñ" },
+        { SHIFT, "z", "x", "c", "v", "b", "n", "m", BACK },
+        { LAYER, ",", "-", SPACE, ".", "?", "!" },
+    },
+    qwerty_it = {
+        { "q", "w", "e", "r", "t", "y", "u", "i", "o", "p" },
+        { "a", "s", "d", "f", "g", "h", "j", "k", "l", "'" },
+        { SHIFT, "z", "x", "c", "v", "b", "n", "m", BACK },
+        { LAYER, ",", "è", SPACE, ".", "?", "!" },
+    },
     symbols = {
         { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0" },
-        { "é", "è", "ê", "à", "â", "ç", "ù", "û", "î", "ô" },
-        { SHIFT, "ë", "ï", "œ", "@", "/", ":", ";", BACK },
+        { accent(1), accent(2), accent(3), accent(4), accent(5), accent(6), accent(7), accent(8), accent(9), accent(10) },
+        { SHIFT, accent(11), accent(12), "œ", "@", "/", ":", ";", BACK },
         { LAYER, "(", ")", SPACE, "\"", "%", "+" },
     },
 }
@@ -88,10 +108,11 @@ local function buildKey(parent, def, x, y, w)
     b.select = K.nineSlice(b, "ck_select", 128, 32, 10, 10, "ARTWORK")
     b.select:SetShown(false)
     local isChar = type(def) == "string"
-    b.label = K.text(b, isChar and 20 or 13)
+    b.accent = type(def) == "table" and def.acc or nil
+    b.label = K.text(b, (isChar or b.accent) and 20 or 13)
     b.label:SetPoint("CENTER", 0, 1)
     b.char = isChar and def or nil
-    b.special = not isChar and def.k or nil
+    b.special = type(def) == "table" and def.k or nil
     -- Center and size in area coordinates (y down), for the nearest-key search
     b.cx, b.cy, b.w, b.h = x + w / 2, y + KEY_H / 2, w, KEY_H
     -- Halves the key belongs to: a key straddling the middle (Space) is in both
@@ -264,6 +285,7 @@ function M:Update()
     left.selected = self:PickKey(set, left)
     right.selected = self:PickKey(set, right)
     local shiftOn = state.shift or state.caps
+    local accents = CK:Accents()
 
     for _, key in ipairs(set.keys) do
         local selected = key == left.selected or key == right.selected
@@ -277,6 +299,7 @@ function M:Update()
         end
         key.select:SetShown(selected)
 
+        if key.accent then key.char = accents[key.accent] end
         if key.char then
             key.label:SetText(CK:DisplayChar(key.char))
         elseif key.special == "LAYER" then
