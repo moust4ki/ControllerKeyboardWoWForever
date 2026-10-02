@@ -233,6 +233,7 @@ function ListPage:Help(g)
     if row and row.test then
         help[#help + 1] = g("DPAD_LEFT") .. " " .. L.CFG_P_PATTERN
         help[#help + 1] = g("A") .. " " .. L.CFG_TEST
+        help[#help + 1] = g("X") .. " " .. L.CFG_P_TOGGLE
     else
         help[#help + 1] = g("DPAD_LEFT") .. " " .. L.CFG_P_CHANGE
         help[#help + 1] = g("A") .. " " .. L.MAP_P_CHOOSE
