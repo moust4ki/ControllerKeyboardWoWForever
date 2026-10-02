@@ -1,5 +1,7 @@
 # Easy Controller - Forever
 
+> **To open the settings: hold RB and press D-pad down** (or type `/ec config` in the chat).
+
 **WoW Forever's gamepad play, made easy. No keyboard needed.**
 
 Easy Controller - Forever (formerly Controller Keyboard) fills the gaps of WoW Forever's gamepad UI,
