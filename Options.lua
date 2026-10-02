@@ -25,12 +25,10 @@ function CK:GetFontPath()
     return STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 end
 
----------------------------------------------------------------------------
--- The configuration panel's General and Keyboard tabs (ConfigWindow.lua
--- draws them): one row per setting
----------------------------------------------------------------------------
+local Config = CK.Config
+
 local GLYPH_STYLES = {
-    { key = "xbox", name = "Xbox (A B X Y)" },
+    { key = "xbox", name = "Xbox" },
     { key = "playstation", name = "PlayStation" },
 }
 
@@ -41,7 +39,495 @@ local function indexOf(list, key)
     return 1
 end
 
--- Row builders
+-- A choice among { key, name } items kept in settings[field]
+local function pick(items, s, field, after)
+    return function() return items[indexOf(items, s[field])].name end, function(d)
+        local i = (indexOf(items, s[field]) - 1 + d) % #items + 1
+        s[field] = items[i].key
+        if after then after() end
+    end
+end
+
+local function percent(v) return format("%d %%", v * 100 + 0.5) end
+
+local function settings() return CK.db.settings end
+
+---------------------------------------------------------------------------
+-- Home: every module and its state (Y: its settings), the panel's
+-- shortcut, the look
+---------------------------------------------------------------------------
+local function moduleRows(b)
+    local s = settings()
+    local mods, f = s.modules, s.features
+    local method = s.inputMethod == "stick" and L.METHOD_STICK or L.METHOD_WHEEL
+    b.header(L.SEC_MODULES)
+    b.check({ id = "m_kb", label = L.LBL_CHAT_KEYBOARD, status = method, tip = L.OPT_SUBTITLE,
+        get = function() return mods.keyboard end,
+        set = function(v)
+            mods.keyboard = v
+            if not v then CK:Close("keyboard module off") end
+        end,
+        onY = function() Config:SetTab("keyboard", 1) end, yVerb = L.V_SETTINGS })
+    b.check({ id = "m_ql", label = L.LBL_QUEST_LINKS, indent = true, disabled = not mods.keyboard, tip = L.MOD_QUEST_LINKS,
+        get = function() return mods.questLinks end,
+        set = function(v)
+            mods.questLinks = v
+            CK:Layout()
+        end,
+        onY = function() Config:SetTab("keyboard", 1) end, yVerb = L.V_SETTINGS })
+    b.check({ id = "m_qi", label = L.SEC_QUESTITEMS, tip = L.MOD_QUEST_ITEMS,
+        get = function() return mods.questItems end,
+        set = function(v) mods.questItems = v end,
+        onY = function() Config:SetTab("alerts", 3) end, yVerb = L.V_SETTINGS })
+    local yours = 0
+    for _ in pairs(s.mapping) do yours = yours + 1 end
+    for _ in pairs(s.replaced) do yours = yours + 1 end
+    b.check({ id = "m_map", label = L.LBL_GAMEPAD_EXTRAS, status = format(L.STATUS_YOURS, yours), tip = L.MOD_MAPPING,
+        get = function() return mods.mapping end,
+        set = function(v)
+            mods.mapping = v
+            CK.Mapping:Apply()
+            CK.Paddles:Apply()
+        end,
+        onY = function() Config:SetTab("gamepad") end, yVerb = L.V_SETTINGS })
+    local tracked = 0
+    for _, r in ipairs(CK.Supplies:Resources()) do
+        if r.cfg.on then tracked = tracked + 1 end
+    end
+    b.check({ id = "m_sup", label = L.LBL_SUPPLY_BUTTONS, status = format(L.STATUS_TRACKED, tracked), tip = L.SUP_INFO,
+        get = function() return s.supplies.enabled end,
+        set = function(v)
+            s.supplies.enabled = v
+            CK.Supplies:Refresh()
+        end,
+        onY = function() Config:SetTab("alerts", 2) end, yVerb = L.V_SETTINGS })
+    b.check({ id = "m_cw", label = L.WHEEL_NAME, tip = L.WHEEL_INFO,
+        get = function() return s.wheel.enabled end,
+        set = function(v)
+            s.wheel.enabled = v
+            CK.ConsumableWheel:Fill()
+        end,
+        onY = function() Config:SetTab("wheels", 2) end, yVerb = L.V_SETTINGS })
+    local V = CK.Vibration
+    local vib = V:Settings()
+    local events = 0
+    for _, e in ipairs(V.EVENTS) do
+        if vib.events[e.key] and vib.events[e.key].on then events = events + 1 end
+    end
+    b.check({ id = "m_vib", label = L.SEC_VIBRATIONS, status = format(L.STATUS_EVENTS, events), tip = L.TIP_MOD_VIBRATIONS,
+        get = function() return vib.enabled end,
+        set = function(v)
+            vib.enabled = v
+            if v then V:Play("pulse") else V:Stop() end
+        end,
+        onY = function() Config:SetTab("alerts", 1) end, yVerb = L.V_SETTINGS })
+end
+
+local function shortcutRows(b)
+    local s = settings()
+    local f, M = s.features, CK.Mapping
+    b.header(L.SEC_SHORTCUT)
+    b.check({ id = "sc_on", label = L.LBL_PANEL_SHORTCUT, tip = L.FEAT_SHORTCUT,
+        get = function() return f.configShortcut end,
+        set = function(v) f.configShortcut = v end })
+    if not f.configShortcut then return end
+    -- A, then hold a button and press a second one
+    b.value({ id = "sc_combo", label = L.LBL_COMBINATION, indent = true, verb = L.V_CHANGE, tip = L.TIP_COMBINATION,
+        text = function()
+            return Config:IsCapturingChord() and L.LBL_HOLD_PRESS or M:ChordLabel(s.shortcut)
+        end,
+        onA = function()
+            Config:CaptureChord(function(chord)
+                if chord then
+                    s.shortcut = chord
+                    Config:Toast(format(L.TOAST_SHORTCUT, M:ChordLabel(chord)))
+                end
+                Config:Render()
+            end)
+        end })
+    local default = CK.DEFAULT_SHORTCUT
+    if s.shortcut.hold ~= default.hold or s.shortcut.press ~= default.press then
+        b.button({ id = "sc_reset", label = format(L.LBL_BACK_TO, M:ChordLabel(default)), indent = true,
+            tip = L.TIP_SHORTCUT_RESET,
+            func = function() s.shortcut = { hold = default.hold, press = default.press } end })
+    end
+end
+
+local function lookRows(b)
+    local s = settings()
+    b.header(L.SEC_LOOK)
+    local text, step = pick(GLYPH_STYLES, s, "glyphStyle", function() CK:UpdateGlyphs() end)
+    b.choice({ id = "glyph", label = L.LBL_GLYPHS, text = text, step = step, tip = L.TIP_GLYPHS })
+    b.check({ id = "gicons", label = L.LBL_GAME_ICONS, tip = L.OPT_GAME_GLYPHS,
+        get = function() return s.gameGlyphs end,
+        set = function(v)
+            s.gameGlyphs = v
+            CK:UpdateGlyphs()
+        end })
+    text, step = pick(CK.FONTS, s, "font", function()
+        CK:ApplyFont()
+        CK:UpdateMethod()
+    end)
+    b.choice({ id = "font", label = L.OPT_FONT, text = text, step = step, tip = L.TIP_FONT })
+end
+
+Config.pages.home = Config.NewRailPage({
+    key = "home",
+    sections = {
+        { key = "modules", label = L.SEC_MODULES, tip = L.TIP_SEC_MODULES, rows = moduleRows },
+        { key = "shortcut", label = L.SEC_SHORTCUT, tip = L.TIP_SEC_SHORTCUT, rows = shortcutRows },
+        { key = "look", label = L.SEC_LOOK, tip = L.TIP_SEC_LOOK, rows = lookRows },
+    },
+})
+
+---------------------------------------------------------------------------
+-- Keyboard: opening, input, sticks, prediction, position. Module off:
+-- each section only offers to turn it on.
+---------------------------------------------------------------------------
+local SIZES = {
+    { scale = 0.8, name = L.SIZE_SMALL }, { scale = 1, name = L.SIZE_NORMAL },
+    { scale = 1.25, name = L.SIZE_LARGE }, { scale = 1.5, name = L.SIZE_XL },
+}
+local LAYOUTS = {
+    { key = "azerty", name = "AZERTY" }, { key = "qwerty", name = "QWERTY" },
+    { key = "qwertz", name = "QWERTZ" }, { key = "qwerty_es", name = "QWERTY (español)" },
+    { key = "qwerty_it", name = "QWERTY (italiano)" },
+}
+local CURVES = {
+    { key = "linear", name = L.CURVE_LINEAR }, { key = "gentle", name = L.CURVE_GENTLE },
+    { key = "fast", name = L.CURVE_FAST },
+}
+local MAGNETS = {
+    { key = "none", name = L.MAGNET_NONE }, { key = "weak", name = L.MAGNET_WEAK },
+    { key = "medium", name = L.MAGNET_MEDIUM }, { key = "strong", name = L.MAGNET_STRONG },
+}
+local METHODS = { { key = "wheel", name = L.METHOD_WHEEL }, { key = "stick", name = L.METHOD_STICK } }
+
+-- The module off: only its box
+local function keyboardOff(b)
+    local mods = settings().modules
+    if mods.keyboard then return false end
+    b.header(L.LBL_CHAT_KEYBOARD)
+    b.check({ id = "k_module", label = L.LBL_CHAT_KEYBOARD, tip = L.TIP_KEYBOARD_OFF,
+        get = function() return mods.keyboard end,
+        set = function(v) mods.keyboard = v end })
+    return true
+end
+
+local function openingRows(b)
+    if keyboardOff(b) then return end
+    local s = settings()
+    local f, mods = s.features, s.modules
+    b.header(L.SEC_OPENING)
+    b.check({ id = "k_auto", label = L.LBL_OPEN_WITH_CHAT, tip = L.OPT_AUTO,
+        get = function() return s.autoOpen end, set = function(v) s.autoOpen = v end })
+    b.check({ id = "k_pad", label = L.LBL_ONLY_GAMEPAD, indent = true, disabled = not s.autoOpen, tip = L.OPT_PAD_ONLY,
+        get = function() return s.onlyWithGamepad end, set = function(v) s.onlyWithGamepad = v end })
+    b.header(L.HDR_MESSAGES)
+    b.check({ id = "k_sticky", label = L.LBL_CHANNEL_STICKS, tip = L.OPT_STICKY,
+        get = function() return s.stickyChannel end, set = function(v) s.stickyChannel = v end })
+    b.check({ id = "k_drafts", label = L.LBL_KEEP_DRAFTS, tip = L.FEAT_DRAFTS,
+        get = function() return f.drafts end, set = function(v) f.drafts = v end })
+    b.check({ id = "k_links", label = L.LBL_SHIFT_LINKS, tip = L.FEAT_LINKS,
+        get = function() return f.linkCapture end, set = function(v) f.linkCapture = v end })
+    b.check({ id = "k_ql", label = L.LBL_QUEST_LINKS, tip = L.MOD_QUEST_LINKS,
+        get = function() return mods.questLinks end,
+        set = function(v)
+            mods.questLinks = v
+            CK:Layout()
+        end })
+end
+
+local function inputRows(b)
+    if keyboardOff(b) then return end
+    local s = settings()
+    b.header(L.SEC_INPUT)
+    b.choice({ id = "k_method", label = L.OPT_METHOD, tip = L.TIP_METHOD,
+        text = function() return METHODS[indexOf(METHODS, s.inputMethod)].name end,
+        step = function(d)
+            local i = (indexOf(METHODS, s.inputMethod) - 1 + d) % #METHODS + 1
+            CK:SetInputMethod(METHODS[i].key)
+        end })
+    local text, step = pick(LAYOUTS, s, "kbLayout", function() CK:UpdateMethod() end)
+    b.choice({ id = "k_layout", label = L.LBL_LAYOUT, indent = true, disabled = s.inputMethod ~= "stick",
+        tip = L.TIP_LAYOUT, text = text, step = step })
+    -- 4 preset sizes (/ec scale still sets any value)
+    local function sizeIndex()
+        local best, bestD = 2, math.huge
+        for i, size in ipairs(SIZES) do
+            local d = math.abs(size.scale - s.scale)
+            if d < bestD then best, bestD = i, d end
+        end
+        return best, bestD < 0.01
+    end
+    b.choice({ id = "k_size", label = L.OPT_SCALE, tip = L.TIP_SIZE,
+        text = function()
+            local i, exact = sizeIndex()
+            if exact then return format("%s (%d %%)", SIZES[i].name, SIZES[i].scale * 100 + 0.5) end
+            return percent(s.scale)
+        end,
+        step = function(d)
+            local i, exact = sizeIndex()
+            -- From a custom value, the first step lands on the nearest preset
+            if exact then i = math.min(#SIZES, math.max(1, i + d)) end
+            s.scale = SIZES[i].scale
+            if CK.frame then
+                CK.frame:SetScale(s.scale)
+                CK:PositionSendButton()
+            end
+        end })
+end
+
+local function sticksRows(b)
+    if keyboardOff(b) then return end
+    local s = settings()
+    b.header(L.SEC_STICKS)
+    b.slider({ id = "k_dead", label = L.LBL_DEADZONE, tip = L.OPT_DEADZONE, min = 0.05, max = 0.40, stepSize = 0.05,
+        fmt = percent, get = function() return s.deadzone end,
+        set = function(v) s.deadzone = math.floor(v * 100 + 0.5) / 100 end })
+    local text, step = pick(CURVES, s, "stickCurve")
+    b.choice({ id = "k_curve", label = L.LBL_RESPONSE, tip = L.TIP_CURVE, text = text, step = step })
+    text, step = pick(MAGNETS, s, "magnet")
+    b.choice({ id = "k_magnet", label = L.LBL_MAGNET, tip = L.TIP_MAGNET, text = text, step = step })
+    b.check({ id = "k_inv", label = L.LBL_INVERT, tip = L.OPT_INVERT,
+        get = function() return s.invertY end, set = function(v) s.invertY = v end })
+    b.check({ id = "k_line", label = L.LBL_CURSOR_LINE, tip = L.OPT_LINE,
+        get = function() return s.showLine end,
+        set = function(v)
+            s.showLine = v
+            CK:UpdateMethod()
+        end })
+end
+
+local function predictionRows(b)
+    if keyboardOff(b) then return end
+    local s = settings()
+    b.header(L.SEC_PREDICTION)
+    b.choice({ id = "k_lang", label = L.LBL_SUGGESTIONS, tip = L.OPT_LANG,
+        text = function() return CK:GetLanguage().name end,
+        step = function(d)
+            local i = (indexOf(CK.LANGUAGES, s.lang) - 1 + d) % #CK.LANGUAGES + 1
+            CK:SetLanguage(CK.LANGUAGES[i].key)
+        end })
+    b.check({ id = "k_learn", label = L.OPT_LEARN, tip = L.TIP_LEARN,
+        get = function() return s.learn end, set = function(v) s.learn = v end })
+    local learned = CK.Predict:NumLearned()
+    b.stat({ label = L.LBL_LEARNED_WORDS, text = BreakUpLargeNumbers and BreakUpLargeNumbers(learned) or tostring(learned) })
+    -- Two presses to forget (no confirmation popup)
+    b.button({ id = "k_forget", label = L.OPT_FORGET, danger = true, armedLabel = L.LBL_FORGET_ARMED,
+        disabled = learned == 0, tip = format(L.TIP_FORGET, learned),
+        func = function()
+            CK.Predict:Forget()
+            Config:Toast(L.FORGOT)
+        end })
+end
+
+local function keyboardPositionRows(b)
+    if keyboardOff(b) then return end
+    local s = settings()
+    b.header(L.SEC_POSITION)
+    b.check({ id = "k_lock", label = L.OPT_LOCK, tip = L.TIP_KB_LOCK,
+        get = function() return s.locked end,
+        set = function(v)
+            s.locked = v
+            CK:UpdateLock()
+        end })
+    b.check({ id = "k_mouse", label = L.LBL_MOUSE_BUTTONS, tip = L.OPT_ACTIONS,
+        get = function() return s.showActions end,
+        set = function(v)
+            s.showActions = v
+            CK:ApplyLayout()
+        end })
+    b.button({ id = "k_reset", label = L.OPT_RESET_POS, tip = L.OPT_RESET_POS,
+        func = function()
+            CK.db.pos = nil
+            if CK.frame then CK:RestorePosition() end
+            Config:Toast(L.TOAST_KB_RESET)
+        end })
+end
+
+Config.pages.keyboard = Config.NewRailPage({
+    key = "keyboard",
+    sections = {
+        { key = "opening", label = L.SEC_OPENING, tip = L.TIP_SEC_OPENING, rows = openingRows },
+        { key = "input", label = L.SEC_INPUT, tip = L.TIP_SEC_INPUT, rows = inputRows },
+        { key = "sticks", label = L.SEC_STICKS, tip = L.TIP_SEC_STICKS, rows = sticksRows },
+        { key = "prediction", label = L.SEC_PREDICTION, tip = L.TIP_SEC_PREDICTION, rows = predictionRows },
+        { key = "position", label = L.SEC_POSITION, tip = L.TIP_SEC_KBPOS, rows = keyboardPositionRows },
+    },
+})
+
+---------------------------------------------------------------------------
+-- Alerts: vibrations, supplies, quest items
+---------------------------------------------------------------------------
+local function vibrationRows(b)
+    local V = CK.Vibration
+    local s = V:Settings()
+    b.header(L.SEC_VIBRATIONS)
+    b.check({ id = "v_on", label = L.VIB_ENABLE, tip = s.enabled and L.TIP_MOD_VIBRATIONS or L.VIB_OFF_INFO,
+        get = function() return s.enabled end,
+        set = function(v)
+            s.enabled = v
+            if v then V:Play("pulse") else V:Stop() end
+        end })
+    if not s.enabled then return end
+    b.slider({ id = "v_int", label = L.LBL_INTENSITY, indent = true, tip = L.VIB_INTENSITY, min = 0.2, max = 1,
+        stepSize = 0.1, fmt = percent, get = function() return s.intensity end,
+        set = function(v)
+            s.intensity = math.floor(v * 10 + 0.5) / 10
+            V:Play("pulse")
+        end })
+    for _, group in ipairs(V.GROUPS) do
+        local events = V:GroupEvents(group)
+        if #events > 0 then
+            b.header(L["VIB_H_" .. group:upper()])
+            for _, e in ipairs(events) do
+                local cfg = s.events[e.key]
+                b.event({ id = "v_" .. e.key, label = L["VIBS_" .. e.key:upper()], tip = L["VIB_E_" .. e.key:upper()],
+                    on = function() return cfg.on end,
+                    toggle = function()
+                        cfg.on = not cfg.on
+                        if cfg.on then V:Play(cfg.pattern) end
+                    end,
+                    pattern = function() return cfg.on and L["VIB_P_" .. cfg.pattern:upper()] or L.VIB_OFF end,
+                    -- A pattern picked turns the event on
+                    step = function(d)
+                        cfg.pattern = V:NextPattern(cfg.pattern, d)
+                        cfg.on = true
+                        V:Play(cfg.pattern)
+                    end,
+                    onY = function()
+                        V:Play(cfg.pattern)
+                        Config:Toast(format(L.TOAST_VIB_TEST, L["VIB_P_" .. cfg.pattern:upper()]))
+                    end, yVerb = L.V_TEST })
+            end
+        end
+    end
+end
+
+local DIR_NAMES = { right = "SUP_DIR_RIGHT", left = "SUP_DIR_LEFT", down = "SUP_DIR_DOWN", up = "SUP_DIR_UP" }
+
+local function suppliesRows(b, page)
+    local S = CK.Supplies
+    local s = settings().supplies
+    b.header(L.SEC_SUPPLIES)
+    b.check({ id = "s_on", label = L.LBL_SUPPLY_BUTTONS, tip = L.SUP_ENABLE,
+        get = function() return s.enabled end,
+        set = function(v)
+            s.enabled = v
+            S:Refresh()
+        end })
+    if not s.enabled then return end
+    b.header(L.SUP_H_TRACKED)
+    for _, r in ipairs(S:Resources()) do
+        local cfg = r.cfg
+        b.check({ id = "s_" .. r.key, label = r.name, status = tostring(r.count),
+            tip = format(L.TIP_RESOURCE, r.count, cfg.low, cfg.critical),
+            get = function() return cfg.on end,
+            set = function(v)
+                cfg.on = v
+                S:Refresh()
+            end })
+        if cfg.on then
+            local step = S.Step(r.kind)
+            b.choice({ id = "s_low_" .. r.key, label = L.SUP_LOW, indent = true, tip = L.TIP_LOW,
+                text = function() return tostring(cfg.low) end,
+                step = function(d) S:SetThreshold(cfg, "low", cfg.low + d * step) end })
+            b.choice({ id = "s_crit_" .. r.key, label = L.SUP_CRITICAL, indent = true, tip = L.TIP_CRITICAL,
+                text = function() return tostring(cfg.critical) end,
+                step = function(d) S:SetThreshold(cfg, "critical", cfg.critical + d * step) end })
+        end
+        if r.custom then
+            b.button({ id = "s_rm_" .. r.key, label = L.SUP_REMOVE, indent = true, tip = L.TIP_REMOVE,
+                func = function()
+                    S:RemoveItem(r.id)
+                    Config:Toast(format(L.TOAST_REMOVED, r.name))
+                end })
+        end
+    end
+    -- The picker, one list: the bags
+    b.button({ id = "s_add", label = L.LBL_ADD_BAGS, tip = L.SUP_ADD_SHOW, verb = L.V_OPEN,
+        func = function()
+            page:OpenPicker({
+                kicker = L.SEC_SUPPLIES, title = L.LBL_ADD_BAGS, rows = 9,
+                lists = { { label = L.LIST_BAGS, entries = function()
+                    local entries = { { header = L.HDR_YOUR_BAGS } }
+                    for _, item in ipairs(S:BagItems()) do
+                        entries[#entries + 1] = { action = item.id, name = item.name, icon = item.icon, sub = tostring(item.count) }
+                    end
+                    if #entries == 1 then entries = {} end
+                    return entries
+                end } },
+                onChoose = function(e)
+                    S:AddItem(e.action)
+                    page.picker:Close()
+                    Config:Toast(format(L.TOAST_TRACKED, e.name))
+                end,
+            })
+        end })
+    b.header(L.HDR_BUTTONS)
+    b.choice({ id = "s_dir", label = L.LBL_DIRECTION, tip = L.TIP_DIRECTION,
+        text = function() return L[DIR_NAMES[s.layout] or "SUP_DIR_RIGHT"] end,
+        step = function(d)
+            local i = (indexOf(S.DIRECTIONS, s.layout) - 1 + d) % #S.DIRECTIONS + 1
+            s.layout = S.DIRECTIONS[i].key
+            S:Refresh()
+        end })
+    local sizes = { L.SIZE_SMALL, L.SIZE_NORMAL, L.SIZE_LARGE }
+    b.choice({ id = "s_size", label = L.SUP_SIZE, tip = L.TIP_SUP_SIZE,
+        text = function() return sizes[s.size] or sizes[2] end,
+        step = function(d)
+            s.size = ((s.size or 2) - 1 + d) % #sizes + 1
+            S:Refresh()
+        end })
+    b.check({ id = "s_lock", label = L.OPT_LOCK, tip = L.SUP_LOCK,
+        get = function() return s.locked end, set = function(v) s.locked = v end })
+    b.button({ id = "s_move", label = L.SUP_MOVE, tip = L.TIP_SUP_MOVE,
+        func = function()
+            Config:BeginPlacement(S)
+            S:StartPlacement()
+        end })
+    b.button({ id = "s_reset", label = L.SUP_RESET, tip = L.SUP_RESET,
+        func = function()
+            S:ResetPosition()
+            Config:Toast(L.TOAST_SUP_RESET)
+        end })
+end
+
+local function questRows(b)
+    local s = settings()
+    local mods, f = s.modules, s.features
+    b.header(L.SEC_QUESTITEMS)
+    b.check({ id = "q_on", label = L.SEC_QUESTITEMS, tip = L.MOD_QUEST_ITEMS,
+        get = function() return mods.questItems end, set = function(v) mods.questItems = v end })
+    if not mods.questItems then return end
+    b.check({ id = "q_tip", label = L.LBL_QI_TOOLTIP, indent = true, tip = L.FEAT_QUEST_TOOLTIP,
+        get = function() return f.questTooltip end, set = function(v) f.questTooltip = v end })
+    b.check({ id = "q_glow", label = L.LBL_QI_GLOW, indent = true, tip = L.FEAT_QUEST_GLOW,
+        get = function() return f.questGlow end,
+        set = function(v)
+            f.questGlow = v
+            CK.QuestItems:RefreshBorders()
+        end })
+    b.check({ id = "q_sell", label = L.LBL_QI_SELL, indent = true, tip = L.FEAT_QUEST_SELL,
+        get = function() return f.questSellAlert end, set = function(v) f.questSellAlert = v end })
+    b.check({ id = "q_hover", label = L.LBL_QI_HOVER, indent = true, tip = L.FEAT_QUEST_HOVER,
+        get = function() return f.questHoverAlert end, set = function(v) f.questHoverAlert = v end })
+end
+
+Config.pages.alerts = Config.NewRailPage({
+    key = "alerts",
+    sections = {
+        { key = "vibrations", label = L.SEC_VIBRATIONS, tip = L.TIP_SEC_VIBRATIONS, rows = vibrationRows },
+        { key = "supplies", label = L.SEC_SUPPLIES, tip = L.SUP_INFO, rows = suppliesRows },
+        { key = "quest", label = L.SEC_QUESTITEMS, tip = L.TIP_SEC_QUESTITEMS, rows = questRows },
+    },
+})
+
+---------------------------------------------------------------------------
+-- The wheels tab, still drawn its 1.x way until its 2.0 screens: the
+-- player's own wheels (MyWheels.lua), the consumables wheel and its place
+---------------------------------------------------------------------------
 local function list()
     local rows = {}
     local b = {}
@@ -54,332 +540,12 @@ local function list()
     function b.choice(text, get, step, indent, key)
         rows[#rows + 1] = { kind = "choice", text = text, get = get, step = step, indent = indent, key = key }
     end
-    -- A choice among { key, name } items stored in settings[field]
-    function b.pick(text, items, s, field, after, indent)
-        b.choice(text, function() return items[indexOf(items, s[field])].name end, function(d)
-            local i = (indexOf(items, s[field]) - 1 + d) % #items + 1
-            s[field] = items[i].key
-            if after then after() end
-        end, indent)
-    end
     function b.button(text, func, indent, key)
         rows[#rows + 1] = { kind = "button", text = text, func = func, indent = indent, key = key }
-    end
-    -- A box with a choice beside it, and a test (A; X for the box)
-    function b.toggle(text, get, set, value, step, test, tip)
-        rows[#rows + 1] = { kind = "toggle", text = text, get = get, set = set, value = value, step = step,
-            test = test, tip = tip }
     end
     return rows, b
 end
 
-local function generalRows()
-    local s = CK.db.settings
-    local f, mods = s.features, s.modules
-    local rows, b = list()
-
-    b.header(L.CFG_H_FEATURES)
-    b.check(L.MOD_KEYBOARD, function() return mods.keyboard end, function(v)
-        mods.keyboard = v
-        if not v then CK:Close("keyboard module off") end
-    end)
-    if mods.keyboard then
-        b.check(L.OPT_AUTO, function() return s.autoOpen end, function(v) s.autoOpen = v end, true)
-        b.check(L.OPT_PAD_ONLY, function() return s.onlyWithGamepad end, function(v) s.onlyWithGamepad = v end, true)
-        b.check(L.MOD_QUEST_LINKS, function() return mods.questLinks end, function(v)
-            mods.questLinks = v
-            CK:Layout()
-        end, true)
-        b.check(L.FEAT_LINKS, function() return f.linkCapture end, function(v) f.linkCapture = v end, true)
-        b.check(L.FEAT_DRAFTS, function() return f.drafts end, function(v) f.drafts = v end, true)
-        b.check(L.OPT_STICKY, function() return s.stickyChannel end, function(v) s.stickyChannel = v end, true)
-    end
-    b.check(L.MOD_QUEST_ITEMS, function() return mods.questItems end, function(v) mods.questItems = v end)
-    if mods.questItems then
-        b.check(L.FEAT_QUEST_TOOLTIP, function() return f.questTooltip end, function(v) f.questTooltip = v end, true)
-        b.check(L.FEAT_QUEST_GLOW, function() return f.questGlow end, function(v)
-            f.questGlow = v
-            CK.QuestItems:RefreshBorders()
-        end, true)
-        b.check(L.FEAT_QUEST_SELL, function() return f.questSellAlert end, function(v) f.questSellAlert = v end, true)
-        b.check(L.FEAT_QUEST_HOVER, function() return f.questHoverAlert end, function(v) f.questHoverAlert = v end, true)
-    end
-    b.check(L.MOD_MAPPING, function() return mods.mapping end, function(v)
-        mods.mapping = v
-        CK.Mapping:Apply()
-        CK.Paddles:Apply()
-    end)
-    if mods.mapping then
-        b.check(L.FEAT_EXTRA_DISPLAY, function() return f.extraDisplay end, function(v)
-            f.extraDisplay = v
-            CK.Paddles:Apply()
-        end, true)
-        b.check(L.FEAT_SHOW_STICKS, function() return f.showSticks end, function(v)
-            f.showSticks = v
-            CK.Paddles:Apply()
-        end, true)
-        -- "R4" on the extra buttons: where, or hidden
-        local places = {}
-        for _, key in ipairs(CK.Paddles.BADGE_PLACES) do
-            places[#places + 1] = { key = key, name = L["BADGE_" .. key:upper()] }
-        end
-        b.pick(L.OPT_BADGE, places, s, "badgePlace", function() CK.Paddles:Apply() end, true)
-        -- RT as a modifier: the RT and LT + RT layers for the extra buttons
-        if CK.Mapping:CanBeModifier("PADRTRIGGER") then
-            b.check(L.FEAT_RT_MODIFIER, function() return CK.Mapping:TriggerModifier("PADRTRIGGER") ~= nil end,
-                function(v) CK.Mapping:SetTriggerModifier("PADRTRIGGER", v) end, true, L.FEAT_RT_MODIFIER_TIP)
-        end
-    end
-    local M = CK.Mapping
-    b.check(L.FEAT_SHORTCUT, function() return f.configShortcut end, function(v) f.configShortcut = v end)
-    if f.configShortcut then
-        -- A, then hold a button and press a second one
-        local text = CK.Config:IsCapturingChord() and L.CFG_SHORTCUT_PRESS
-            or format(L.CFG_SHORTCUT_KEY, M:ChordLabel(s.shortcut))
-        b.button(text, function()
-            CK.Config:CaptureChord(function(chord)
-                if chord then s.shortcut = chord end
-                if CK.Config:IsOpen() then
-                    CK.Config:Page():Show()
-                    CK.Config:Render()
-                end
-            end)
-        end, true)
-        local default = CK.DEFAULT_SHORTCUT
-        if s.shortcut.hold ~= default.hold or s.shortcut.press ~= default.press then
-            b.button(format(L.CFG_SHORTCUT_RESET, M:ChordLabel(default)), function()
-                s.shortcut = { hold = default.hold, press = default.press }
-            end, true)
-        end
-    end
-
-    b.header(L.OPT_LOOK)
-    b.pick(L.OPT_GLYPHS, GLYPH_STYLES, s, "glyphStyle", function() CK:UpdateGlyphs() end)
-    b.check(L.OPT_GAME_GLYPHS, function() return s.gameGlyphs end, function(v)
-        s.gameGlyphs = v
-        CK:UpdateGlyphs()
-    end)
-    b.pick(L.OPT_FONT, CK.FONTS, s, "font", function()
-        CK:ApplyFont()
-        CK:UpdateMethod()
-    end)
-    return rows
-end
-
-local SIZES = {
-    { scale = 0.8, name = L.SIZE_SMALL }, { scale = 1, name = L.SIZE_NORMAL },
-    { scale = 1.25, name = L.SIZE_LARGE }, { scale = 1.5, name = L.SIZE_XL },
-}
-
-local function keyboardRows()
-    local s = CK.db.settings
-    local rows, b = list()
-
-    b.header(L.OPT_KEYBOARD)
-    -- 4 preset sizes (/ec scale still sets any value)
-    local function sizeIndex()
-        local best, bestD = 2, math.huge
-        for i, size in ipairs(SIZES) do
-            local d = math.abs(size.scale - s.scale)
-            if d < bestD then best, bestD = i, d end
-        end
-        return best, bestD < 0.01
-    end
-    b.choice(L.OPT_SCALE, function()
-        local i, exact = sizeIndex()
-        if exact then return format("%s (%d %%)", SIZES[i].name, SIZES[i].scale * 100 + 0.5) end
-        return format("%d %%", s.scale * 100 + 0.5)
-    end, function(d)
-        local i, exact = sizeIndex()
-        -- From a custom value, the first step lands on the nearest preset
-        if exact then i = math.min(#SIZES, math.max(1, i + d)) end
-        s.scale = SIZES[i].scale
-        if CK.frame then
-            CK.frame:SetScale(s.scale)
-            CK:PositionSendButton()
-        end
-    end)
-    b.check(L.OPT_LOCK, function() return s.locked end, function(v)
-        s.locked = v
-        CK:UpdateLock()
-    end)
-    b.button(L.OPT_RESET_POS, function()
-        CK.db.pos = nil
-        if CK.frame then CK:RestorePosition() end
-    end)
-    b.check(L.OPT_INVERT, function() return s.invertY end, function(v) s.invertY = v end)
-    b.check(L.OPT_ACTIONS, function() return s.showActions end, function(v)
-        s.showActions = v
-        CK:ApplyLayout()
-    end)
-
-    b.header(L.OPT_INPUT)
-    local methods = { { key = "wheel", name = L.METHOD_WHEEL }, { key = "stick", name = L.METHOD_STICK } }
-    b.choice(L.OPT_METHOD, function() return methods[indexOf(methods, s.inputMethod)].name end, function(d)
-        local i = (indexOf(methods, s.inputMethod) - 1 + d) % #methods + 1
-        CK:SetInputMethod(methods[i].key)
-    end)
-    b.pick(L.OPT_LAYOUT, {
-        { key = "azerty", name = "AZERTY" }, { key = "qwerty", name = "QWERTY" },
-        { key = "qwertz", name = "QWERTZ" }, { key = "qwerty_es", name = "QWERTY (español)" },
-        { key = "qwerty_it", name = "QWERTY (italiano)" },
-    }, s, "kbLayout", function() CK:UpdateMethod() end)
-    b.choice(L.OPT_DEADZONE, function() return format("%d %%", s.deadzone * 100 + 0.5) end, function(d)
-        s.deadzone = math.min(0.40, math.max(0.05, math.floor((s.deadzone + d * 0.05) * 100 + 0.5) / 100))
-    end)
-    b.pick(L.OPT_CURVE, {
-        { key = "linear", name = L.CURVE_LINEAR }, { key = "gentle", name = L.CURVE_GENTLE },
-        { key = "fast", name = L.CURVE_FAST },
-    }, s, "stickCurve")
-    b.pick(L.OPT_MAGNET, {
-        { key = "none", name = L.MAGNET_NONE }, { key = "weak", name = L.MAGNET_WEAK },
-        { key = "medium", name = L.MAGNET_MEDIUM }, { key = "strong", name = L.MAGNET_STRONG },
-    }, s, "magnet")
-    b.check(L.OPT_LINE, function() return s.showLine end, function(v)
-        s.showLine = v
-        CK:UpdateMethod()
-    end)
-
-    b.header(L.OPT_PREDICTION)
-    b.choice(L.OPT_LANG, function() return CK:GetLanguage().name end, function(d)
-        local i = (indexOf(CK.LANGUAGES, s.lang) - 1 + d) % #CK.LANGUAGES + 1
-        CK:SetLanguage(CK.LANGUAGES[i].key)
-    end)
-    b.check(L.OPT_LEARN, function() return s.learn end, function(v) s.learn = v end)
-    -- Two presses to forget (no confirmation popup, see the keyboard)
-    local forget = CK.forgetArmed
-    b.button(forget and L.OPT_FORGET_CONFIRM or L.OPT_FORGET, function()
-        if CK.forgetArmed then
-            CK.forgetArmed = false
-            CK.Predict:Forget()
-            CK:Print(L.FORGOT)
-        else
-            CK.forgetArmed = true
-            C_Timer.After(4, function()
-                CK.forgetArmed = false
-                if CK.Config:IsOpen() then CK.Config:Render() end
-            end)
-        end
-    end)
-    b.info(format(L.STATS, CK.Predict:NumLearned(), CK.Predict:NumEntries()))
-    return rows
-end
-
--- Vibrations: one switch and intensity, then each event with its pattern
-local function vibrationRows()
-    local V = CK.Vibration
-    local s = V:Settings()
-    local rows, b = list()
-
-    b.header(L.CFG_TAB_VIBRATION)
-    b.check(L.VIB_ENABLE, function() return s.enabled end, function(v)
-        s.enabled = v
-        if v then V:Play("pulse") else V:Stop() end
-    end)
-    if not s.enabled then
-        b.info(L.VIB_OFF_INFO)
-        return rows
-    end
-    b.choice(L.VIB_INTENSITY, function() return format("%d %%", s.intensity * 100 + 0.5) end, function(d)
-        s.intensity = math.min(1, math.max(0.2, math.floor((s.intensity + d * 0.1) * 10 + 0.5) / 10))
-        V:Play("pulse")
-    end, true)
-    b.info(L.VIB_INFO)
-    for _, group in ipairs(V.GROUPS) do
-        local events = V:GroupEvents(group)
-        if #events > 0 then
-            b.header(L["VIB_H_" .. group:upper()])
-            for _, e in ipairs(events) do
-                local cfg = s.events[e.key]
-                b.toggle(L["VIB_E_" .. e.key:upper()], function() return cfg.on end, function(v)
-                    cfg.on = v
-                    if v then V:Play(cfg.pattern) end
-                end, function()
-                    return cfg.on and L["VIB_P_" .. cfg.pattern:upper()] or L.VIB_OFF
-                end, function(d)
-                    -- "Off" is one of the values: the D-pad does it all
-                    if V:StepEvent(cfg, d) then V:Play(cfg.pattern) end
-                end, function() V:Play(cfg.pattern) end)
-            end
-        end
-    end
-    return rows
-end
-
-CK.Config.pages.general = CK.Config.NewListPage(generalRows)
-CK.Config.pages.keyboard = CK.Config.NewListPage(keyboardRows)
-CK.Config.pages.vibration = CK.Config.NewListPage(vibrationRows)
-
--- Supplies: the bar (shown, lock, place, layout, size), each resource with
--- its thresholds, and the items of the bags to add
-local function suppliesRows()
-    local S = CK.Supplies
-    local s = CK.db.settings.supplies
-    local rows, b = list()
-
-    b.header(L.CFG_TAB_SUPPLIES)
-    b.check(L.SUP_ENABLE, function() return s.enabled end, function(v)
-        s.enabled = v
-        S:Refresh()
-    end)
-    if not s.enabled then return rows end
-    b.info(L.SUP_INFO)
-    b.check(L.SUP_LOCK, function() return s.locked end, function(v) s.locked = v end, true)
-    b.button(L.SUP_MOVE, function()
-        CK.Config:BeginPlacement(S)
-        S:StartPlacement()
-    end, true)
-    b.button(L.SUP_RESET, function() S:ResetPosition() end, true)
-    -- The way the bar grows from its first button
-    local directions = {}
-    for _, d in ipairs(S.DIRECTIONS) do directions[#directions + 1] = { key = d.key, name = L["SUP_DIR_" .. d.key:upper()] } end
-    b.pick(L.SUP_LAYOUT, directions, s, "layout", function() S:Refresh() end, true)
-    local sizes = { L.SIZE_SMALL, L.SIZE_NORMAL, L.SIZE_LARGE }
-    b.choice(L.SUP_SIZE, function() return sizes[s.size] or sizes[2] end, function(d)
-        s.size = ((s.size or 2) - 1 + d) % #sizes + 1
-        S:Refresh()
-    end, true)
-
-    b.header(L.SUP_H_TRACKED)
-    for _, r in ipairs(S:Resources()) do
-        local cfg = r.cfg
-        b.check(format("%s  |cff9d9a8c(%d)|r", r.name, r.count), function() return cfg.on end, function(v)
-            cfg.on = v
-            S:Refresh()
-        end)
-        if cfg.on then
-            local step = S.Step(r.kind)
-            b.choice(L.SUP_LOW, function() return tostring(cfg.low) end, function(d)
-                S:SetThreshold(cfg, "low", cfg.low + d * step)
-            end, true)
-            b.choice(L.SUP_CRITICAL, function() return tostring(cfg.critical) end, function(d)
-                S:SetThreshold(cfg, "critical", cfg.critical + d * step)
-            end, true)
-        end
-        if r.custom then b.button(L.SUP_REMOVE, function() S:RemoveItem(r.id) end, true) end
-    end
-
-    b.header(L.SUP_H_ADD)
-    b.button(S.showAdd and L.SUP_ADD_HIDE or L.SUP_ADD_SHOW, function()
-        S.showAdd = not S.showAdd
-        -- The list opens below: go to its first item, in view
-        if S.showAdd then CK.Config:Page().selectNext = true end
-    end)
-    if S.showAdd then
-        local items = S:BagItems()
-        if #items == 0 then b.info(L.SUP_ADD_NONE) end
-        for _, item in ipairs(items) do
-            b.button(format("+ |T%s:16:16|t %s  |cff9d9a8c(%d)|r", tostring(item.icon or 134400), item.name, item.count),
-                function() S:AddItem(item.id) end, true)
-        end
-    end
-    return rows
-end
-
-CK.Config.pages.supplies = CK.Config.NewListPage(suppliesRows)
-
--- Wheels: the player's own (MyWheels.lua), then the consumables wheel (on /
--- off, its kinds, the variants) and where every wheel shows
 local function wheelRows()
     local W = CK.ConsumableWheel
     local s = CK.db.settings.wheel
@@ -403,7 +569,7 @@ local function wheelRows()
     -- Where every wheel shows
     b.check(L.WHEEL_LOCK, function() return s.locked end, function(v) s.locked = v end)
     b.button(L.WHEEL_MOVE, function()
-        CK.Config:BeginPlacement(W)
+        Config:BeginPlacement(W)
         W:StartPlacement()
     end, true)
     b.button(L.WHEEL_RESET, function() W:ResetPosition() end, true)
@@ -420,7 +586,7 @@ local function wheelRows()
 end
 
 -- The list, or a wheel's editor in its place (MyWheels.lua)
-CK.Config.pages.wheel, CK.MyWheels.list = CK.MyWheels:TabPage(CK.Config.NewListPage(wheelRows))
+Config.pages.wheels, CK.MyWheels.list = CK.MyWheels:TabPage(Config.NewListPage(wheelRows))
 
 ---------------------------------------------------------------------------
 -- The game's settings panel (Escape > Options > AddOns > Controller

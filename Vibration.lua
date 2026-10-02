@@ -87,17 +87,6 @@ function V:NextPattern(key, delta)
     return V.PATTERNS[(p.index - 1 + delta) % #V.PATTERNS + 1].key
 end
 
--- The D-pad on an event: "off", then each pattern (the D-pad alone turns an
--- event on or off). Returns true when it plays.
-function V:StepEvent(cfg, delta)
-    local count = #V.PATTERNS + 1
-    local pos = cfg.on and (PATTERN[cfg.pattern] or V.PATTERNS[1]).index or 0
-    pos = (pos + delta) % count
-    cfg.on = pos > 0
-    if cfg.on then cfg.pattern = V.PATTERNS[pos].key end
-    return cfg.on
-end
-
 ---------------------------------------------------------------------------
 -- Playing a pattern
 ---------------------------------------------------------------------------
