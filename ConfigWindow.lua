@@ -415,6 +415,8 @@ function RailPage:LayoutRow(r, row, focused)
         local armed = C:IsArmed(row.id)
         r.btn.label:SetText(armed and row.armedLabel or resolve(row.label))
         r.btn:SetState({ focus = focused, armed = armed, disabled = disabled })
+        if armed and r.btn.armedId ~= row.id and UIFrameFadeIn then UIFrameFadeIn(r.btn, 0.15, 0.3, 1) end
+        r.btn.armedId = armed and row.id or nil
         return
     end
 
@@ -666,6 +668,8 @@ function RailPage:OpenPicker(def)
     end
     self.picker:Open(def)
     C:Render()
+    -- The handoff's only fades (0.15 s): the picker opening, a button armed
+    if UIFrameFadeIn then UIFrameFadeIn(self.picker, 0.15, 0, 1) end
 end
 
 function RailPage:Press(name)
