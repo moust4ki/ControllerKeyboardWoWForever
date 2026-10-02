@@ -115,9 +115,12 @@ function W.Category(id)
 end
 
 -- The best first: required level, then item level
+-- The best first: required level, then item level. Nil for an item above
+-- the player's level (the game won't let it be used)
 local function rank(id)
     local get = C_Item.GetItemInfo or GetItemInfo
     local _, _, _, itemLevel, minLevel = get(id)
+    if minLevel and minLevel > (UnitLevel("player") or 0) then return nil end
     return (minLevel or 0) * 1000 + (itemLevel or 0)
 end
 
@@ -132,9 +135,10 @@ function W:Scan()
             if id and not seen[id] then
                 seen[id] = true
                 local cat = W.Category(id)
-                if cat and s.categories[cat] then
+                local value = cat and s.categories[cat] and rank(id)
+                if value then
                     byKind[cat] = byKind[cat] or {}
-                    table.insert(byKind[cat], { id = id, cat = cat, rank = rank(id) })
+                    table.insert(byKind[cat], { id = id, cat = cat, rank = value })
                 end
             end
         end
@@ -816,7 +820,7 @@ function W:Init()
     self:StickKeys(settings().enabled)
     self:Build()
     local f = CreateFrame("Frame")
-    for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "BAG_UPDATE_DELAYED", "PLAYER_REGEN_ENABLED",
+    for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "BAG_UPDATE_DELAYED", "PLAYER_REGEN_ENABLED", "PLAYER_LEVEL_UP",
         "PLAYER_REGEN_DISABLED", "BAG_UPDATE_COOLDOWN", "GET_ITEM_INFO_RECEIVED" }) do
         pcall(f.RegisterEvent, f, event)
     end
