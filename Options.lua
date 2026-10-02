@@ -128,12 +128,6 @@ local function moduleRows(b)
             if v then V:Play("pulse") else V:Stop() end
         end,
         onY = function() Config:SetTab("alerts", 1) end, yVerb = L.V_SETTINGS })
-    b.check({ id = "m_junk", label = L.LBL_SELL_JUNK, tip = L.TIP_SELL_JUNK,
-        get = function() return mods.sellJunk end, set = function(v) mods.sellJunk = v end,
-        onY = function() Config:SetTab("home", 4) end, yVerb = L.V_SETTINGS })
-    b.check({ id = "m_repair", label = L.LBL_AUTO_REPAIR, tip = L.TIP_AUTO_REPAIR,
-        get = function() return mods.autoRepair end, set = function(v) mods.autoRepair = v end,
-        onY = function() Config:SetTab("home", 4) end, yVerb = L.V_SETTINGS })
 end
 
 local function shortcutRows(b)

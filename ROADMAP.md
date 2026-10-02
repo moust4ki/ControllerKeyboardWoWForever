@@ -40,7 +40,7 @@ closes.
 
 ## Next version: automation at merchants
 
-Both turned on or off in Home › Modules, and set in a new Home › Automation section (under Look).
+Both turned on or off in a new Home › Automation section (under Look).
 
 - [x] **Auto-sell junk**: at a merchant, the grey (poor quality) items of the bags are sold by
   themselves; a line in the chat says how much they brought.
