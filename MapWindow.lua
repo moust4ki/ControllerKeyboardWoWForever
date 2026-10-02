@@ -358,6 +358,14 @@ function W:RenderSide(layer)
         side.title:SetText("")
         status = ""
     end
+    -- The list starts under two lines: while it is open, only what the
+    -- input holds now
+    if picker and input then
+        local current = picker.slot and M:SlotAction(picker.slot) or M:Get(input.id, layer)
+        status = current and ("|cffffd100" .. (M:ActionName(current) or "") .. "|r")
+            or ("|cff9d9a8c" .. (picker.slot and L.MAP_EMPTY_SLOT or L.MAP_FREE) .. "|r")
+    end
+    side.status:SetMaxLines(picker and 2 or 0)
     side.status:SetText(status)
 
     -- The tab buttons show this picker's own tabs
