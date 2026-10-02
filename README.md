@@ -1,6 +1,12 @@
-# Controller Keyboard
+# Easy Controller - Forever
 
-A **gamepad keyboard** to type in **WoW Forever**'s chat, with **smartphone-style word prediction**
+*Formerly Controller Keyboard.*
+
+**WoW Forever's gamepad play, made easy**, without changing the game's own gamepad UI: a **chat
+keyboard** with word prediction, a **gamepad mapping** (the gamepad bar's slots, game functions on
+the free buttons and back paddles), and **quest** helpers. RB + D-pad down opens the configuration.
+
+The **gamepad keyboard** types in **WoW Forever**'s chat, with **smartphone-style word prediction**
 that learns the way you write. Two input methods: a **daisywheel** and a **split keyboard** (one half per stick).
 Everything is also clickable with the mouse, so it works with the Steam Controller trackpad too.
 
@@ -131,7 +137,7 @@ you typed; then type the message. Deleting on an empty message goes back to the 
 **RB + D-pad down** opens the addon's own panel (only watched, never bound: the game's own buttons stay as they are;
 the General tab learns any other pair: press A on it, then hold a button and press a second one;
 also `/ck config`, a
-key binding, or *Options > AddOns > Controller Keyboard*). It is driven with the gamepad (LB / RB:
+key binding, or *Options > AddOns > Easy Controller - Forever*). It is driven with the gamepad (LB / RB:
 tabs, D-pad: move and change values, A: choose, B: close) or the mouse.
 
 - **General**: every function, each with its own switch (keyboard, auto-open, quest links,
@@ -240,7 +246,7 @@ In the configuration panel (RB + D-pad down, `/ck config`):
 | `/ck glyphs` | list the game's gamepad button icons |
 | `/ck debug` | print received buttons and sticks |
 
-**"Toggle keyboard"**, **"Controller Keyboard configuration"** and **"Gamepad mapping"** key bindings
+**"Toggle keyboard"**, **"Easy Controller - Forever configuration"** and **"Gamepad mapping"** key bindings
 are also available in *Escape > Key Bindings > AddOns*.
 
 ## Technical notes
@@ -291,6 +297,23 @@ CurseForge / release package (`dist/ControllerKeyboard-<version>.zip`, page desc
 ```bash
 python tools/package.py
 ```
+
+### Releases
+
+Releases are automatic (`.github/workflows/release.yml`): set the new `## Version` in the TOC, add a
+`## <version>` section to `CHANGELOG.md`, commit, then push a tag `v<version>`:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+GitHub then checks that the tag matches the TOC, builds the zip, creates the GitHub release and uploads
+the file to CurseForge, both with that version's CHANGELOG section as release notes. A tag with a dash
+(`v1.1.0-beta1`) is a beta. It needs the `CF_API_KEY` repository secret (a CurseForge API token); the
+CurseForge game version is 1.60.1 (WoW Forever) unless the `CF_GAME_VERSION` repository variable says
+otherwise. CurseForge has no API for the project page itself: paste `docs/curseforge.md` there when it
+changes.
 
 ## License
 

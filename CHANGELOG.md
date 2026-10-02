@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.5.0
+## 1.0.0
+
+The addon is now **Easy Controller - Forever** (formerly Controller Keyboard): the name players see changes, the
+addon's folder and all settings stay the same. `/ec` works as well as `/ck`.
 
 ### Configuration panel
 
@@ -33,7 +36,8 @@
 - The extra buttons that do something (back paddles, L3, R3) are shown around the gamepad action bar,
   in its round slot style, with the action's icon (zoomed like the game's), count, cooldown and
   usability; they show the held trigger layer's action, and press down like the game's buttons.
-  Their name (R4...) shows on the outer side, above, below, left, right, or not at all (option).
+  Their name (R4...) shows on the outer side (left / right, or up / down following each button's
+  place), above, below, left, right, or not at all (option).
   L3 / R3 can be shown too, with what the game does with them (autorun, ping...) or what you put on
   them. Spells are listed and shown with their rank.
 - "Place the bar and extra buttons": the game's gamepad bar moves by steps with the D-pad (only its

@@ -270,13 +270,13 @@ CK.Config.pages.keyboard = CK.Config.NewListPage(keyboardRows)
 function CK:RegisterOptions()
     if self.optionsPanel then return end
     local panel = CK.NewFrame("Frame")
-    panel.name = "Controller Keyboard"
+    panel.name = "Easy Controller - Forever"
     panel:Hide()
     self.optionsPanel = panel
 
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText("Controller Keyboard")
+    title:SetText("Easy Controller - Forever")
     local sub = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     sub:SetPoint("TOPLEFT", 16, -40)
     sub:SetText(L.OPT_SUBTITLE)

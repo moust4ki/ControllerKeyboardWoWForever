@@ -231,6 +231,7 @@ end
 
 SLASH_CONTROLLERKEYBOARD1 = "/ck"
 SLASH_CONTROLLERKEYBOARD2 = "/controllerkeyboard"
+SLASH_CONTROLLERKEYBOARD3 = "/ec"
 SlashCmdList.CONTROLLERKEYBOARD = slash
 
 ---------------------------------------------------------------------------

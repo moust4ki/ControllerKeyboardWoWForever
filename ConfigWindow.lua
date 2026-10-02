@@ -250,7 +250,7 @@ function C:Build()
     local title = kit.text(f, 16)
     title:SetPoint("TOPLEFT", 16, -13)
     title:SetTextColor(unpack(kit.C.gold))
-    title:SetText("Controller Keyboard")
+    title:SetText("Easy Controller")
 
     f.tabs = {}
     local lb = f:CreateTexture(nil, "OVERLAY")

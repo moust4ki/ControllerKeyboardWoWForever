@@ -357,18 +357,22 @@ function P:AddBadge(b, text, side)
     local fs = badge:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     fs:SetPoint("CENTER", 0, 0)
     fs:SetText(text)
+    -- Above every button, so a neighbour never hides a name
+    badge:SetFrameLevel(b.over:GetFrameLevel() + 20)
     b.badge = badge
     P.PlaceBadge(b, "outer")
 end
 
--- The badge on the outer side (left for L4, right for R4), above, below,
--- left, right, or hidden (option)
-P.BADGE_PLACES = { "outer", "top", "bottom", "left", "right", "hidden" }
+-- The badge on the outer side, horizontally (left for L4, right for R4) or
+-- vertically (above for a button above the bar's middle, below for one
+-- below it), above, below, left, right, or hidden (option)
+P.BADGE_PLACES = { "outer", "outer_v", "top", "bottom", "left", "right", "hidden" }
 
-function P.PlaceBadge(b, where)
+function P.PlaceBadge(b, where, y)
     local badge = b.badge
     if not badge then return end
-    if where == "outer" then where = (b.side or -1) < 0 and "left" or "right" end
+    if where == "outer_v" and y and y ~= 0 then where = y > 0 and "top" or "bottom" end
+    if where == "outer" or where == "outer_v" then where = (b.side or -1) < 0 and "left" or "right" end
     badge:ClearAllPoints()
     badge:SetShown(where ~= "hidden")
     if where == "top" then
@@ -561,6 +565,8 @@ function P:Layout()
         else
             b:SetPoint("CENTER", f, "CENTER", x + SIDE[id] * 195, y)
         end
+        -- Its name follows its place (outer side, up / down)
+        P.PlaceBadge(b, settings().badgePlace or "outer", y)
     end
 end
 
@@ -641,7 +647,9 @@ function P:BuildFrame()
     local f = CK.NewFrame("Frame", nil, UIParent)
     f:SetSize(1, 1)
     f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 211)
-    f:SetFrameStrata("LOW")
+    -- Above the game's gamepad bar (LOW): buttons and names placed over its
+    -- top and bottom bars stay visible
+    f:SetFrameStrata("MEDIUM")
     f.buttons = {}
     for _, id in ipairs(P.EXTRA) do
         local b = self:CreateSlot(f, SIZE)
@@ -688,7 +696,6 @@ end
 -- Settings changed: layout, what is shown
 function P:Apply()
     if not self.frame then return end
-    for _, id in ipairs(P.EXTRA) do P.PlaceBadge(self.frame.buttons[id], settings().badgePlace or "outer") end
     self:Layout()
     self:UpdateVisibility()
     self:Refresh(true)

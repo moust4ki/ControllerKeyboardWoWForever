@@ -1,11 +1,12 @@
 ## Interface: 16001
-## Title: Controller Keyboard
-## Notes: Visual daisywheel keyboard to type in chat with a gamepad or the mouse, with word prediction.
-## Notes-frFR: Clavier visuel en roue pour écrire dans le chat à la manette ou à la souris, avec prédiction de mots.
+## Title: Easy Controller - Forever
+## Notes: Gamepad play made easy on WoW Forever: chat keyboard with word prediction, gamepad mapping and back paddles, quest items and quest links.
+## Notes-frFR: Le jeu à la manette simplifié sur WoW Forever : clavier de chat avec prédiction, mappage manette et palettes arrière, objets et liens de quête.
 ## Author: moust4ki
-## Version: 0.5.0
+## Version: 1.0.0
 ## SavedVariables: ControllerKeyboardDB
 ## X-Website: https://github.com/moust4ki/ControllerKeyboardWoWForever
+## X-Curse-Project-ID: 1712492
 
 Core.lua
 Dict_frFR.lua

@@ -1,19 +1,25 @@
-# Controller Keyboard
+# Easy Controller - Forever
 
-**Type in WoW Forever's chat with a gamepad. No keyboard needed.**
+**WoW Forever's gamepad play, made easy. No keyboard needed.**
 
-Controller Keyboard opens a gamepad keyboard as soon as you open the chat. Pick the input method that
-suits you, let the smartphone-style prediction finish your words and sentences, choose the channel,
-and send with A. It learns the way you write, and everything stays clickable with the mouse or the
-Steam Controller trackpad.
+Easy Controller - Forever (formerly Controller Keyboard) fills the gaps of WoW Forever's gamepad UI,
+without changing it:
 
-The look matches WoW Forever's gamepad UI: bronze and gold rims, Friz Quadrata font, the game's own
-button icons.
+- **Chat keyboard**: type in the chat with the gamepad, with smartphone-style word prediction that
+  learns the way you write.
+- **Gamepad mapping**: your whole controller in one window; fill the gamepad bar's slots, and put the
+  missing game functions (run / walk, game menu, map...) on the free buttons and the **back paddles**
+  (Steam Deck, Elite, Edge...).
+- **Quests**: quest items marked "do not sell" and glowing in your bags, quest links in the chat.
 
-It also brings quality of life modules for gamepad players, each one can be turned off: a
-**gamepad mapping** that adds the missing game functions on the free buttons and the **back
-paddles**, without changing WoW Forever's own gamepad UI, **quest items** marked "do not sell", and
-**quest links** in the chat.
+Everything is driven with the gamepad (RB + D-pad down opens the configuration), every function can
+be turned off, and the look matches WoW Forever's gamepad UI.
+
+## Chat keyboard
+
+The keyboard opens as soon as you open the chat. Pick the input method that suits you, let the
+prediction finish your words and sentences, choose the channel, and send with A. Everything stays
+clickable with the mouse or the Steam Controller trackpad.
 
 ## Two input methods
 
@@ -141,7 +147,7 @@ Install with the CurseForge app, or extract the zip into
 - `/ck map`: gamepad mapping (free buttons, back paddles)
 - `/ck keys`: list the keys the game receives (to set up back paddles)
 - `/ck help`: all commands
-- Options: RB + D-pad down, `/ck config`, or *Escape > Options > AddOns > Controller Keyboard*
+- Options: RB + D-pad down, `/ck config`, or *Escape > Options > AddOns > Easy Controller - Forever*
 
 ## Compatibility
 
