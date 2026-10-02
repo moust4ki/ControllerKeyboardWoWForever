@@ -216,7 +216,7 @@ local function slash(msg)
     elseif cmd == "wheel" then
         CK.ConsumableWheel:Diagnose()
     elseif cmd == "binds" then
-        if arg == "test" then CK.Mapping:BindingTest() else CK.Mapping:Diagnose() end
+        CK.Mapping:Diagnose()
     elseif cmd == "debug" then
         s.debug = not s.debug
         CK.seenSticks = nil

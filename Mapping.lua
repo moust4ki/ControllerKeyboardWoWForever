@@ -1072,55 +1072,6 @@ function M:UpdateMarks()
     end
 end
 
--- /ec binds test: how the client takes back a binding to one of the game's
--- gamepad commands, on a key nobody uses
-function M:BindingTest()
-    if CK:BlockedByCombat() then return end
-    local key = "ALT-CTRL-SHIFT-F12"
-    self.testOwner = self.testOwner or CK.NewFrame("Frame")
-    local f = self.testOwner
-    local context = Enum and Enum.BindingContext and Enum.BindingContext.GamepadModeInGameCore
-    local function show(step)
-        local game
-        if context and C_KeyBindings and C_KeyBindings.GetBindingByKey then
-            local ok, value = pcall(C_KeyBindings.GetBindingByKey, key, context)
-            game = ok and value or nil
-        end
-        DEFAULT_CHAT_FRAME:AddMessage(format("  %s: %s | gamepad context: %s", step,
-            tostring(GetBindingAction(key, true)), tostring(game)))
-    end
-    self.applying = true
-    show("0 before")
-    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("1 set TOGGLEPINGSYSTEM")
-    ClearOverrideBindings(f) show("2 ClearOverrideBindings")
-    SetOverrideBinding(f, true, key, nil) show("3 set nil")
-    SetOverrideBinding(f, true, key, "TOGGLEAUTORUN") show("4 set TOGGLEAUTORUN")
-    ClearOverrideBindings(f) show("5 ClearOverrideBindings")
-    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("6 set TOGGLEPINGSYSTEM")
-    SetOverrideBinding(f, true, key, nil) show("7 set nil")
-    ClearOverrideBindings(f) show("8 ClearOverrideBindings")
-    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("9 set TOGGLEPINGSYSTEM")
-    SetOverrideBindingClick(f, true, key, "ControllerKeyboardNoopButton", "LeftButton") show("10 set a click")
-    SetOverrideBinding(f, true, key, nil) show("11 set nil")
-    ClearOverrideBindings(f) show("12 ClearOverrideBindings")
-    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("13 set TOGGLEPINGSYSTEM")
-    SetOverrideBinding(f, true, key, "CONTROLLERKEYBOARD_NOOP") show("14 set NOOP")
-    SetOverrideBinding(f, true, key, nil) show("15 set nil")
-    ClearOverrideBindings(f) show("16 ClearOverrideBindings")
-    -- Our panel's case: ping replaced by us, let go, then the panel binds
-    -- the key on its own frame
-    self.testPanel = self.testPanel or CK.NewFrame("Frame")
-    local panel = self.testPanel
-    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("17 ours: ping")
-    SetOverrideBinding(f, true, key, "CONTROLLERKEYBOARD_NOOP")
-    SetOverrideBindingClick(f, true, key, "ControllerKeyboardNoopButton", "LeftButton")
-    SetOverrideBinding(f, true, key, nil)
-    ClearOverrideBindings(f) show("18 ours let go")
-    SetOverrideBindingClick(panel, true, key, "ControllerKeyboardConfigPadPAD1", "LeftButton") show("19 the panel binds it")
-    ClearOverrideBindings(panel) show("20 the panel closes")
-    self.applying = false
-end
-
 -- /ec binds: the game's buttons replaced, and what each key runs now
 function M:Diagnose()
     local manager = GamepadSharedUtility and GamepadSharedUtility.InputBindingManager

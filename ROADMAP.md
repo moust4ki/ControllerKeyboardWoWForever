@@ -2,9 +2,10 @@
 
 Everything planned for Easy Controller - Forever, so nothing gets lost. Each feature is built, tested
 in game, then released on GitHub and CurseForge. Done items move to the [CHANGELOG](CHANGELOG.md)
-(1.2.0: vibrations, supplies, consumables wheel).
+(1.2.0: vibrations, supplies, consumables wheel; 1.2.1: the game's gamepad functions anywhere, its
+buttons replaceable).
 
-## 1.3.0: the game's own gamepad functions, on any button
+## 1.2.1: the game's own gamepad functions, on any button
 
 How WoW Forever does it: jump, back (stop casting / targeting, clear the target), interact and
 inspect are the four fixed buttons of the gamepad bar's top layer (A, B, X, Y alone), with their
@@ -20,8 +21,8 @@ closes.
   Start, Select, L3 / R3), behind a switch in the Gamepad tab, off by default: a priority binding of
   ours over the game's, taken away while one of its gamepad windows has the focus (so its menus keep
   A / B), and set again when it closes. LT and RT become modifiers (a key per layer); the other
-  layers of a replaced button are bound to what the game does there. To check in game: a menu
-  opened in combat (bindings can't change then), `/ec binds`.
+  layers of a replaced button are bound to what the game does there. Checked in game; still to
+  watch: a menu opened in combat (bindings can't change then), `/ec binds`.
 
 ## Next: your own wheels
 

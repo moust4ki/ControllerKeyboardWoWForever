@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.0
+## 1.2.1
 
 - **The game's own gamepad functions on any free button.** The Gamepad tab's Game list starts with
   them: jump, back, interact and inspect (the game's fixed A / B / X / Y buttons, pressed from the
