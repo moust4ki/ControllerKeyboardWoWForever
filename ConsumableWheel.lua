@@ -4,16 +4,19 @@ local L = CK.L
 -- Module "consumables wheel": a key of its own (Gamepad tab, or the game's key
 -- bindings) opens a wheel of up to 12 consumables from the bags: food, drink,
 -- health and mana potions, healthstone, mana gem, bandages, buff food,
--- elixirs and flasks, scrolls. Hold its key, aim with a stick, let
--- the key go: the item aimed is used (nothing aimed: nothing used). A quick
--- press keeps it open: aim, then A or the key again. B cancels; the D-pad
--- and the mouse work too. While it is open it takes the sticks, like the
--- game's own wheels: the camera and the character stay still. In the middle
--- of the screen (or placed with the mouse or the D-pad).
+-- elixirs and flasks, scrolls. Like the game's own radial menu: push a
+-- stick towards an item and let it go to use it; B cancels. The wheel's key
+-- held then let go uses the item aimed too; A, the D-pad and the mouse work
+-- as well. While it is open it takes the sticks, like the game's own wheels:
+-- the camera and the character stay still. In the middle of the screen (or
+-- placed with the mouse or the D-pad).
 --
--- Secure code only acts on key presses and releases, never on a stick
--- moving: in combat, letting the stick go cannot be seen by an addon, so the
--- use comes with the release of the wheel's key.
+-- Secure code only acts on keys: letting a stick go is seen through the
+-- game's stick direction keys (PADLSTICKUP...), sent with its
+-- GamePadStickAxisButtons setting, which the wheel keeps on while it is
+-- turned on (it cannot be changed in combat). Each direction's press and
+-- release goes to the wheel while it is open; the use comes once no
+-- direction is held any more, or the stick is back near the middle.
 --
 -- It works in combat: the wheel, its slots and the keys it takes while open
 -- are secure frames and snippets run by the game (its restricted
@@ -152,6 +155,8 @@ end
 -- unit vector ("ck-x3", "ck-y3"): the aimed slot is the closest one.
 ---------------------------------------------------------------------------
 local PREFIXES = ",SHIFT-,CTRL-,ALT-,CTRL-SHIFT-,ALT-SHIFT-,ALT-CTRL-,ALT-CTRL-SHIFT-,"
+local STICK_KEYS = "PADLSTICKUP,PADLSTICKDOWN,PADLSTICKLEFT,PADLSTICKRIGHT,"
+    .. "PADRSTICKUP,PADRSTICKDOWN,PADRSTICKLEFT,PADRSTICKRIGHT,"
 
 -- `slot`: the slot a stick points at (either one, the one pushed further,
 -- past half its course), else the one chosen with the D-pad, else 0
@@ -187,8 +192,50 @@ local SHOW = [[
         owner:SetBindingClick(true, prefix .. "PADDRIGHT", "ControllerKeyboardWheelNext")
         owner:SetBindingClick(true, prefix .. "PADDDOWN", "ControllerKeyboardWheelNext")
         owner:SetBindingClick(true, prefix .. "PADRSTICK", "ControllerKeyboardWheelClose")
+        for key in gmatch(owner:GetAttribute("ck-stickkeys"), "([^,]+),") do
+            owner:SetAttribute("ck-held-" .. key, 0)
+            owner:SetBindingClick(true, prefix .. key, "ControllerKeyboardWheelLetGo", key)
+        end
     end
     owner:SetBindingClick(true, "ESCAPE", "ControllerKeyboardWheelClose")
+]]
+
+-- The stick direction keys (their name comes as the click's button). A
+-- press aims (the stick a third of the way out); a release aims again while
+-- the stick is still out, then, once no direction is held any more or the
+-- stick is back near the middle, uses the item aimed. Rolling round the rim
+-- keeps a direction held: nothing is used.
+local LET_GO = [[
+    if button == "LeftButton" then return false end
+    local count = owner:GetAttribute("count") or 0
+    local state = GetGamePadState()
+    local sticks = state and state.sticks
+    local stick = sticks and sticks[owner:GetAttribute("ck-stick") or 2]
+    local other = sticks and sticks[owner:GetAttribute("ck-stick2") or 1]
+    if other and other.len and (not (stick and stick.len) or other.len > stick.len) then stick = other end
+    local len = stick and stick.len or 0
+    if len > (down and 0.35 or 0.4) then
+        local best, bestDot = nil, -2
+        for i = 1, count do
+            local dot = stick.x * (owner:GetAttribute("ck-x" .. i) or 0) + stick.y * (owner:GetAttribute("ck-y" .. i) or 0)
+            if dot > bestDot then best, bestDot = i, dot end
+        end
+        if best then owner:SetAttribute("selected", best) end
+    end
+    if down then
+        owner:SetAttribute("ck-held-" .. button, 1)
+        return false
+    end
+    owner:SetAttribute("ck-held-" .. button, 0)
+    if len >= 0.6 then
+        for key in gmatch(owner:GetAttribute("ck-stickkeys"), "([^,]+),") do
+            if owner:GetAttribute("ck-held-" .. key) == 1 then return false end
+        end
+        if len >= 0.9 then return false end
+    end
+    local slot = owner:GetAttribute("selected") or 0
+    if slot < 1 or slot > count then return false end
+    return "s" .. slot, true
 ]]
 
 local HIDE = [[
@@ -297,6 +344,7 @@ function W:Build()
     -- camera and the character still get them
     wheel:SetScript("OnGamePadStick", function() W:Track() end)
     wheel:SetAttribute("ck-prefixes", PREFIXES)
+    wheel:SetAttribute("ck-stickkeys", STICK_KEYS)
     self.frame = wheel
     self:Place()
 
@@ -309,6 +357,11 @@ function W:Build()
     use:SetAttribute("type", "click")
     self.use = use
     keyButton("ControllerKeyboardWheelClose", wheel, CLOSE)
+    -- The stick direction keys: their presses and releases
+    local letGo = keyButton("ControllerKeyboardWheelLetGo", wheel, LET_GO, DONE, "AnyDown", "AnyUp")
+    letGo:SetAttribute("useOnKeyDown", false)
+    letGo:SetAttribute("type", "click")
+    self.letGo = letGo
     keyButton("ControllerKeyboardWheelPrev", wheel, turn(-1))
     keyButton("ControllerKeyboardWheelNext", wheel, turn(1))
 
@@ -360,6 +413,7 @@ function W:Build()
         b:Hide()
         use:SetAttribute("*clickbutton-s" .. i, b)
         toggle:SetAttribute("*clickbutton-s" .. i, b)
+        letGo:SetAttribute("*clickbutton-s" .. i, b)
         self.buttons[i] = b
     end
 end
@@ -447,6 +501,8 @@ function W:Paint()
     end
     local g = function(key) return CK:GlyphMarkup(key, 14) end
     self.view.help:SetText(format("%s%s %s   %s %s", g("LS"), g("RS"), L.WHEEL_AIM, g("B"), L.WHEEL_CLOSE))
+    -- Turned off by something else since: on again (out of combat)
+    self:StickKeys(settings().enabled)
     self.aimed = nil
     self:Track()
 end
@@ -572,18 +628,43 @@ function W:PlacementPress(name)
 end
 
 ---------------------------------------------------------------------------
--- Game settings an earlier version changed (stick direction buttons, camera
--- speeds): given back as they were
+-- The game's stick direction keys (GamePadStickAxisButtons): on while the
+-- wheel is on, the player's own value given back when it is turned off.
+-- Out of combat only (the game refuses it in combat). Camera speeds an
+-- earlier version changed are given back too.
 ---------------------------------------------------------------------------
+local STICK_CVAR = "GamePadStickAxisButtons"
+
+local function getCVar(name)
+    local get = C_CVar and C_CVar.GetCVar or GetCVar
+    local ok, value = pcall(get, name)
+    return ok and value or nil
+end
+
+local function setCVar(name, value)
+    local set = C_CVar and C_CVar.SetCVar or SetCVar
+    return pcall(set, name, value)
+end
+
+function W:StickKeys(on)
+    if InCombatLockdown() then return end
+    local s = settings()
+    local current = getCVar(STICK_CVAR)
+    if current == nil then return end
+    if on and tostring(current) ~= "1" then
+        if s.stickButtonsWas == nil then s.stickButtonsWas = tostring(current) end
+        setCVar(STICK_CVAR, "1")
+    elseif not on and s.stickButtonsWas ~= nil then
+        setCVar(STICK_CVAR, s.stickButtonsWas)
+        s.stickButtonsWas = nil
+    end
+end
+
 function W:RestoreSettings()
     if InCombatLockdown() then return end
     local s = settings()
-    if s.stickButtonsWas then
-        pcall(SetCVar, "GamePadStickAxisButtons", s.stickButtonsWas)
-        s.stickButtonsWas = nil
-    end
     if s.camera then
-        for cvar, value in pairs(s.camera) do pcall(SetCVar, cvar, value) end
+        for cvar, value in pairs(s.camera) do setCVar(cvar, value) end
         s.camera = nil
     end
 end
@@ -599,6 +680,7 @@ end
 ---------------------------------------------------------------------------
 function W:Init()
     self:RestoreSettings()
+    self:StickKeys(settings().enabled)
     self:Build()
     local f = CreateFrame("Frame")
     for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "BAG_UPDATE_DELAYED", "PLAYER_REGEN_ENABLED",
