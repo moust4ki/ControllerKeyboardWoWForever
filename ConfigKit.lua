@@ -294,12 +294,29 @@ end
 ---------------------------------------------------------------------------
 -- A round icon (spell, item, macro...) cut by a circle
 ---------------------------------------------------------------------------
+local function hasAtlas(name)
+    return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) ~= nil
+end
+
+-- A square icon with the corners of the game's gamepad bar (its SquareMask)
+function K.SquareIcon(parent, size, layer)
+    local t = parent:CreateTexture(nil, layer or "ARTWORK")
+    t:SetSize(size, size)
+    if hasAtlas("SquareMask") then
+        local mask = parent:CreateMaskTexture()
+        mask:SetAllPoints(t)
+        mask:SetAtlas("SquareMask")
+        t:AddMaskTexture(mask)
+    end
+    return t
+end
+
 function K.RoundIcon(parent, size, layer)
     local t = parent:CreateTexture(nil, layer or "ARTWORK")
     t:SetSize(size, size)
     local mask = parent:CreateMaskTexture()
     mask:SetAllPoints(t)
-    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo("CircleMask") then
+    if hasAtlas("CircleMask") then
         mask:SetAtlas("CircleMask")
     else
         mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
@@ -702,22 +719,24 @@ end
 -- a "+", stripes (unavailable), a coloured ring (a slot of the game's bar,
 -- yours), a cyan diamond (yours), the focus glow, the target's dashed ring.
 ---------------------------------------------------------------------------
-function K.Slot(parent, size, iconSize)
+function K.Slot(parent, size, iconSize, square)
+    -- Square (the D-pad's, like the game's gamepad bar) or round
+    local sq = square and "_sq" or ""
     local s = CK.NewFrame("Button", nil, parent)
     s:SetSize(size, size)
     s:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     s.bg = s:CreateTexture(nil, "BACKGROUND")
-    s.bg:SetTexture(TEX .. "ck_slot")
+    s.bg:SetTexture(TEX .. "ck_slot" .. sq)
     s.bg:SetAllPoints()
     s.disc = s:CreateTexture(nil, "ARTWORK", nil, 0)
-    s.disc:SetTexture(TEX .. "ck_dot")
+    s.disc:SetTexture(TEX .. (square and "ck_sqr" or "ck_dot"))
     s.disc:SetSize(iconSize, iconSize)
     s.disc:SetPoint("CENTER")
-    s.icon = K.RoundIcon(s, iconSize, "ARTWORK")
+    s.icon = (square and K.SquareIcon or K.RoundIcon)(s, iconSize, "ARTWORK")
     s.icon:SetDrawLayer("ARTWORK", 1)
     s.icon:SetPoint("CENTER")
     s.hatch = s:CreateTexture(nil, "ARTWORK", nil, 2)
-    s.hatch:SetTexture(TEX .. "ck_hatch")
+    s.hatch:SetTexture(TEX .. "ck_hatch" .. sq)
     s.hatch:SetSize(iconSize, iconSize)
     s.hatch:SetPoint("CENTER")
     s.plus = K.Text(s, size >= 52 and 20 or 18, C.dimGold, "OVERLAY")
@@ -727,7 +746,7 @@ function K.Slot(parent, size, iconSize)
     -- The ring: its outer edge on the slot's (a slot of the game's bar), or
     -- 1 px out (yours)
     s.ring = s:CreateTexture(nil, "OVERLAY", nil, 0)
-    s.ring:SetTexture(TEX .. "ck_ring")
+    s.ring:SetTexture(TEX .. "ck_ring" .. sq)
     s.ring:SetPoint("CENTER")
     s.ring:SetSize(size, size)
     -- Yours: a cyan diamond with a dark edge, bottom left
@@ -742,7 +761,7 @@ function K.Slot(parent, size, iconSize)
     s.mark:SetSize(13, 13)
     s.mark:SetPoint("CENTER", s.markEdge, "CENTER")
     s.glow = s:CreateTexture(nil, "OVERLAY", nil, 3)
-    s.glow:SetTexture(TEX .. "ck_slot_glow")
+    s.glow:SetTexture(TEX .. "ck_slot_glow" .. sq)
     s.glow:SetBlendMode("ADD")
     s.glow:SetSize(math.floor(size * 1.46 + 0.5), math.floor(size * 1.46 + 0.5))
     s.glow:SetPoint("CENTER")

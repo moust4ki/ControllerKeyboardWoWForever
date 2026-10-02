@@ -30,8 +30,10 @@ local NODES = {
     { "R3", 312, 212 },
     { "L4", 34, 300 }, { "L5", 112, 300 }, { "R5", 376, 300 }, { "R4", 452, 300 },
 }
--- The D-pad's four sit on the drawn cross: no glyph of their own
+-- The D-pad's four sit on the drawn cross: no glyph of their own; square,
+-- like the game's gamepad bar draws them
 local NO_GLYPH = { UP = true, DOWN = true, LEFT = true, RIGHT = true }
+local SQUARE = NO_GLYPH
 -- Select and Start are close: narrower names
 local LABEL_W = { SELECT = 64, START = 64 }
 local GLYPH_SIDE = {
@@ -198,7 +200,7 @@ function W:BuildNode(area, n)
     node:SetSize(SLOT, SLOT)
     node:SetPoint("CENTER", area, "TOPLEFT", x, -y)
     node.input = M.BY_ID[id]
-    node.slot = K.Slot(node, SLOT, ICON)
+    node.slot = K.Slot(node, SLOT, ICON, SQUARE[id])
     node.slot:SetAllPoints()
     -- Its glyph, beside it (just over the slot's edge)
     node.glyph = K.Glyph(node, GLYPH)
