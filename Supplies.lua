@@ -221,6 +221,7 @@ function S:Button(i)
     b.count:ClearAllPoints()
     b.count:SetPoint("BOTTOM", 0, 1)
     local click = CK.NewFrame("Button", "ControllerKeyboardSupplyButton" .. i, bar, "SecureActionButtonTemplate")
+    click:SetSize(b.size, b.size)
     click:SetFrameLevel(b:GetFrameLevel() + 10)
     click:RegisterForClicks("LeftButtonUp")
     -- Acts on the release, the click it gets (the game's default for its
@@ -245,13 +246,13 @@ function S:Button(i)
     return b
 end
 
--- Size of a slot (it keeps its size when unchanged)
+-- Size of a slot and of the button that takes its clicks
 local function resize(b, size)
+    b.click:SetSize(size, size)
     if b.size == size then return end
     b.size = size
     b:SetSize(size, size)
     b.visual:SetSize(size, size)
-    b.click:SetSize(size, size)
 end
 
 -- The 4 ways the bar grows from its first button
