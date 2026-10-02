@@ -4,9 +4,10 @@ local L = CK.L
 -- Configuration, Gamepad tab: the whole controller in four trigger layers.
 -- The game's own buttons are shown with what they do (read only, with their
 -- icon); the free ones and the extra buttons get a game function, a spell, an
--- item, a macro or a gamepad bar button from the list on the right. Top
--- right: the game's buttons left alone (default) or replaceable too. Below:
--- identify the back paddles, place the extra buttons on the HUD.
+-- item, a macro or a gamepad bar button from the list on the right, the
+-- game's own too (replaced over the game's). Top right: every replaced
+-- button given back to the game. Below: identify the back paddles, place the
+-- extra buttons on the HUD.
 local W = {}
 CK.MapPage = W
 CK.Config.pages.gamepad = W
@@ -111,8 +112,8 @@ function W:Build(parent)
         t.layer = layer
         f.layerTabs[i] = t
     end
-    -- The game's own buttons: left alone, or replaceable (off by default)
-    f.replace = kit.buildButton(f, "", function() W:ToggleReplace() end)
+    -- Every replaced button of the game's given back to it
+    f.replace = kit.buildButton(f, "", function() W:Restore() end)
     f.replace:SetSize(282, 22)
     f.replace:SetPoint("TOPLEFT", f, "TOPLEFT", 480, 0)
     local back = kit.text(area, 11)
@@ -199,6 +200,7 @@ function W:Show()
     self.focusAction = nil
     self.focusLayers = false
     self.focusReplace = false
+    self.restoreAsk = false
     self.frame:Show()
 end
 
@@ -328,8 +330,11 @@ function W:Render()
     end
     for _, b in pairs(f.slots) do self:RenderSlot(b, layer) end
     for i, b in ipairs(f.actions) do b:SetActive(self.focusAction == i) end
-    f.replace.label:SetText(M:ReplaceOn() and L.MAP_REPLACE_ON or L.MAP_REPLACE_OFF)
-    f.replace.active = M:ReplaceOn()
+    local replaced = M:ReplacedCount()
+    if not self.focusReplace then self.restoreAsk = false end
+    f.replace.label:SetText(replaced == 0 and L.MAP_RESTORE_NONE
+        or self.restoreAsk and L.MAP_RESTORE_CONFIRM or format(L.MAP_RESTORE, replaced))
+    f.replace.active = self.restoreAsk or false
     f.replace.hover = self.focusReplace or nil
     f.replace:Render()
     self:RenderSide(layer)
@@ -373,10 +378,8 @@ function W:RenderSide(layer)
         elseif state == "slot" then
             -- The game keeps some actions on its bars (hunter aspects...)
             local kept = M:SlotKept(M:NativeSlot(input, layer))
-            -- The switch off: what it would allow, said every time
-            local switch = not M:ReplaceOn() and ("\n" .. L.MAP_REPLACE_SWITCH_HINT) or ""
-            local hint = kept and (kept .. (replaceHint and ("\n" .. replaceHint) or switch))
-                or (canReplace and M:CanOwnKeys() and L.MAP_SLOT_REPLACE_HINT) or replaceHint or (L.MAP_SLOT_HINT .. switch)
+            local hint = kept and (kept .. (replaceHint and ("\n" .. replaceHint) or ""))
+                or (canReplace and M:CanOwnKeys() and L.MAP_SLOT_REPLACE_HINT) or replaceHint or L.MAP_SLOT_HINT
             status = "|cffffd100" .. (M:NativeInfo(input, layer) or L.MAP_EMPTY_SLOT) .. "|r\n|cff9d9a8c" .. hint .. "|r"
         elseif state == "native" then
             local hint = replaceHint or L.MAP_NATIVE_HINT
@@ -466,7 +469,7 @@ function W:Help(g)
         return { g("B") .. " " .. L.MAP_P_SKIP }
     elseif self.focusReplace then
         return {
-            g("A") .. " " .. L.CFG_P_TOGGLE, g("DPAD_LEFT") .. " " .. L.MAP_P_LAYER,
+            g("A") .. " " .. L.MAP_P_RESTORE, g("DPAD_LEFT") .. " " .. L.MAP_P_LAYER,
             g("LB") .. g("RB") .. " " .. L.MAP_P_TAB, g("B") .. " " .. L.MAP_P_CLOSE,
         }
     elseif self.focusLayers then
@@ -562,15 +565,22 @@ function W:Move(dir)
     CK.Config:Render()
 end
 
-function W:ToggleReplace()
-    if CK:BlockedByCombat() then return end
-    self.picker = nil
-    M:SetReplaceOn(not M:ReplaceOn())
+-- Every replaced button back to the game: asked once, done on the second press
+function W:Restore()
+    if CK:BlockedByCombat() or M:ReplacedCount() == 0 then return end
+    self.focusReplace = true
+    if self.restoreAsk then
+        self.restoreAsk = false
+        self.picker = nil
+        M:RestoreGameButtons()
+    else
+        self.restoreAsk = true
+    end
     CK.Config:Render()
 end
 
 function W:Choose()
-    if self.focusReplace then return self:ToggleReplace() end
+    if self.focusReplace then return self:Restore() end
     if self.focusLayers then
         self.focusLayers = false
         CK.Config:Render()
@@ -590,10 +600,7 @@ function W:Choose()
         local slot = M:NativeSlot(input, layer)
         local kept = M:SlotKept(slot)
         if kept and not replace then
-            if UIErrorsFrame then
-                UIErrorsFrame:AddMessage(kept, 1, 0.1, 0.1)
-                if not M:ReplaceOn() then UIErrorsFrame:AddMessage(L.MAP_REPLACE_SWITCH_HINT, 1, 0.82, 0) end
-            end
+            if UIErrorsFrame then UIErrorsFrame:AddMessage(kept, 1, 0.1, 0.1) end
             return
         end
         self.picker = { layer = layer, tab = 1, tabs = replace and M.TABS or M.SLOT_TABS, slot = slot,

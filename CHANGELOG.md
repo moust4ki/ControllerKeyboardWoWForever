@@ -7,7 +7,10 @@
   the addon's keyboard or a physical one. They look and work like the consumables wheel, in combat
   too, and each one gets a key: Gamepad tab, Items list (any free button, a paddle), or the game's
   Key Bindings. Deleting a wheel takes it off its buttons.
-- **Gamepad tab**: with the game's buttons switch off, the hints say what turning it on allows.
+- **Every button remappable from the start.** The game's buttons switch is gone: A, B, X, Y, the D-pad,
+  LB / RB, Start and Select take any function right away. In its place, **Restore the game's
+  buttons (N)** (A, then A again) gives every replaced button back to the game, and only those: the
+  game's slots, free buttons, paddles and wheels keep what you put there.
 - **Vibrations**: low health and big hit removed. WoW Forever hides your health from addons in combat,
   so they could never work there.
 

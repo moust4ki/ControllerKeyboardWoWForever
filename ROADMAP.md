@@ -18,8 +18,8 @@ closes.
   own button (its behaviour exactly: the smart interact, jump and sit...); the others are the
   game's own bindings.
 - [x] **Put something else on a button the game uses** (A, B, X, Y alone, the D-pad, LB / RB alone,
-  Start, Select, L3 / R3), behind a switch in the Gamepad tab, off by default: a priority binding of
-  ours over the game's, taken away while one of its gamepad windows has the focus (so its menus keep
+  Start, Select, L3 / R3); since 1.2.2 open to all, with a Restore button in the Gamepad tab: a
+  priority binding of ours over the game's, taken away while one of its gamepad windows has the focus (so its menus keep
   A / B), and set again when it closes. LT and RT become modifiers (a key per layer); the other
   layers of a replaced button are bound to what the game does there. Checked in game; still to
   watch: a menu opened in combat (bindings can't change then), `/ec binds`.

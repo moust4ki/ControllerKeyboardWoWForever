@@ -14,8 +14,8 @@ local L = CK.L
 -- while no gamepad window has the focus; the game's windows bind their keys
 -- with priority above them, and ours are set again when they close.
 --
--- Only when the player turns it on (Gamepad tab, off by default): the
--- game's own buttons can be replaced too (see "The game's buttons, replaced").
+-- The game's own buttons can be replaced too (see "The game's buttons,
+-- replaced"); the Gamepad tab gives them all back to the game at once.
 local M = {}
 CK.Mapping = M
 
@@ -335,10 +335,10 @@ function M:Set(inputId, layer, action)
 end
 
 ---------------------------------------------------------------------------
--- The game's buttons, replaced (an option, off by default): A, B, X, Y, the
--- D-pad, LB / RB, Start, Select... take any function, bound over the game's
--- with priority. settings.replaced["A:"] = action, kept while the option is
--- off. Each layer needs a key of its own, so both triggers are modifiers.
+-- The game's buttons, replaced: A, B, X, Y, the D-pad, LB / RB, Start,
+-- Select... take any function, bound over the game's with priority.
+-- settings.replaced["A:"] = action; the Gamepad tab's Restore button empties
+-- it. Each layer needs a key of its own, so both triggers are modifiers.
 -- The other layers of a replaced button get what the game does there, bound
 -- the same way: a key with no binding of its own would fall back to ours
 -- (the game takes the key without its modifiers). The game's menus bind
@@ -349,14 +349,20 @@ end
 local TRIGGERS = { "PADLTRIGGER", "PADRTRIGGER" }
 
 function M:ReplaceOn()
-    return self:Enabled() and settings().features.gameButtons or false
+    return self:Enabled() or false
 end
 
--- Off: every replaced button back to the game's own binding (what the
--- player put in the game's slots, on the free buttons and paddles stays)
-function M:SetReplaceOn(on)
-    settings().features.gameButtons = on and true or false
-    if not on then wipe(settings().replaced) end
+-- How many of the game's buttons are replaced
+function M:ReplacedCount()
+    local n = 0
+    for _ in pairs(settings().replaced) do n = n + 1 end
+    return n
+end
+
+-- Every replaced button back to the game's own binding (what the player put
+-- in the game's slots, on the free buttons and paddles stays)
+function M:RestoreGameButtons()
+    wipe(settings().replaced)
     self:Apply()
     CK.Paddles:Apply()
 end
