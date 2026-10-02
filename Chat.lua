@@ -266,6 +266,12 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
         CK:RegisterOptions()
         local version = (C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata)(ADDON, "Version")
         CK:Print(L.LOADED, version or "?")
+        -- The folder was ControllerKeyboard before 1.1: an old copy left
+        -- there loads too, with a keyboard of its own
+        local isLoaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
+        if ADDON ~= "ControllerKeyboard" and isLoaded and isLoaded("ControllerKeyboard") then
+            CK:Print(L.OLD_FOLDER)
+        end
     elseif event == "PLAYER_LOGOUT" then
         CK.Predict:Prune()
     elseif event == "GAME_PAD_ACTIVE_CHANGED" then

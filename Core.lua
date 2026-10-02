@@ -79,6 +79,7 @@ local L = {
     OPT_FORGET = "Forget learned words",
     OPT_FORGET_CONFIRM = "Click again to confirm",
     LOADED = "v%s loaded. /ec for help.",
+    OLD_FOLDER = "|cffff6060The old ControllerKeyboard folder is still installed and loads too.|r Delete Interface/AddOns/ControllerKeyboard (game closed): Easy Controller now lives in EasyController.",
     HELP = {
         "/ec - open the keyboard",
         "/ec auto - open automatically with the chat (current: %s)",
@@ -293,6 +294,7 @@ LOCALES.frFR = {
     OPT_FORGET = "Oublier les mots appris",
     OPT_FORGET_CONFIRM = "Cliquer pour confirmer",
     LOADED = "v%s chargé. /ec pour l'aide.",
+    OLD_FOLDER = "|cffff6060L'ancien dossier ControllerKeyboard est encore installé et se charge aussi.|r Supprimez Interface/AddOns/ControllerKeyboard (jeu fermé) : Easy Controller est maintenant dans EasyController.",
     HELP = {
         "/ec - ouvrir le clavier",
         "/ec auto - ouverture automatique avec le chat (actuel : %s)",
@@ -504,6 +506,7 @@ LOCALES.deDE = {
     OPT_FORGET = "Gelernte Wörter vergessen",
     OPT_FORGET_CONFIRM = "Zum Bestätigen erneut klicken",
     LOADED = "v%s geladen. /ec für Hilfe.",
+    OLD_FOLDER = "|cffff6060Der alte Ordner ControllerKeyboard ist noch installiert und wird ebenfalls geladen.|r Lösche Interface/AddOns/ControllerKeyboard (Spiel geschlossen): Easy Controller liegt jetzt in EasyController.",
     HELP = {
         "/ec - Tastatur öffnen",
         "/ec auto - automatisch mit dem Chat öffnen (aktuell: %s)",
@@ -715,6 +718,7 @@ LOCALES.esES = {
     OPT_FORGET = "Olvidar las palabras aprendidas",
     OPT_FORGET_CONFIRM = "Pulsa otra vez para confirmar",
     LOADED = "v%s cargado. /ec para la ayuda.",
+    OLD_FOLDER = "|cffff6060La antigua carpeta ControllerKeyboard sigue instalada y también se carga.|r Borra Interface/AddOns/ControllerKeyboard (con el juego cerrado): Easy Controller está ahora en EasyController.",
     HELP = {
         "/ec - abrir el teclado",
         "/ec auto - abrir automáticamente con el chat (actual: %s)",
@@ -927,6 +931,7 @@ LOCALES.itIT = {
     OPT_FORGET = "Dimentica le parole apprese",
     OPT_FORGET_CONFIRM = "Clicca di nuovo per confermare",
     LOADED = "v%s caricato. /ec per l'aiuto.",
+    OLD_FOLDER = "|cffff6060La vecchia cartella ControllerKeyboard è ancora installata e viene caricata anch'essa.|r Elimina Interface/AddOns/ControllerKeyboard (a gioco chiuso): Easy Controller ora si trova in EasyController.",
     HELP = {
         "/ec - apri la tastiera",
         "/ec auto - apri automaticamente con la chat (attuale: %s)",
