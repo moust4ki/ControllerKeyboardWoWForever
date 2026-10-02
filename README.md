@@ -156,8 +156,8 @@ tabs, D-pad: move and change values, A: choose, B: close) or the mouse.
 The Gamepad tab (`/ec map`) shows the whole controller, in its four trigger layers: alone, LT, RT,
 LT + RT (hold the triggers, or click the layer tabs).
 
-- **The game's own buttons stay as they are.** They are shown with what they do and its icon: jump,
-  interact, back, inspect, targeting, Start menu...
+- **The game's own buttons stay as they are** (by default). They are shown with what they do and its
+  icon: jump, interact, back, inspect, targeting, Start menu...
 - **The gamepad bar's slots** (D-pad and A / B / X / Y in the four layers, but the fixed jump /
   interact / back / inspect) take a spell, an item or a macro: press A on one, pick it, and it goes
   in the game's own slot, like with its action bar editor (X empties it).
@@ -171,6 +171,22 @@ LT + RT (hold the triggers, or click the layer tabs).
   - **Spells**, **Items** (usable ones in your bags), **Macros**;
   - **Bar**: press a button of the gamepad action bar ("LT + RT A"...).
 - X removes, B goes back / closes. Everything is clickable with the mouse too.
+
+### Replacing the game's own buttons (optional)
+
+The switch at the top right of the Gamepad tab, **Game's buttons: left alone / replaceable** (off by
+default: the addon then never touches a button the game uses). Turned on:
+
+- A, B, X, Y, the D-pad, LB / RB (alone), Start, Select and the sticks' buttons the game uses take any
+  function from the lists, in any layer. A slot of the gamepad bar still takes a spell, an item or a
+  macro in the slot itself; anything else replaces the button, and what the slot held stays in it,
+  under the picture of your function, for when you give the button back (X).
+- The game's menus keep their buttons: the replacements are taken away while one of its gamepad
+  windows has the focus, and set again when it closes. LB / RB with a trigger stay the game's (its
+  class and pet actions read them directly), and so do LT / RT.
+- Each layer needs a key of its own, so LT and RT become modifiers (the game's gamepad setting, like
+  LT already sending Shift); the other layers of a replaced button keep what the game does there.
+- `/ec binds` lists the replaced keys and what each one runs right now.
 
 ### Back paddles (L4 / R4 / L5 / R5) and extra buttons
 
@@ -316,6 +332,7 @@ In the configuration panel (RB + D-pad down, `/ec config`):
 | `/ec keys` | list the keys and buttons the game receives (back paddles) |
 | `/ec vibe [pattern]` | test the controller vibration |
 | `/ec wheel` | what the consumables wheel holds, and why an item is not in it |
+| `/ec binds` | the game's buttons replaced, and what each key runs now |
 | `/ec glyphs` | list the game's gamepad button icons |
 | `/ec debug` | print received buttons and sticks |
 

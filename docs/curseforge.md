@@ -101,7 +101,8 @@ exactly as they are and show what they do; the free ones get the missing functio
 trigger combinations (LT + Start...) and the back paddles can run a game function (run / walk,
 autorun, game menu, map, bags, any key binding of the game), one of the game's own gamepad functions
 (jump, back, interact, inspect, Start menu, ping, targeting...), a spell, an item, a macro, or press
-a button of the gamepad action bar.
+a button of the gamepad action bar. Optional (off by default): a switch makes the game's own buttons
+replaceable too (A, B, X, Y, D-pad, LB / RB, Start, Select), its menus keeping their buttons.
 
 **Back paddles (L4 / R4 / L5 / R5)**
 Steam Deck and other controllers: set each paddle to a keyboard key in Steam Input (F13 to F16 for

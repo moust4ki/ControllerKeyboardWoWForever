@@ -16,11 +16,12 @@ closes.
   Gamepad tab's Game list gets a "gamepad functions" section. The four fixed ones press the game's
   own button (its behaviour exactly: the smart interact, jump and sit...); the others are the
   game's own bindings.
-- [ ] **Put something else on a button the game uses** (A, B, X, Y alone, LB / RB, Start, Select,
-  L3 / R3): only with a priority binding of ours over the game's, taken away while one of its
-  gamepad windows has the focus (so its menus keep A / B), and set again when it closes. Limit: in
-  combat bindings can't change, so a window opened in combat gives the button back to the game
-  until the fight ends. To decide together before building it.
+- [x] **Put something else on a button the game uses** (A, B, X, Y alone, the D-pad, LB / RB alone,
+  Start, Select, L3 / R3), behind a switch in the Gamepad tab, off by default: a priority binding of
+  ours over the game's, taken away while one of its gamepad windows has the focus (so its menus keep
+  A / B), and set again when it closes. LT and RT become modifiers (a key per layer); the other
+  layers of a replaced button are bound to what the game does there. To check in game: a menu
+  opened in combat (bindings can't change then), `/ec binds`.
 
 ## To decide
 

@@ -7,6 +7,14 @@
   other button: their exact behaviour, the smart interact included), the Start menu, interface
   focus, ping, and ally / enemy targeting (held). Put jump on a back paddle, the Start menu on
   LT + L3...
+- **Replace the game's own buttons (optional, off by default).** A switch at the top right of the
+  Gamepad tab: "Game's buttons: left alone / replaceable". Turned on, A, B, X, Y, the D-pad, LB / RB
+  (alone), Start and Select take any function, in any layer: a slot of the gamepad bar still takes a
+  spell, an item or a macro in the slot; anything else replaces the button, with its picture over
+  the game's, and X gives the button back (with what its slot held). The game's menus keep their
+  buttons; LT and RT become modifiers so that each layer has a key of its own. `/ec binds` shows
+  the replaced keys.
+- **Consumables wheel**: after a reload, the banner under the wheel was empty on its first opening.
 
 ## 1.2.0
 

@@ -215,6 +215,8 @@ local function slash(msg)
         CK.Vibration:Diagnose(arg)
     elseif cmd == "wheel" then
         CK.ConsumableWheel:Diagnose()
+    elseif cmd == "binds" then
+        CK.Mapping:Diagnose()
     elseif cmd == "debug" then
         s.debug = not s.debug
         CK.seenSticks = nil

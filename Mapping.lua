@@ -13,6 +13,9 @@ local L = CK.L
 -- bindings are plain override bindings of our own frame, set out of combat
 -- while no gamepad window has the focus; the game's windows bind their keys
 -- with priority above them, and ours are set again when they close.
+--
+-- Only when the player turns it on (Gamepad tab, off by default): the
+-- game's own buttons can be replaced too (see "The game's buttons, replaced").
 local M = {}
 CK.Mapping = M
 
@@ -148,10 +151,11 @@ end
 -- What the game does with an input (nil: free)
 ---------------------------------------------------------------------------
 M.bound = {}    -- combo -> what we bound there
+M.taken = {}    -- combo -> what we bound there over the game (replaced buttons)
 
 function M:NativeBinding(combo)
     local action = GetBindingAction(combo, true)
-    if action == self.bound[combo] then action = GetBindingAction(combo, false) end
+    if action == self.bound[combo] or action == self.taken[combo] then action = GetBindingAction(combo, false) end
     if action and action ~= "" then return action end
     if C_KeyBindings and C_KeyBindings.GetBindingByKey and Enum and Enum.BindingContext then
         local ok, context = pcall(C_KeyBindings.GetBindingByKey, combo, Enum.BindingContext.GamepadModeInGameCore)
@@ -300,6 +304,7 @@ end
 
 -- Free / native state of every combo, taken before the window binds the pad
 function M:TakeSnapshot()
+    self:Release()
     self.snapshot = nil
     local snapshot = {}
     for _, input in ipairs(M.INPUTS) do
@@ -325,6 +330,76 @@ end
 
 function M:Set(inputId, layer, action)
     settings().mapping[inputId .. ":" .. layer] = action
+    self:Apply()
+    CK.Paddles:Apply()
+end
+
+---------------------------------------------------------------------------
+-- The game's buttons, replaced (an option, off by default): A, B, X, Y, the
+-- D-pad, LB / RB, Start, Select... take any function, bound over the game's
+-- with priority. settings.replaced["A:"] = action, kept while the option is
+-- off. Each layer needs a key of its own, so both triggers are modifiers.
+-- The other layers of a replaced button get what the game does there, bound
+-- the same way: a key with no binding of its own would fall back to ours
+-- (the game takes the key without its modifiers). The game's menus bind
+-- their keys over ours; ours are also taken away while one of them has the
+-- focus (out of combat). A slot of the game's bar keeps what it holds,
+-- under our function's picture, and gets it back when the button does.
+---------------------------------------------------------------------------
+local TRIGGERS = { "PADLTRIGGER", "PADRTRIGGER" }
+
+function M:ReplaceOn()
+    return self:Enabled() and settings().features.gameButtons or false
+end
+
+function M:SetReplaceOn(on)
+    settings().features.gameButtons = on and true or false
+    self:Apply()
+    CK.Paddles:Apply()
+end
+
+-- The game's own: never the triggers (its bars), LB / RB alone only (with
+-- a trigger, its class and pet actions read the buttons themselves)
+function M:Replaceable(input, layer)
+    if not self:ReplaceOn() or input.layer or input.paddle then return false end
+    if (input.id == "LB" or input.id == "RB") and layer ~= "" then return false end
+    local state = self:State(input, layer)
+    return state == "native" or state == "slot"
+end
+
+-- Every layer has a key of its own: both triggers are modifiers
+function M:OwnKeys()
+    return self:TriggerModifier("PADLTRIGGER") ~= nil and self:TriggerModifier("PADRTRIGGER") ~= nil
+end
+
+-- Enough free modifiers in the game's gamepad settings for that
+function M:CanOwnKeys()
+    local need, free = 0, 0
+    for _, t in ipairs(TRIGGERS) do
+        if not self:TriggerModifier(t) then need = need + 1 end
+    end
+    for _, cvar in ipairs({ "GamePadEmulateAlt", "GamePadEmulateCtrl" }) do
+        if FREE[GetCVar(cvar) or ""] then free = free + 1 end
+    end
+    return free >= need
+end
+
+function M:GetReplaced(inputId, layer)
+    return self:ReplaceOn() and settings().replaced[inputId .. ":" .. layer] or nil
+end
+
+-- Bound now: the option on, the button the game's, a key of its own
+function M:ReplacedActive(input, layer)
+    return self:GetReplaced(input.id, layer) ~= nil and self:OwnKeys() and self:Replaceable(input, layer)
+end
+
+function M:SetReplaced(inputId, layer, action)
+    settings().replaced[inputId .. ":" .. layer] = action
+    if action then
+        for _, t in ipairs(TRIGGERS) do
+            if not self:TriggerModifier(t) then self:SetTriggerModifier(t, true) end
+        end
+    end
     self:Apply()
     CK.Paddles:Apply()
 end
@@ -619,6 +694,7 @@ end
 -- Bindings
 ---------------------------------------------------------------------------
 local owner
+local takeOwner         -- the game's buttons replaced: priority bindings
 local buttons = {}      -- comboId -> secure button (spells, items, macros)
 
 local function secureButton(comboId)
@@ -651,29 +727,30 @@ local function actionButton(comboId, action)
     return b
 end
 
-local function bindAction(combo, comboId, action)
+-- replace: over a button of the game (priority, our second owner)
+local function bindAction(combo, comboId, action, replace)
     local kind, value = action:match("^(%a+):(.+)$")
+    local o, record = owner, M.bound
+    if replace then o, record = takeOwner, M.taken end
+    local click
     if kind == "cmd" then
-        SetOverrideBinding(owner, false, combo, value)
-        M.bound[combo] = value
+        SetOverrideBinding(o, replace or false, combo, value)
+        record[combo] = value
     elseif kind == "bar" then
         local native = CK.Paddles:NativeButton(action)
-        local name = native and native:GetName()
-        if name then
-            SetOverrideBindingClick(owner, false, combo, name, "LeftButton")
-            M.bound[combo] = "CLICK " .. name .. ":LeftButton"
-        end
+        click = native and native:GetName()
     elseif kind == "wheel" then
         -- Its key opens the consumables wheel
-        local toggle = CK.ConsumableWheel:Toggle()
-        SetOverrideBindingClick(owner, false, combo, toggle:GetName(), "LeftButton")
-        M.bound[combo] = "CLICK " .. toggle:GetName() .. ":LeftButton"
+        click = CK.ConsumableWheel:Toggle():GetName()
     elseif M.Routable(action) then
         local b = actionButton(comboId, action)
         -- Pressed by its key: acts on the press
         b:SetAttribute("useOnKeyDown", true)
-        SetOverrideBindingClick(owner, false, combo, b:GetName(), "LeftButton")
-        M.bound[combo] = "CLICK " .. b:GetName() .. ":LeftButton"
+        click = b:GetName()
+    end
+    if click then
+        SetOverrideBindingClick(o, replace or false, combo, click, "LeftButton")
+        record[combo] = "CLICK " .. click .. ":LeftButton"
     end
 end
 
@@ -789,6 +866,14 @@ function M:Repair()
     for combo, want in pairs(self.bound) do
         if GetBindingAction(combo, true) ~= want then return self:Apply() end
     end
+    -- The game's buttons replaced: its binding sets (menus, its own while a
+    -- trigger is held) go over ours for a while; checked once none is left
+    local manager = GamepadSharedUtility and GamepadSharedUtility.InputBindingManager
+    local stack = manager and manager.bindingSetStack
+    if stack and #stack > 0 then return end
+    for combo, want in pairs(self.taken) do
+        if GetBindingAction(combo, true) ~= want then return self:Apply() end
+    end
 end
 
 -- No gamepad window has the focus (the game's own HUD bindings are active)
@@ -801,29 +886,135 @@ end
 function M:Apply()
     if InCombatLockdown() or not self:CoreActive() then
         self.pending = true
+        -- A menu of the game, or our panel: its buttons back to it
+        self:Release()
         return
     end
     self.pending = false
     self.applying = true
     owner = owner or CK.NewFrame("Frame")
+    takeOwner = takeOwner or CK.NewFrame("Frame")
     ClearOverrideBindings(owner)
+    ClearOverrideBindings(takeOwner)
     wipe(self.bound)
-    if not self:Enabled() then
-        self.applying = false
-        return
+    wipe(self.taken)
+    if self:Enabled() then
+        for comboId, action in pairs(settings().mapping) do
+            local inputId, layer = comboId:match("^(%w+):(%a*)$")
+            local input = inputId and M.BY_ID[inputId]
+            -- Never on an input the game uses
+            if input and not input.paddle and type(action) == "string" and self:State(input, layer) == "free" then
+                bindAction(self:Combo(input, layer), comboId, action)
+            end
+        end
+        for _, input in ipairs(M.INPUTS) do
+            if input.paddle then self:ApplyPaddle(input) end
+        end
+        self:ApplyReplaced()
     end
-    for comboId, action in pairs(settings().mapping) do
-        local inputId, layer = comboId:match("^(%w+):(%a*)$")
-        local input = inputId and M.BY_ID[inputId]
-        -- Never on an input the game uses
-        if input and not input.paddle and type(action) == "string" and self:State(input, layer) == "free" then
-            bindAction(self:Combo(input, layer), comboId, action)
+    self:UpdateMarks()
+    self.applying = false
+end
+
+-- The game's buttons the player replaced, and the other layers of each
+function M:ApplyReplaced()
+    if not (self:ReplaceOn() and self:OwnKeys()) then return end
+    for _, input in ipairs(M.INPUTS) do
+        local replaced = {}
+        for _, layer in ipairs(M.LAYERS) do
+            local action = self:Replaceable(input, layer) and self:GetReplaced(input.id, layer)
+            if action then replaced[layer] = action end
+        end
+        if next(replaced) then
+            for _, layer in ipairs(M.LAYERS) do
+                local combo = self:Combo(input, layer)
+                if combo and replaced[layer] then
+                    bindAction(combo, input.id .. ":" .. layer, replaced[layer], true)
+                elseif combo and not self.bound[combo] then
+                    self:KeepNative(input, layer, combo)
+                end
+            end
         end
     end
-    for _, input in ipairs(M.INPUTS) do
-        if input.paddle then self:ApplyPaddle(input) end
+end
+
+-- What the game does on the key of a layer left to it: its bar button, else
+-- its binding (the key's own, or the one without modifiers it fell back to)
+function M:KeepNative(input, layer, combo)
+    local native = self:NativeBarButton(input, layer)
+    local name = native and native:GetName()
+    if name then
+        SetOverrideBindingClick(takeOwner, true, combo, name, "LeftButton")
+        self.taken[combo] = "CLICK " .. name .. ":LeftButton"
+        return
     end
+    -- The sticks: while a trigger is held the game binds them itself
+    if input.id == "L3" or input.id == "R3" then return end
+    local command = self:NativeBinding(combo) or self:NativeBinding(self:InputKey(input))
+    if command then
+        SetOverrideBinding(takeOwner, true, combo, command)
+        self.taken[combo] = command
+    end
+end
+
+-- Our replacements taken away, out of combat: a menu of the game (or our
+-- panel) has the focus. Set again when it closes.
+function M:Release()
+    if InCombatLockdown() or not (takeOwner and next(self.taken)) then return end
+    self.applying = true
+    ClearOverrideBindings(takeOwner)
+    wipe(self.taken)
     self.applying = false
+    self.pending = true
+end
+
+-- Our function's picture over the game's bar button it replaces (what the
+-- slot holds stays under it)
+local marks = {}        -- the game's button -> our picture
+function M:UpdateMarks()
+    local wanted = {}
+    if self:ReplaceOn() and self:OwnKeys() then
+        for comboId, action in pairs(settings().replaced) do
+            local inputId, layer = comboId:match("^(%w+):(%a*)$")
+            local input = inputId and M.BY_ID[inputId]
+            local native = input and self:Replaceable(input, layer) and self:NativeBarButton(input, layer)
+            if native then wanted[native] = action end
+        end
+    end
+    for native, mark in pairs(marks) do
+        if not wanted[native] then mark:Hide() end
+    end
+    for native, action in pairs(wanted) do
+        local mark = marks[native]
+        if not mark then
+            mark = CK.NewFrame("Frame", nil, native)
+            mark:SetAllPoints(native.icon or native)
+            mark.icon = mark:CreateTexture(nil, "OVERLAY")
+            mark.icon:SetAllPoints()
+            local mask = mark:CreateMaskTexture()
+            mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+            mask:SetAllPoints(mark.icon)
+            mark.icon:AddMaskTexture(mask)
+            marks[native] = mark
+        end
+        mark:SetFrameLevel(native:GetFrameLevel() + 3)
+        CK.Paddles.SetIcon(mark.icon, self:ActionIcon(action))
+        mark:Show()
+    end
+end
+
+-- /ec binds: the game's buttons replaced, and what each key runs now
+function M:Diagnose()
+    CK:Print(format(L.REPLACE_DIAG, tostring(self:ReplaceOn()), tostring(self:OwnKeys()),
+        tostring(InCombatLockdown()), tostring(self:CoreActive())))
+    local keys = {}
+    for combo in pairs(self.taken) do keys[#keys + 1] = combo end
+    table.sort(keys)
+    for _, combo in ipairs(keys) do
+        local now = GetBindingAction(combo, true)
+        local color = now == self.taken[combo] and "|cff6fd36f" or "|cffff6060"
+        DEFAULT_CHAT_FRAME:AddMessage(format("  %s%s|r: %s (%s)", color, combo, tostring(self.taken[combo]), tostring(now)))
+    end
 end
 
 -- Labels of keys and pad buttons ("LB", "Start", "L4"...)
@@ -904,7 +1095,8 @@ function M:Init()
     if EventRegistry and EventRegistry.RegisterCallback then
         EventRegistry:RegisterCallback("Gamepad.RefreshFrameFocus", function()
             C_Timer.After(0, function()
-                if M:CoreActive() and not InCombatLockdown() then M:Repair() end
+                if InCombatLockdown() then return end
+                if M:CoreActive() then M:Repair() else M:Release() end
             end)
         end, M)
     end

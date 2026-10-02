@@ -4,7 +4,8 @@ local L = CK.L
 -- Configuration, Gamepad tab: the whole controller in four trigger layers.
 -- The game's own buttons are shown with what they do (read only, with their
 -- icon); the free ones and the extra buttons get a game function, a spell, an
--- item, a macro or a gamepad bar button from the list on the right. Below:
+-- item, a macro or a gamepad bar button from the list on the right. Top
+-- right: the game's buttons left alone (default) or replaceable too. Below:
 -- identify the back paddles, place the extra buttons on the HUD.
 local W = {}
 CK.MapPage = W
@@ -72,7 +73,7 @@ function W:BuildSlot(area, input)
         local native = M:NativeBarButton(self.input, layer)
         local slot = native and native.action
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        if slot and P.SlotTexture(slot) then
+        if slot and P.SlotTexture(slot) and not M:GetReplaced(self.input.id, layer) then
             GameTooltip:SetAction(slot)
         else
             GameTooltip:SetText(comboLabel(self.input, layer), 1, 1, 1)
@@ -110,6 +111,10 @@ function W:Build(parent)
         t.layer = layer
         f.layerTabs[i] = t
     end
+    -- The game's own buttons: left alone, or replaceable (off by default)
+    f.replace = kit.buildButton(f, "", function() W:ToggleReplace() end)
+    f.replace:SetSize(282, 22)
+    f.replace:SetPoint("TOPLEFT", f, "TOPLEFT", 480, 0)
     local back = kit.text(area, 11)
     back:SetPoint("TOP", area, "TOPLEFT", 235, -336)
     back:SetTextColor(unpack(kit.C.sugg))
@@ -193,6 +198,7 @@ function W:Show()
     self.picker = nil
     self.focusAction = nil
     self.focusLayers = false
+    self.focusReplace = false
     self.frame:Show()
 end
 
@@ -227,7 +233,14 @@ function W:SelectedInput()
 end
 
 -- What an input does in a layer, as text
+-- A button of the game the player replaced: what it runs instead
+local function replacedAction(input, layer)
+    return M:Replaceable(input, layer) and M:GetReplaced(input.id, layer) or nil
+end
+
 function W:SlotText(input, layer)
+    local replaced = replacedAction(input, layer)
+    if replaced then return M:ActionName(replaced) end
     local state = M:State(input, layer)
     -- A paddle's shared key, taken by a game function
     if state == "locked" and input.paddle then return M:ActionName(M:EffectiveAction(input, layer)) or L.MAP_LOCKED end
@@ -253,7 +266,15 @@ function W:RenderSlot(b, layer)
     b.icon:SetDesaturated(false)
     b.icon:SetAlpha(1)
     b:SetAlpha(1)
-    if state == "locked" and input.paddle then
+    local replaced = replacedAction(input, layer)
+    if replaced then
+        -- Our function instead of the game's (faded: no key of its own now)
+        local active = M:OwnKeys()
+        P.SetIcon(b.icon, M:ActionIcon(replaced))
+        b.icon:SetDesaturated(not active)
+        b.name:SetText(M:ActionName(replaced))
+        b.name:SetTextColor(unpack(active and GOLD or GREY))
+    elseif state == "locked" and input.paddle then
         -- A shared key a game function takes: that function, faded
         local shown = M:EffectiveAction(input, layer)
         P.SetIcon(b.icon, M:ActionIcon(shown) or { glyph = GLYPH[input.id] })
@@ -307,6 +328,10 @@ function W:Render()
     end
     for _, b in pairs(f.slots) do self:RenderSlot(b, layer) end
     for i, b in ipairs(f.actions) do b:SetActive(self.focusAction == i) end
+    f.replace.label:SetText(M:ReplaceOn() and L.MAP_REPLACE_ON or L.MAP_REPLACE_OFF)
+    f.replace.active = M:ReplaceOn()
+    f.replace.hover = self.focusReplace or nil
+    f.replace:Render()
     self:RenderSide(layer)
 end
 
@@ -323,12 +348,22 @@ function W:RenderSide(layer)
     elseif self.focusAction then
         side.title:SetText(self.focusAction == 1 and L.MAP_IDENTIFY or L.MAP_PLACE)
         status = self.focusAction == 1 and L.MAP_IDENTIFY_HINT or L.MAP_PLACE_HINT
+    elseif self.focusReplace then
+        side.title:SetText(L.MAP_REPLACE_TITLE)
+        status = L.MAP_REPLACE_TIP
     elseif input then
         side.title:SetText(comboLabel(input, layer))
         local state = M:State(input, layer)
         local action = M:Get(input.id, layer)
+        local replaced = replacedAction(input, layer)
+        -- With the option on: what the game's button can take
+        local canReplace = M:Replaceable(input, layer)
+        local replaceHint = canReplace and (M:CanOwnKeys() and L.MAP_REPLACE_HINT or L.MAP_REPLACE_NO_MOD)
         if P:IsCapturing(input.id) then
             status = L.MAP_PADDLE_PRESS
+        elseif replaced then
+            status = "|cffffd100" .. (M:ActionName(replaced) or "") .. "|r\n|cff9d9a8c"
+                .. (M:OwnKeys() and L.MAP_REPLACED_HINT or L.MAP_REPLACED_INACTIVE) .. "|r"
         elseif state == "locked" and input.paddle then
             local base = M:SharedLayers(layer)[1]
             status = format(L.MAP_SHARED_LOCKED, comboLabel(input, base), M:ActionName(M:Get(input.id, base)) or "")
@@ -338,9 +373,15 @@ function W:RenderSide(layer)
         elseif state == "slot" then
             -- The game keeps some actions on its bars (hunter aspects...)
             local kept = M:SlotKept(M:NativeSlot(input, layer))
-            status = "|cffffd100" .. (M:NativeInfo(input, layer) or L.MAP_EMPTY_SLOT) .. "|r\n|cff9d9a8c" .. (kept or L.MAP_SLOT_HINT) .. "|r"
+            local hint = kept and (kept .. (replaceHint and ("\n" .. replaceHint) or ""))
+                or (canReplace and M:CanOwnKeys() and L.MAP_SLOT_REPLACE_HINT) or replaceHint or L.MAP_SLOT_HINT
+            status = "|cffffd100" .. (M:NativeInfo(input, layer) or L.MAP_EMPTY_SLOT) .. "|r\n|cff9d9a8c" .. hint .. "|r"
         elseif state == "native" then
-            status = (M:NativeInfo(input, layer) or L.MAP_GAME) .. "\n|cff9d9a8c" .. L.MAP_NATIVE_HINT .. "|r"
+            local hint = replaceHint or L.MAP_NATIVE_HINT
+            if M:ReplaceOn() and not canReplace then
+                hint = input.layer and L.MAP_KEPT_TRIGGER or L.MAP_KEPT_CLASS
+            end
+            status = (M:NativeInfo(input, layer) or L.MAP_GAME) .. "\n|cff9d9a8c" .. hint .. "|r"
         elseif action and M:Inactive(input, layer) then
             status = "|cff9d9a8c" .. (M:ActionName(action) or "") .. "|r\n" .. L.MAP_SHARED_INACTIVE
         elseif action then
@@ -364,7 +405,10 @@ function W:RenderSide(layer)
     -- input holds now
     if picker and input then
         local name
-        if picker.slot then
+        local replaced = picker.replace and M:GetReplaced(input.id, layer)
+        if replaced then
+            name = M:ActionName(replaced)
+        elseif picker.slot then
             -- Whatever the slot holds (spell, flyout, mount...)
             name = P.SlotTexture(picker.slot) and (P.SlotName(picker.slot) or L.MAP_GAME)
         else
@@ -418,6 +462,11 @@ end
 function W:Help(g)
     if self.wizard then
         return { g("B") .. " " .. L.MAP_P_SKIP }
+    elseif self.focusReplace then
+        return {
+            g("A") .. " " .. L.CFG_P_TOGGLE, g("DPAD_LEFT") .. " " .. L.MAP_P_LAYER,
+            g("LB") .. g("RB") .. " " .. L.MAP_P_TAB, g("B") .. " " .. L.MAP_P_CLOSE,
+        }
     elseif self.focusLayers then
         return {
             g("DPAD_LEFT") .. " " .. L.MAP_P_LAYER, g("A") .. g("DPAD_DOWN") .. " " .. L.MAP_P_CONFIRM,
@@ -446,6 +495,17 @@ local DIRS = { UP = { 0, -1 }, DOWN = { 0, 1 }, LEFT = { -1, 0 }, RIGHT = { 1, 0
 
 function W:Move(dir)
     -- On the layer row: left / right pick the layer, down goes back
+    -- The switch of the game's buttons, right of the layer row
+    if self.focusReplace then
+        if dir == "DOWN" then
+            self.focusReplace = false
+        elseif dir == "LEFT" then
+            self.focusReplace = false
+            self.focusLayers = true
+        end
+        CK.Config:Render()
+        return
+    end
     if self.focusLayers then
         if dir == "DOWN" then
             self.focusLayers = false
@@ -454,8 +514,13 @@ function W:Move(dir)
             for i, layer in ipairs(M.LAYERS) do
                 if layer == (self.layer or "") then index = i end
             end
-            index = math.max(1, math.min(#M.LAYERS, index + (dir == "LEFT" and -1 or 1)))
-            self.layer = M.LAYERS[index]
+            if dir == "RIGHT" and index == #M.LAYERS then
+                self.focusLayers = false
+                self.focusReplace = true
+            else
+                index = math.max(1, math.min(#M.LAYERS, index + (dir == "LEFT" and -1 or 1)))
+                self.layer = M.LAYERS[index]
+            end
         end
         CK.Config:Render()
         return
@@ -489,12 +554,21 @@ function W:Move(dir)
     elseif dir == "DOWN" then
         self.focusAction = from.x < 235 and 1 or 2
     elseif dir == "UP" then
-        self.focusLayers = true
+        -- Right side: up to the switch above the list
+        if from.x > 300 then self.focusReplace = true else self.focusLayers = true end
     end
     CK.Config:Render()
 end
 
+function W:ToggleReplace()
+    if CK:BlockedByCombat() then return end
+    self.picker = nil
+    M:SetReplaceOn(not M:ReplaceOn())
+    CK.Config:Render()
+end
+
 function W:Choose()
+    if self.focusReplace then return self:ToggleReplace() end
     if self.focusLayers then
         self.focusLayers = false
         CK.Config:Render()
@@ -508,16 +582,21 @@ function W:Choose()
     if not input then return end
     local layer = self:ViewLayer()
     local state = M:State(input, layer)
+    -- The game's button, replaceable (option on): every list
+    local replace = M:Replaceable(input, layer) and M:CanOwnKeys()
     if state == "slot" then
         local slot = M:NativeSlot(input, layer)
         local kept = M:SlotKept(slot)
-        if kept then
+        if kept and not replace then
             if UIErrorsFrame then UIErrorsFrame:AddMessage(kept, 1, 0.1, 0.1) end
             return
         end
-        self.picker = { layer = layer, tab = 1, tabs = M.SLOT_TABS, slot = slot }
+        self.picker = { layer = layer, tab = 1, tabs = replace and M.TABS or M.SLOT_TABS, slot = slot,
+            replace = replace, kept = kept }
     elseif state == "free" then
         self.picker = { layer = layer, tab = 1, tabs = input.paddle and M:PaddleTabs(input, layer) or M.TABS }
+    elseif replace then
+        self.picker = { layer = layer, tab = 1, tabs = M.TABS, replace = true }
     else
         return
     end
@@ -532,10 +611,11 @@ end
 
 function W:LoadTab()
     local picker = self.picker
-    picker.list = M:Catalog(picker.tabs[picker.tab], picker.slot ~= nil)
+    picker.list = M:Catalog(picker.tabs[picker.tab], picker.slot ~= nil and not picker.replace)
     picker.offset, picker.index = 0, nil
     -- Start on the current function when it is in this list
-    local current = picker.slot and M:SlotAction(picker.slot) or M:Get(self.selected, picker.layer)
+    local current = (picker.replace and M:GetReplaced(self.selected, picker.layer))
+        or (picker.slot and M:SlotAction(picker.slot)) or M:Get(self.selected, picker.layer)
     for i, entry in ipairs(picker.list) do
         if not entry.header and (entry.action == current or not picker.index) then
             picker.index = i
@@ -591,13 +671,22 @@ function W:JumpSection(step)
     end
 end
 
+-- What a slot of the game's bar takes
+local SLOT_KINDS = { spell = true, item = true, macro = true }
+
 function W:Assign()
     local picker = self.picker
     local entry = picker and picker.index and picker.list[picker.index]
     if not entry or entry.header then return end
-    if picker.slot then
-        M:PlaceInSlot(picker.slot, entry.action)
-    else
+    local kind = entry.action:match("^(%a+):")
+    if picker.slot and SLOT_KINDS[kind] and not picker.kept then
+        -- In the game's slot (its own editor's way), the button back to it
+        if M:PlaceInSlot(picker.slot, entry.action) and M:GetReplaced(self.selected, picker.layer) then
+            M:SetReplaced(self.selected, picker.layer, nil)
+        end
+    elseif picker.replace then
+        M:SetReplaced(self.selected, picker.layer, entry.action)
+    elseif not picker.slot then
         M:Set(self.selected, picker.layer, entry.action)
     end
     self.picker = nil
@@ -610,7 +699,10 @@ function W:Clear()
     if not input then return end
     local layer = self:ViewLayer()
     local slot = M:State(input, layer) == "slot" and M:NativeSlot(input, layer)
-    if slot then
+    if replacedAction(input, layer) then
+        -- The button back to the game (its slot as it was)
+        M:SetReplaced(input.id, layer, nil)
+    elseif slot then
         M:ClearSlot(slot)
     elseif M:Get(input.id, layer) then
         M:Set(input.id, layer, nil)

@@ -647,7 +647,8 @@ function W:Paint()
     end
     local h = function(key) return CK:GlyphMarkup(key, 14) end
     self.view.help:SetText(format("%s %s   %s %s   %s %s", h("LS"), L.WHEEL_AIM, h("A"), L.WHEEL_USE, h("B"), L.WHEEL_CLOSE))
-    self.aimed = nil
+    -- Not "nothing aimed" (nil): the banner is written, even the first time
+    self.aimed = false
     self:Track()
 end
 
