@@ -26,7 +26,7 @@ end
 ---------------------------------------------------------------------------
 -- Option lists (General, Keyboard...): rows from Options.lua. Kinds:
 -- header, info, check, choice (< value >), button, toggle (a check with a
--- choice, and an optional test: Y or its button)
+-- choice, and an optional test: A or its button, X for the box)
 ---------------------------------------------------------------------------
 local ListPage = {}
 ListPage.__index = ListPage
@@ -214,9 +214,11 @@ function ListPage:Press(name)
     elseif name == "LEFT" or name == "RIGHT" then
         self:Step(self.index, name == "LEFT" and -1 or 1)
     elseif name == "A" then
+        -- A row with a test (vibrations): A plays it, X turns it on or off
+        local row = self.list[self.index or 0]
+        if row and row.test then row.test() else self:Activate() end
+    elseif name == "X" and self.list[self.index or 0] and self.list[self.index].test then
         self:Activate()
-    elseif name == "Y" and self.list[self.index or 0] and self.list[self.index].test then
-        self.list[self.index].test()
     else
         return false
     end
@@ -224,12 +226,14 @@ function ListPage:Press(name)
 end
 
 function ListPage:Help(g)
-    local help = {
-        g("DPAD_UP") .. " " .. L.MAP_P_MOVE, g("DPAD_LEFT") .. " " .. L.CFG_P_CHANGE,
-        g("A") .. " " .. L.MAP_P_CHOOSE,
-    }
     local row = self.list and self.list[self.index or 0]
-    if row and row.test then help[#help + 1] = g("Y") .. " " .. L.CFG_TEST end
+    local help = { g("DPAD_UP") .. " " .. L.MAP_P_MOVE, g("DPAD_LEFT") .. " " .. L.CFG_P_CHANGE }
+    if row and row.test then
+        help[#help + 1] = g("A") .. " " .. L.CFG_TEST
+        help[#help + 1] = g("X") .. " " .. L.CFG_P_TOGGLE
+    else
+        help[#help + 1] = g("A") .. " " .. L.MAP_P_CHOOSE
+    end
     help[#help + 1] = g("LB") .. g("RB") .. " " .. L.MAP_P_TAB
     help[#help + 1] = g("B") .. " " .. L.MAP_P_CLOSE
     return help

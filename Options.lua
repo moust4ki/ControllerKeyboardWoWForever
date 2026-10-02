@@ -64,7 +64,7 @@ local function list()
     function b.button(text, func, indent)
         rows[#rows + 1] = { kind = "button", text = text, func = func, indent = indent }
     end
-    -- A box with a choice beside it, and a test (Y)
+    -- A box with a choice beside it, and a test (A; X for the box)
     function b.toggle(text, get, set, value, step, test, tip)
         rows[#rows + 1] = { kind = "toggle", text = text, get = get, set = set, value = value, step = step,
             test = test, tip = tip }
