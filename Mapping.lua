@@ -229,8 +229,25 @@ function M:SlotAction(slot)
     end
 end
 
+-- What the game itself won't take off its gamepad bars (the hunter's aspects,
+-- pet actions while the pet has its bar): its own message, else nil
+function M:SlotKept(slot)
+    local util = GamepadActionBarBindingUtil
+    if not (slot and util and util.GetUnbindErrorMessage and C_ActionBar.HasAction(slot)) then return nil end
+    local ok, message = pcall(util.GetUnbindErrorMessage, { GetActionInfo(slot) })
+    return ok and message or nil
+end
+
+local function refuseKept(slot)
+    local message = M:SlotKept(slot)
+    if message and UIErrorsFrame then UIErrorsFrame:AddMessage(message, 1, 0.1, 0.1) end
+    return message ~= nil
+end
+
 function M:PlaceInSlot(slot, action)
     if CK:BlockedByCombat() then return false end
+    -- What was there would be lost
+    if refuseKept(slot) then return false end
     local kind, value = (action or ""):match("^(%a+):(.+)$")
     ClearCursor()
     if kind == "spell" then
@@ -250,7 +267,7 @@ function M:PlaceInSlot(slot, action)
 end
 
 function M:ClearSlot(slot)
-    if CK:BlockedByCombat() then return end
+    if CK:BlockedByCombat() or refuseKept(slot) then return end
     ClearCursor()
     PickupAction(slot)
     ClearCursor()

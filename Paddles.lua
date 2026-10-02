@@ -104,8 +104,28 @@ function P.SlotName(slot)
         return GetActionText and GetActionText(slot) or (GetMacroInfo and (GetMacroInfo(id)))
     elseif kind == "summonmount" and C_MountJournal and C_MountJournal.GetMountInfoByID then
         return (C_MountJournal.GetMountInfoByID(id))
+    elseif kind == "flyout" then
+        -- The game's pop-out menus (hunter aspects, tracking, pets...)
+        local name
+        if C_Flyout and C_Flyout.GetFlyoutInfo then
+            local ok, info = pcall(C_Flyout.GetFlyoutInfo, id)
+            name = ok and type(info) == "table" and info.name
+        end
+        if not name and GetFlyoutInfo then name = GetFlyoutInfo(id) end
+        if name and name ~= "" then return name end
+    elseif kind == "summonpet" and C_PetJournal and C_PetJournal.GetPetInfoByPetID then
+        local _, customName, _, _, _, _, _, petName = C_PetJournal.GetPetInfoByPetID(id)
+        return customName or petName
     end
-    return GetActionText and GetActionText(slot)
+    local text = GetActionText and GetActionText(slot)
+    if text and text ~= "" then return text end
+    -- Anything else: the first line of its tooltip
+    if C_TooltipInfo and C_TooltipInfo.GetAction then
+        local ok, data = pcall(C_TooltipInfo.GetAction, slot)
+        local line = ok and type(data) == "table" and data.lines and data.lines[1]
+        local left = line and line.leftText
+        if type(left) == "string" and not (issecretvalue and issecretvalue(left)) and left ~= "" then return left end
+    end
 end
 
 function P:CommandName(command)

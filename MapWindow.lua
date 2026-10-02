@@ -336,7 +336,9 @@ function W:RenderSide(layer)
             local name = M:NativeInfo(input, "")
             status = (name and (name .. "\n") or "") .. "|cff9d9a8c" .. L.MAP_LOCKED .. "|r"
         elseif state == "slot" then
-            status = "|cffffd100" .. (M:NativeInfo(input, layer) or L.MAP_EMPTY_SLOT) .. "|r\n|cff9d9a8c" .. L.MAP_SLOT_HINT .. "|r"
+            -- The game keeps some actions on its bars (hunter aspects...)
+            local kept = M:SlotKept(M:NativeSlot(input, layer))
+            status = "|cffffd100" .. (M:NativeInfo(input, layer) or L.MAP_EMPTY_SLOT) .. "|r\n|cff9d9a8c" .. (kept or L.MAP_SLOT_HINT) .. "|r"
         elseif state == "native" then
             status = (M:NativeInfo(input, layer) or L.MAP_GAME) .. "\n|cff9d9a8c" .. L.MAP_NATIVE_HINT .. "|r"
         elseif action and M:Inactive(input, layer) then
@@ -361,8 +363,15 @@ function W:RenderSide(layer)
     -- The list starts under two lines: while it is open, only what the
     -- input holds now
     if picker and input then
-        local current = picker.slot and M:SlotAction(picker.slot) or M:Get(input.id, layer)
-        status = current and ("|cffffd100" .. (M:ActionName(current) or "") .. "|r")
+        local name
+        if picker.slot then
+            -- Whatever the slot holds (spell, flyout, mount...)
+            name = P.SlotTexture(picker.slot) and (P.SlotName(picker.slot) or L.MAP_GAME)
+        else
+            local current = M:Get(input.id, layer)
+            name = current and M:ActionName(current)
+        end
+        status = name and ("|cffffd100" .. name .. "|r")
             or ("|cff9d9a8c" .. (picker.slot and L.MAP_EMPTY_SLOT or L.MAP_FREE) .. "|r")
     end
     side.status:SetMaxLines(picker and 2 or 0)
@@ -500,7 +509,13 @@ function W:Choose()
     local layer = self:ViewLayer()
     local state = M:State(input, layer)
     if state == "slot" then
-        self.picker = { layer = layer, tab = 1, tabs = M.SLOT_TABS, slot = M:NativeSlot(input, layer) }
+        local slot = M:NativeSlot(input, layer)
+        local kept = M:SlotKept(slot)
+        if kept then
+            if UIErrorsFrame then UIErrorsFrame:AddMessage(kept, 1, 0.1, 0.1) end
+            return
+        end
+        self.picker = { layer = layer, tab = 1, tabs = M.SLOT_TABS, slot = slot }
     elseif state == "free" then
         self.picker = { layer = layer, tab = 1, tabs = input.paddle and M:PaddleTabs(input, layer) or M.TABS }
     else
