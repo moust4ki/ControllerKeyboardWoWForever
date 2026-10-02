@@ -223,6 +223,9 @@ function S:Button(i)
     local click = CK.NewFrame("Button", "ControllerKeyboardSupplyButton" .. i, bar, "SecureActionButtonTemplate")
     click:SetFrameLevel(b:GetFrameLevel() + 10)
     click:RegisterForClicks("LeftButtonUp")
+    -- Acts on the release, the click it gets (the game's default for its
+    -- action buttons is the press, which never comes here)
+    click:SetAttribute("useOnKeyDown", false)
     click:RegisterForDrag("LeftButton")
     if _G[BACKPACK] then
         click:SetAttribute("type", "click")
