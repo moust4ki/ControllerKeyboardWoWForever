@@ -19,7 +19,7 @@ local KC = K.C
 
 local ZONE_W, PANEL_W, BODY_H = 480, 292, 424
 local PAD_TOP, PAD_H = 40, 344
-local SLOT, ICON = 44, 32
+local SLOT, ICON, GLYPH = 44, 32, 20
 
 -- Each button's centre on the silhouette, and the side of its glyph
 local NODES = {
@@ -30,6 +30,10 @@ local NODES = {
     { "R3", 312, 212 },
     { "L4", 34, 300 }, { "L5", 112, 300 }, { "R5", 376, 300 }, { "R4", 452, 300 },
 }
+-- The D-pad's four sit on the drawn cross: no glyph of their own
+local NO_GLYPH = { UP = true, DOWN = true, LEFT = true, RIGHT = true }
+-- Select and Start are close: narrower names
+local LABEL_W = { SELECT = 64, START = 64 }
 local GLYPH_SIDE = {
     SELECT = "top", START = "top", Y = "top", B = "top", L4 = "top", L5 = "top", R4 = "top", R5 = "top",
     X = "right", A = "right", RIGHT = "right",
@@ -196,21 +200,22 @@ function W:BuildNode(area, n)
     node.input = M.BY_ID[id]
     node.slot = K.Slot(node, SLOT, ICON)
     node.slot:SetAllPoints()
-    -- Its glyph, beside it (over the slot's edge)
-    node.glyph = K.Glyph(node, 30)
+    -- Its glyph, beside it (just over the slot's edge)
+    node.glyph = K.Glyph(node, GLYPH)
     node.glyph:SetFrameLevel(node.slot:GetFrameLevel() + 3)
+    node.glyph.none = NO_GLYPH[id]
     local side = GLYPH_SIDE[id] or "left"
     if side == "top" then
-        node.glyph:SetPoint("BOTTOM", node, "TOP", 0, -4)
+        node.glyph:SetPoint("BOTTOM", node, "TOP", 0, -2)
     elseif side == "right" then
-        node.glyph:SetPoint("LEFT", node, "RIGHT", -4, 0)
+        node.glyph:SetPoint("LEFT", node, "RIGHT", -3, 0)
     else
-        node.glyph:SetPoint("RIGHT", node, "LEFT", 4, 0)
+        node.glyph:SetPoint("RIGHT", node, "LEFT", 3, 0)
     end
     -- What it does, under it
     node.label = K.Text(area, 12, KC.cream)
     node.label:SetPoint("TOP", node, "BOTTOM", 0, -2)
-    node.label:SetWidth(76)
+    node.label:SetWidth(LABEL_W[id] or 76)
     node.label:SetJustifyH("CENTER")
     if node.label.SetMaxLines then node.label:SetMaxLines(1) end
     node.slot:SetScript("OnClick", function(_, button)
@@ -408,7 +413,7 @@ function W:RenderNode(node, layer)
         -- No picture of its own: the button's glyph, if it has one
         local glyph = K.INPUT_GLYPH[input.id] or input.id
         look.icon = cell.icon or (K.IMAGE[glyph] and { glyph = glyph }) or nil
-        look.desaturate, look.discColor = true, KC.iconBg
+        look.discColor = KC.iconBg
     elseif st == "slot" then
         look.ring = KC.slot
         if cell.empty then
@@ -427,7 +432,11 @@ function W:RenderNode(node, layer)
     node.slot:SetLook(look)
     node:SetAlpha(st == "off" and 0.45 or 1)
     node.label:SetAlpha(st == "off" and 0.45 or 1)
-    node.glyph:Set(K.INPUT_GLYPH[input.id] or input.id)
+    if node.glyph.none then
+        node.glyph:Hide()
+    else
+        node.glyph:Set(K.INPUT_GLYPH[input.id] or input.id)
+    end
     node.label:SetText(cell.name or "")
     local color = focus and KC.focusText or ((st == "free" or cell.empty) and KC.grey)
         or (st == "native" and KC.help) or KC.cream
