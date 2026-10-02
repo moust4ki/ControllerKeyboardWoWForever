@@ -1099,6 +1099,17 @@ function M:BindingTest()
     SetOverrideBinding(f, true, key, "CONTROLLERKEYBOARD_NOOP") show("14 set NOOP")
     SetOverrideBinding(f, true, key, nil) show("15 set nil")
     ClearOverrideBindings(f) show("16 ClearOverrideBindings")
+    -- Our panel's case: ping replaced by us, let go, then the panel binds
+    -- the key on its own frame
+    self.testPanel = self.testPanel or CK.NewFrame("Frame")
+    local panel = self.testPanel
+    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("17 ours: ping")
+    SetOverrideBinding(f, true, key, "CONTROLLERKEYBOARD_NOOP")
+    SetOverrideBindingClick(f, true, key, "ControllerKeyboardNoopButton", "LeftButton")
+    SetOverrideBinding(f, true, key, nil)
+    ClearOverrideBindings(f) show("18 ours let go")
+    SetOverrideBindingClick(panel, true, key, "ControllerKeyboardConfigPadPAD1", "LeftButton") show("19 the panel binds it")
+    ClearOverrideBindings(panel) show("20 the panel closes")
     self.applying = false
 end
 
