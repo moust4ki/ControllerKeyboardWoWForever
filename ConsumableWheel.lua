@@ -5,7 +5,10 @@ local L = CK.L
 -- bindings) opens a wheel of up to 12 consumables from the bags: food, drink,
 -- health and mana potions, healthstone, mana gem, bandages, buff food,
 -- elixirs and flasks, scrolls. The right stick aims (or the D-pad turns the
--- selection), A uses, B closes; the mouse clicks a slot.
+-- selection), A uses, B closes; the mouse clicks a slot. Nothing is chosen
+-- when it opens: with the stick back in the middle, A closes it unused. It is
+-- placed freely (mouse while unlocked, or the D-pad), the middle of the
+-- screen by default.
 --
 -- It works in combat: the wheel, its slots and the keys it takes while open
 -- are secure frames and snippets run by the game (its restricted
@@ -152,6 +155,7 @@ local OPEN = [[
         return false
     end
     if (owner:GetAttribute("count") or 0) == 0 then return false end
+    owner:SetAttribute("selected", 0)
     owner:Show()
     for prefix in gmatch(owner:GetAttribute("ck-prefixes"), "([^,]*),") do
         owner:SetBindingClick(true, prefix .. "PAD1", "ControllerKeyboardWheelUse")
@@ -168,7 +172,7 @@ local OPEN = [[
 local USE = [[
     if not down then return false end
     local count = owner:GetAttribute("count") or 0
-    local slot = owner:GetAttribute("selected") or 1
+    local slot = owner:GetAttribute("selected") or 0
     local state = GetGamePadState()
     local stick = state and state.sticks and state.sticks[owner:GetAttribute("ck-stick") or 2]
     if stick and stick.len and stick.len > ]] .. AIM .. [[ then
@@ -179,8 +183,12 @@ local USE = [[
         end
         slot = best or slot
     end
-    if slot < 1 or slot > count then return false end
-    owner:SetAttribute("selected", slot)
+    if slot < 1 or slot > count then
+        -- Nothing aimed: closes, nothing used
+        owner:Hide()
+        owner:ClearBindings()
+        return false
+    end
     return "s" .. slot, true
 ]]
 
@@ -197,7 +205,13 @@ local function turn(delta)
         if not down then return false end
         local count = owner:GetAttribute("count") or 0
         if count == 0 then return false end
-        owner:SetAttribute("selected", ((owner:GetAttribute("selected") or 1) - 1 + ]] .. delta .. [[) % count + 1)
+        local slot = owner:GetAttribute("selected") or 0
+        if slot < 1 then
+            slot = ]] .. (delta > 0 and "1" or "count") .. [[
+        else
+            slot = (slot - 1 + ]] .. delta .. [[) % count + 1
+        end
+        owner:SetAttribute("selected", slot)
         return false
     ]]
 end
@@ -217,13 +231,24 @@ function W:Build()
     if self.frame then return end
     local wheel = CK.NewFrame("Frame", "ControllerKeyboardWheel", UIParent, "SecureHandlerBaseTemplate")
     wheel:SetSize((RADIUS + SLOT) * 2, (RADIUS + SLOT) * 2)
-    wheel:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
     wheel:SetFrameStrata("DIALOG")
     wheel:Hide()
     wheel:SetAttribute("count", 0)
-    wheel:SetAttribute("selected", 1)
+    wheel:SetAttribute("selected", 0)
+    wheel:SetMovable(true)
+    wheel:SetClampedToScreen(true)
+    wheel:EnableMouse(true)
+    wheel:RegisterForDrag("LeftButton")
+    wheel:SetScript("OnDragStart", function(self)
+        if not settings().locked and not InCombatLockdown() then self:StartMoving() end
+    end)
+    wheel:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        W:SavePosition()
+    end)
     wheel:SetAttribute("ck-prefixes", PREFIXES)
     self.frame = wheel
+    self:Place()
 
     -- The key that opens and closes it: acts on its release (a press on a
     -- shared paddle key comes as a click from the paddle's own button)
@@ -341,7 +366,7 @@ function W:Fill()
     end
     wheel:SetAttribute("count", count)
     wheel:SetAttribute("ck-stick", cameraStick())
-    if (wheel:GetAttribute("selected") or 1) > count then wheel:SetAttribute("selected", 1) end
+    if (wheel:GetAttribute("selected") or 0) > count then wheel:SetAttribute("selected", 0) end
     self.items = items
     self:Paint()
 end
@@ -383,22 +408,107 @@ function W:Aimed()
         end
         return best
     end
-    return wheel:GetAttribute("selected") or 1
+    local selected = wheel:GetAttribute("selected") or 0
+    return selected >= 1 and selected or nil
 end
 
 function W:Track()
     local i = self:Aimed()
     if i == self.aimed then return end
     self.aimed = i
-    local item = self.items and self.items[i]
+    local item = i and self.items and self.items[i]
     local view = self.view
     view.ring:SetShown(item ~= nil)
-    if not item then return end
+    if not item then
+        -- In the middle: A closes, nothing used
+        view.name:SetText(L.WHEEL_NOTHING)
+        view.count:SetText(L.WHEEL_NOTHING_HINT)
+        return
+    end
     view.ring:ClearAllPoints()
     view.ring:SetPoint("CENTER", self.slots[i], "CENTER")
     view.name:SetText(C_Item.GetItemNameByID(item.id) or "")
     view.count:SetText(L["WHEEL_CAT_" .. item.cat:upper()])
     if CK.Vibration then CK.Vibration:Fire("wheelTick") end
+end
+
+---------------------------------------------------------------------------
+-- Its place: the middle of the screen, or where it was put (the mouse while
+-- unlocked, or the D-pad from the Wheel tab; out of combat)
+---------------------------------------------------------------------------
+function W:Place()
+    local pos = settings().pos
+    local wheel = self.frame
+    wheel:ClearAllPoints()
+    if type(pos) == "table" and pos.point then
+        wheel:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
+    else
+        wheel:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
+    end
+end
+
+function W:SavePosition()
+    local point, _, _, x, y = self.frame:GetPoint(1)
+    settings().pos = { point = point, x = math.floor(x + 0.5), y = math.floor(y + 0.5) }
+end
+
+function W:ResetPosition()
+    settings().pos = nil
+    if self.frame and not InCombatLockdown() then self:Place() end
+end
+
+local MOVES = { UP = { 0, 1 }, DOWN = { 0, -1 }, LEFT = { -1, 0 }, RIGHT = { 1, 0 } }
+
+function W:StartPlacement()
+    if InCombatLockdown() then return end
+    self:Build()
+    self.moving = true
+    if not self.banner then
+        local banner = CK.NewFrame("Frame", nil, UIParent)
+        banner:SetSize(560, 58)
+        banner:SetPoint("TOP", 0, -90)
+        banner:SetFrameStrata("FULLSCREEN_DIALOG")
+        CK.Config.panel(banner)
+        banner.title = CK.UIKit.text(banner, 14)
+        banner.title:SetPoint("TOP", 0, -10)
+        banner.title:SetTextColor(unpack(CK.UIKit.C.gold))
+        banner.title:SetText(L.WHEEL_MOVE)
+        banner.help = CK.UIKit.text(banner, 11)
+        banner.help:SetPoint("BOTTOM", 0, 10)
+        banner.help:SetTextColor(unpack(CK.UIKit.C.btn))
+        self.banner = banner
+    end
+    local g = function(key) return CK:GlyphMarkup(key, 16) end
+    self.banner.help:SetText(table.concat({
+        g("DPAD_UP") .. " " .. L.MAP_P_MOVE, g("X") .. " " .. L.PLACE_P_RESET, g("A") .. g("B") .. " " .. L.PLACE_P_DONE,
+    }, "    "))
+    self.banner:Show()
+    self.frame:Show()
+end
+
+function W:StopPlacement()
+    if not self.moving then return end
+    self.moving = false
+    if self.banner then self.banner:Hide() end
+    if not InCombatLockdown() then
+        self.frame:Hide()
+        ClearOverrideBindings(self.frame)
+    end
+end
+
+function W:PlacementPress(name)
+    if InCombatLockdown() then return end
+    if MOVES[name] then
+        local point, _, _, x, y = self.frame:GetPoint(1)
+        self.frame:ClearAllPoints()
+        self.frame:SetPoint(point, UIParent, point, x + MOVES[name][1] * 10, y + MOVES[name][2] * 10)
+        self:SavePosition()
+    elseif name == "X" then
+        self:ResetPosition()
+    elseif name == "A" or name == "B" then
+        self:StopPlacement()
+        CK.Config:EndPlacement()
+    end
 end
 
 -- The action the Gamepad tab puts on an input: its key opens the wheel

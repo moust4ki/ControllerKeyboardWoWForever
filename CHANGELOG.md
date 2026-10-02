@@ -20,7 +20,9 @@
   in any layer; or the game's key bindings) opens a wheel of up to 12 consumables from the bags:
   food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
   elixirs and flasks, scrolls, the best of each kind first and the other variants after. The right
-  stick aims or the D-pad turns, A uses, B closes, the mouse clicks. It works in combat (secure
+  stick aims or the D-pad turns, A uses, B closes, the mouse clicks; with the stick back in the
+  middle nothing is chosen and A closes it unused. Placed freely (mouse while unlocked, or the
+  D-pad), the middle of the screen by default. It works in combat (secure
   frames and snippets; food and drink greyed there). Wheel tab: each kind on or off, the variants.
 - The configuration panel's tabs share the room, for the new ones; it can be dragged with the mouse.
 - The addon list shows Easy Controller's icon.

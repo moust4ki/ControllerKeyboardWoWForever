@@ -404,6 +404,12 @@ local function wheelRows()
         s.variants = v
         W:Fill()
     end)
+    b.check(L.WHEEL_LOCK, function() return s.locked end, function(v) s.locked = v end)
+    b.button(L.WHEEL_MOVE, function()
+        CK.Config:BeginPlacement(W)
+        W:StartPlacement()
+    end, true)
+    b.button(L.WHEEL_RESET, function() W:ResetPosition() end, true)
     b.header(L.WHEEL_H_CATEGORIES)
     for _, cat in ipairs(W.CATEGORIES) do
         b.check(L["WHEEL_CAT_" .. cat:upper()], function() return s.categories[cat] end, function(v)
