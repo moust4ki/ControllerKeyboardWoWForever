@@ -318,6 +318,68 @@ CK.Config.pages.general = CK.Config.NewListPage(generalRows)
 CK.Config.pages.keyboard = CK.Config.NewListPage(keyboardRows)
 CK.Config.pages.vibration = CK.Config.NewListPage(vibrationRows)
 
+-- Supplies: the bar (shown, lock, place, layout, size), each resource with
+-- its thresholds, and the items of the bags to add
+local function suppliesRows()
+    local S = CK.Supplies
+    local s = CK.db.settings.supplies
+    local rows, b = list()
+
+    b.header(L.CFG_TAB_SUPPLIES)
+    b.check(L.SUP_ENABLE, function() return s.enabled end, function(v)
+        s.enabled = v
+        S:Refresh()
+    end)
+    if not s.enabled then return rows end
+    b.info(L.SUP_INFO)
+    b.check(L.SUP_LOCK, function() return s.locked end, function(v) s.locked = v end, true)
+    b.button(L.SUP_MOVE, function()
+        CK.Config:BeginPlacement(S)
+        S:StartPlacement()
+    end, true)
+    b.button(L.SUP_RESET, function() S:ResetPosition() end, true)
+    b.pick(L.SUP_LAYOUT, { { key = "row", name = L.SUP_ROW }, { key = "column", name = L.SUP_COLUMN } }, s, "layout",
+        function() S:Refresh() end, true)
+    local sizes = { L.SIZE_SMALL, L.SIZE_NORMAL, L.SIZE_LARGE }
+    b.choice(L.SUP_SIZE, function() return sizes[s.size] or sizes[2] end, function(d)
+        s.size = ((s.size or 2) - 1 + d) % #sizes + 1
+        S:Refresh()
+    end, true)
+
+    b.header(L.SUP_H_TRACKED)
+    for _, r in ipairs(S:Resources()) do
+        local cfg = r.cfg
+        b.check(format("%s  |cff9d9a8c(%d)|r", r.name, r.count), function() return cfg.on end, function(v)
+            cfg.on = v
+            S:Refresh()
+        end)
+        if cfg.on then
+            local step = S.Step(r.kind)
+            b.choice(L.SUP_LOW, function() return tostring(cfg.low) end, function(d)
+                S:SetThreshold(cfg, "low", cfg.low + d * step)
+            end, true)
+            b.choice(L.SUP_CRITICAL, function() return tostring(cfg.critical) end, function(d)
+                S:SetThreshold(cfg, "critical", cfg.critical + d * step)
+            end, true)
+        end
+        if r.custom then b.button(L.SUP_REMOVE, function() S:RemoveItem(r.id) end, true) end
+    end
+
+    b.header(L.SUP_H_ADD)
+    b.button(S.showAdd and L.SUP_ADD_HIDE or L.SUP_ADD_SHOW, function() S.showAdd = not S.showAdd end)
+    if S.showAdd then
+        local items = S:BagItems()
+        if #items == 0 then b.info(L.SUP_ADD_NONE) end
+        for _, item in ipairs(items) do
+            b.button(format("+ |T%s:16:16|t %s  |cff9d9a8c(%d)|r", tostring(item.icon or 134400), item.name, item.count),
+                function() S:AddItem(item.id) end, true)
+        end
+    end
+    return rows
+end
+
+CK.Config.pages.supplies = CK.Config.NewListPage(suppliesRows)
+
 ---------------------------------------------------------------------------
 -- The game's settings panel (Escape > Options > AddOns > Controller
 -- Keyboard) only points to the addon's own panel. Plain buttons: no

@@ -252,6 +252,7 @@ local function questProgress(message)
 end
 
 local function durabilityLow()
+    if not GetInventoryItemDurability then return false end
     for slot = 1, 19 do
         local current, max = GetInventoryItemDurability(slot)
         if current and max and max > 0 and current / max <= 0.2 then return true end

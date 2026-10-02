@@ -10,6 +10,12 @@
   (whisper, invite, ready check, resurrection or summon, trade or duel), progress (level up, quest
   objective, rare loot, bags full, gear almost broken) and the chat keyboard's keys. `/ec vibe` tests
   it.
+- **Supplies.** A round button per resource, in a new Supplies tab: free bag slots, the equipped
+  ammunition, the class reagents once carried (soul shards, powders, candles, symbols, seeds,
+  poisons...) and any item added from the bags. Each shows its count and glows under its low
+  threshold, stronger and redder down to the critical one; thresholds set with the D-pad. The bar
+  is placed freely (mouse drag while unlocked, or the D-pad), horizontal or vertical, in 3 sizes; a
+  click opens the bags. Low supplies and little room can vibrate.
 - The configuration panel's tabs share the room, for the new ones.
 - The addon list shows Easy Controller's icon.
 

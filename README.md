@@ -146,6 +146,7 @@ tabs, D-pad: move and change values, A: choose, B: close) or the mouse.
 - **Keyboard**: size, position, input method, layout, sticks, prediction.
 - **Gamepad**: the mapping below.
 - **Vibrations**: the controller vibrations below.
+- **Supplies**: the supplies buttons below.
 
 ## Gamepad mapping
 
@@ -211,6 +212,19 @@ on or off.
 Only the two standard motors are used, so any controller the game drives vibrates. WoW Forever may
 hide your exact health from addons in combat: low health and big hit then cannot work, and the tab
 says so. `/ec vibe [pattern]` tells what the client allows and plays a pattern.
+
+## Supplies
+
+One round button per resource, in the gamepad bar's style (Supplies tab):
+
+- **free bag slots** (quivers, ammo pouches and soul bags apart), the **equipped ammunition**, the
+  **class reagents** (soul shards, infernal stones, arcane powder, runes, candles, symbols, seeds,
+  ankhs, poisons, powders...) once you carry them, and **any item** added from your bags;
+- the count, and under the **low threshold** a glow that grows stronger, faster and redder down to
+  the **critical threshold**; each resource can be turned off, its thresholds set with the D-pad;
+- the bar is **placed freely**: dragged with the mouse while unlocked, or moved with the D-pad
+  ("Move with the D-pad"), horizontal or vertical, in 3 sizes; a click opens the bags;
+- low supplies and little room left can vibrate (Vibrations tab).
 
 ## Quest items
 
@@ -303,6 +317,11 @@ are also available in *Escape > Key Bindings > AddOns*.
   the pad buttons and sticks; `ConfigWindow.lua` the configuration panel (`Options.lua` its General
   and Keyboard rows, `MapWindow.lua` its Gamepad tab); `Mapping.lua` / `Paddles.lua`,
   `QuestItems.lua` and `QuestLinks.lua` are the modules.
+
+## Roadmap
+
+What is planned next (consumables wheel, remapping the game's own buttons...) is in
+[ROADMAP.md](ROADMAP.md).
 
 ## Development
 

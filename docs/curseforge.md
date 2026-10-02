@@ -11,8 +11,10 @@ without changing it:
   missing game functions (run / walk, game menu, map...) on the free buttons and the **back paddles**
   (Steam Deck, Elite, Edge...).
 - **Quests**: the items your quests ask for (meat, cloth...) get an orange quest border in your bags and a "do not sell" line naming the quest, quest links in the chat.
-- **Vibrations**: the controller vibrates on the events you pick (low health, interrupted, whisper,
-  invite, level up, bags full...), each with its own pattern.
+- **Vibrations**: the controller vibrates on the events you pick (interrupted, whisper, invite,
+  level up, bags full...), each with its own pattern.
+- **Supplies**: a button per resource (bag space, ammo, soul shards, reagents, any item) that glows
+  when you run low.
 
 Everything is driven with the gamepad (RB + D-pad down opens the configuration), every function can
 be turned off, and the look matches WoW Forever's gamepad UI.
@@ -66,7 +68,13 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
 
 **Configuration panel**
 RB + D-pad down (or `/ec config`) opens the addon's own panel, driven with the gamepad or the mouse:
-General (every function can be turned on or off), Keyboard, Gamepad and Vibrations tabs.
+General (every function can be turned on or off), Keyboard, Gamepad, Vibrations and Supplies tabs.
+
+**Supplies**
+A round button per resource: free bag slots, your ammunition, your class reagents (soul shards,
+powders, candles, symbols, seeds, poisons...) and any item you add from your bags. Under its low
+threshold it glows, stronger and redder down to the critical one; thresholds are yours to set.
+Place the bar anywhere (mouse or D-pad), lock it; a click opens your bags.
 
 **Vibrations**
 The controller vibrates on the game events you choose: combat (low health heartbeat, big hit, death,

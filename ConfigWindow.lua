@@ -12,7 +12,7 @@ CK.Config = C
 local WIDTH, HEIGHT = 820, 580
 local kit
 
-C.TABS = { "general", "keyboard", "gamepad", "vibration" }
+C.TABS = { "general", "keyboard", "gamepad", "vibration", "supplies" }
 C.pages = {}
 
 function C:IsOpen()
@@ -359,9 +359,9 @@ local REPEAT = { UP = true, DOWN = true, LEFT = true, RIGHT = true }
 function C:Press(name)
     -- Learning the shortcut: the presses are for it
     if self:IsCapturingChord() then return end
-    -- Placing the extra buttons on the HUD
+    -- Placing something on the HUD (extra buttons, supplies)
     if self.placing then
-        CK.Paddles:PlacementPress(name)
+        self.placer:PlacementPress(name)
         return
     end
     local page = self:Page()
@@ -474,7 +474,7 @@ end
 
 function C:Close()
     if not self:IsOpen() then return end
-    if self.placing then CK.Paddles:StopPlacement() end
+    if self.placing then self.placer:StopPlacement() end
     CK.Paddles:StopCapture(nil)
     local page = self:Page()
     if page then page:Hide() end
@@ -489,9 +489,10 @@ function C:Toggle(tab)
     if self.frame and self.frame:IsShown() then self:Close() else self:Open(tab) end
 end
 
--- Placing the extra buttons happens on the HUD: the panel steps aside and
--- keeps the pad
-function C:BeginPlacement()
+-- Placing things on the HUD (the extra buttons, the supplies): the panel
+-- steps aside and keeps the pad, the placer gets the presses
+function C:BeginPlacement(placer)
+    self.placer = placer or CK.Paddles
     self.placing = true
     self.frame:Hide()
     self.repeatName = nil
