@@ -58,7 +58,7 @@ for _, e in ipairs(V.EVENTS) do EVENT[e.key] = e end
 -- settings.vibration = { enabled, intensity, events = { key = { on, pattern } } }
 function V:Settings()
     local s = CK.db.settings.vibration
-    -- Events no longer offered (low health, big hit before 1.2.2)
+    -- Events no longer offered (low health, big hit before 1.3.0)
     for key in pairs(s.events) do
         if not EVENT[key] then s.events[key] = nil end
     end

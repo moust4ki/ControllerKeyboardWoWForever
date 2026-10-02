@@ -3,7 +3,7 @@
 Everything planned for Easy Controller - Forever, so nothing gets lost. Each feature is built, tested
 in game, then released on GitHub and CurseForge. Done items move to the [CHANGELOG](CHANGELOG.md)
 (1.2.0: vibrations, supplies, consumables wheel; 1.2.1: the game's gamepad functions anywhere, its
-buttons replaceable).
+buttons replaceable; 1.3.0: your own wheels, every button remappable from the start).
 
 ## 1.2.1: the game's own gamepad functions, on any button
 
@@ -18,15 +18,15 @@ closes.
   own button (its behaviour exactly: the smart interact, jump and sit...); the others are the
   game's own bindings.
 - [x] **Put something else on a button the game uses** (A, B, X, Y alone, the D-pad, LB / RB alone,
-  Start, Select, L3 / R3); since 1.2.2 open to all, with a Restore button in the Gamepad tab: a
+  Start, Select, L3 / R3); since 1.3.0 open to all, with a Restore button in the Gamepad tab: a
   priority binding of ours over the game's, taken away while one of its gamepad windows has the focus (so its menus keep
   A / B), and set again when it closes. LT and RT become modifiers (a key per layer); the other
   layers of a replaced button are bound to what the game does there. Checked in game; still to
   watch: a menu opened in combat (bindings can't change then), `/ec binds`.
 
-## Next: your own wheels
+## 1.3.0: your own wheels
 
-- [x] **Wheels of your own, like the consumables wheel** (built for 1.2.2, to test in game), each filled with the spells, items and
+- [x] **Wheels of your own, like the consumables wheel** (1.3.0), each filled with the spells, items and
   macros you choose, and opened by a shortcut:
   - same look and handling as the consumables wheel: the left stick points, A uses, B cancels,
     LB / RB turn the pages, usable in combat;

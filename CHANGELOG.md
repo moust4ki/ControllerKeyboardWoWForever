@@ -1,13 +1,13 @@
 # Changelog
 
-## 1.2.2
+## 1.3.0
 
 - **Your own wheels** (Wheels tab, formerly Wheel): up to 8 wheels of your own, 8 slots each, filled
   with the spells, items and macros you choose, in an editor of their own: the wheel drawn with its
   slots around it, the chosen slot's list beside it (Spells / Items / Macros); a choice fills the slot
-  and goes on to the next one. Named with the addon's keyboard or a physical one. They look and work like the consumables wheel, in combat
-  too, and each one gets a key: Gamepad tab, Items list (any free button, a paddle), or the game's
-  Key Bindings. Deleting a wheel takes it off its buttons.
+  and goes on to the next one. Named with the addon's keyboard or a physical one. They look and work
+  like the consumables wheel, in combat too, and each one gets a key: Gamepad tab, Items list (any
+  free button, a paddle), or the game's Key Bindings. Deleting a wheel takes it off its buttons.
 - **Every button remappable from the start.** The game's buttons switch is gone: A, B, X, Y, the D-pad,
   LB / RB, Start and Select take any function right away. In its place, **Restore the game's
   buttons (N)** (A, then A again) gives every replaced button back to the game, and only those: the
