@@ -67,6 +67,18 @@ function CK:SetGlyph(tex, key)
     tex:SetTexCoord(0, 1, 0, 1)
 end
 
+-- The same glyph inline in a text ("|A...|a" or "|T...|t")
+function CK:GlyphMarkup(key, size)
+    size = size or 16
+    local style = self.db.settings.glyphStyle
+    if self.db.settings.gameGlyphs then
+        for _, name in ipairs((ATLAS[style] or ATLAS.xbox)[key] or {}) do
+            if atlasExists(name) then return format("|A:%s:%d:%d|a", name, size, size) end
+        end
+    end
+    return format("|T%s%s:%d:%d|t", TEX, FALLBACK[key] or "ck_g_a", size, size)
+end
+
 -- /ck glyphs: print the gamepad atlases found in this client
 function CK:ListGlyphAtlases()
     local prefixes = { "Gamepad_Ltr_", "Gamepad_Shp_", "Gamepad_Gen_", "Gamepad_Rev_" }

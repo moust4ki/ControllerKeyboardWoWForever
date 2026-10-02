@@ -1,5 +1,76 @@
 # Changelog
 
+## 0.5.0
+
+### Configuration panel
+
+- The addon has its own configuration panel, driven with the gamepad or the mouse: **RB + D-pad down**
+  (only watched, never bound, so the game's buttons stay as they are; any other pair can be learned
+  in the General tab: hold a button, press a second one), `/ck config`, or its key binding. Tabs **General**,
+  **Keyboard** and **Gamepad** (LB / RB), D-pad to move and change values, A to choose, B to close.
+  The game's options only point to it.
+- The addon is a set of modules, and every function can be turned on or off in the General tab:
+  keyboard (auto-open, quest links, Shift+click links, drafts, sticky channel), quest items (tooltip
+  line, sale warning, merchant selection warning), gamepad mapping (extra buttons on screen), the
+  RB + D-pad down shortcut.
+
+### Gamepad mapping
+
+- The Gamepad tab (`/ck map`) shows the whole controller in its four trigger layers (alone, LT, RT,
+  LT + RT). Holding LT / RT shows their layer.
+- WoW Forever's gamepad UI is never changed: the buttons the game uses are shown with what they do
+  and their icon (jump, interact, back, inspect, targeting, Start menu...) and left as they are.
+- The gamepad bar's own slots (D-pad and A / B / X / Y in the four layers, but the fixed jump /
+  interact / back / inspect) take a spell, an item or a macro from the same window, placed in the
+  game's slot like its own action bar editor does (X empties it).
+- The free inputs get the missing functions: L3 / R3, trigger combinations nothing is bound to
+  (LT + Start...) and the back paddles. Each one can run a game function (run / walk, autorun, game
+  menu, map, bags, any key binding of the game, listed by its own categories), a spell, an item, a
+  macro, or press a button of the gamepad action bar.
+- Back paddles (L4 / R4 / L5 / R5, Steam Deck and others): set each paddle to a keyboard key in Steam
+  Input (F13 to F16 for example), then "Identify the back paddles" asks for each paddle in turn (B
+  skips one). Controllers whose paddles the game sees directly (PADPADDLE1-4) work as they are.
+- The extra buttons that do something (back paddles, L3, R3) are shown around the gamepad action bar,
+  in its round slot style, with the action's icon (zoomed like the game's), count, cooldown and
+  usability; they show the held trigger layer's action, and press down like the game's buttons.
+  Their name (R4...) shows on the outer side, above, below, left, right, or not at all (option).
+  L3 / R3 can be shown too, with what the game does with them (autorun, ping...) or what you put on
+  them. Spells are listed and shown with their rank.
+- "Place the bar and extra buttons": the game's gamepad bar moves by steps with the D-pad (only its
+  place on the screen, out of combat; X puts it back), the extra buttons following it; each extra
+  button goes on one of the fixed places around the bar's controls
+  (outer columns, two rows above, two below): the D-pad chooses the bar or a button, A picks it up,
+  the D-pad moves it (taken places swap), A puts it down, B puts it back; or by clicking; the right side mirrors the left (Y turns it off). Places follow the compact layout.
+- Game functions and the game's own L3 / R3 actions use interface icons (ping markers, the gamepad
+  jump icon), never spell icons.
+- When RT is no modifier in the game's gamepad settings (the RT and LT + RT layers then don't exist
+  for the extra buttons), an option makes it one (Alt, or Ctrl), like LT already sends Shift.
+- Bindings are set out of combat, only on inputs the game leaves free, and set again when one of the
+  game's gamepad windows closes. `/ck keys` lists the keys the game receives and which pad buttons
+  act as Shift / Ctrl / Alt.
+
+### Quest items
+
+- Item tooltips show an orange "Quest item: do not sell" line on quest items, including the items a
+  quest asks to collect (cloth, ore, meat...), which the game does not mark; in the bags they also get
+  a slowly pulsing orange glow (the game's own bag glow).
+- Selling one to a merchant shows a warning with a reminder of the Buyback tab. At a merchant, with
+  the gamepad bag tooltips turned off, selecting a quest item shows the warning too.
+
+### Quest links and drafts
+
+- The channel row ends with a "Quests" chip: it turns the suggestions row into the list of your
+  quests, the right stick click inserts the quest link.
+- Links inserted with Shift+click or the game's "Share in chat" go into the keyboard's message.
+- When the game closes the chat (a panel opens, combat), the message is kept as a draft and comes back
+  with the chat: type "LFM", open the quest log, "Share in chat", and the keyboard holds
+  "LFM [quest]". Backspace deletes a link as a whole.
+
+### Fixes
+
+- Sending with Enter on a physical keyboard now always empties the keyboard's copy of the message
+  (the game no longer calls the old `ChatEdit_SendText`).
+
 ## 0.4.2
 
 - German, Spanish and Italian: dictionaries (12,000 words each), keyboard layouts for the split

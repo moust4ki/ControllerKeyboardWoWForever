@@ -299,6 +299,28 @@ function CK:BuildUI()
         f.channels[i] = b
     end
 
+    -- "Quests" chip at the end of the channel row (quest links module)
+    local chip = CK.NewFrame("Button", nil, f)
+    chip:SetFrameLevel(cbar:GetFrameLevel() + 2)
+    chip.select = nineSlice(chip, "ck_select", 128, 32, 10, 8, "ARTWORK")
+    chip.icon = texture(chip, nil, "OVERLAY")
+    chip.icon:SetSize(18, 18)
+    chip.icon:SetPoint("CENTER")
+    -- The game's own quest "!" icon
+    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo("QuestNormal") then
+        chip.icon:SetAtlas("QuestNormal")
+    else
+        chip.icon:SetTexture("Interface\\GossipFrame\\AvailableQuestIcon")
+    end
+    chip:SetScript("OnEnter", function(s)
+        GameTooltip:SetOwner(s, "ANCHOR_BOTTOM")
+        GameTooltip:SetText(L.QUESTS_TIP, 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    chip:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    chip:SetScript("OnClick", function() CK:OpenQuestList() end)
+    f.questChip = chip
+
     -- Mouse / Steam Controller actions
     f.actions = {}
     for _, a in ipairs(ACTIONS) do
@@ -380,10 +402,13 @@ function CK:Layout()
     place(f.cbar, f, 8, cy, w - 16, 26)
     place(f.chanLeft, f, 12, cy + 2, 22, 22)
     place(f.chanRight, f, w - 34, cy + 2, 22, 22)
-    local cstep = (w - 76) / #f.channels
+    local withChip = self.db.settings.modules.questLinks
+    local cstep = (w - 76) / (#f.channels + (withChip and 1 or 0))
     for i, b in ipairs(f.channels) do
         place(b, f, 38 + cstep * (i - 1), cy + 1, cstep - 1, 24)
     end
+    place(f.questChip, f, 38 + cstep * #f.channels, cy + 1, cstep - 1, 24)
+    f.questChip:SetShown(withChip)
 
     -- Mouse buttons row is optional: when hidden, the help band moves up
     local show = self.db.settings.showActions
@@ -558,6 +583,8 @@ function CK:UpdateRows()
     local c = channels and on or off
     f.cbarSlice:SetVertexColor(c, c, c)
     for _, b in ipairs(f.channels) do b:SetAlpha(channels and 1 or 0.6) end
+    f.questChip:SetAlpha(channels and 1 or 0.6)
+    f.questChip.select:SetShown(channels and self.state.questChip or false)
     self:SetGlyph(f.chanLeft, channels and "DPAD_LEFT" or "DPAD_DOWN")
     self:SetGlyph(f.chanRight, "DPAD_RIGHT")
     f.chanRight:SetShown(channels)
@@ -580,7 +607,7 @@ function CK:UpdateChannels()
         local r, g, bl = 1, 1, 1
         if info then r, g, bl = info.r, info.g, info.b end
         local available = self:ChannelAvailable(i)
-        b.select:SetShown(i == current)
+        b.select:SetShown(i == current and not self.state.questChip)
         b.label:SetTextColor(r, g, bl)
         b.label:SetAlpha(available and 1 or 0.3)
     end

@@ -128,6 +128,7 @@ end
 -- { start = true } at the beginning of a message or sentence,
 -- otherwise { prev = last word, prev2 = the one before }
 function P:Context(before)
+    before = before:gsub("|c%x%x%x%x%x%x%x%x|H[^|]+|h[^|]*|h|r", " "):gsub("|H[^|]+|h[^|]*|h", " ")
     local sentence = before:match("([^%.!%?]*)$") or ""
     local tokens = P.Tokenize(sentence)
     local n = #tokens

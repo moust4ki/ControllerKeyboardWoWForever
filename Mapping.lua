@@ -1,0 +1,667 @@
+local _, CK = ...
+local L = CK.L
+
+-- Module "gamepad mapping": WoW Forever's gamepad UI is never changed. This
+-- module only adds functions on the inputs the game leaves free: the back
+-- paddles, and the buttons and trigger combinations nothing is bound to
+-- (L3, R3, LT + Start...). A free input can run a game function (any key
+-- binding command: run / walk, game menu, map...), a spell, an item, a macro,
+-- or press a button of the gamepad action bar.
+--
+-- "Free" is checked against the game's own bindings every time ours are set,
+-- with ours removed first: an input the game uses is never taken. Our
+-- bindings are plain override bindings of our own frame, set out of combat
+-- while no gamepad window has the focus; the game's windows bind their keys
+-- with priority above them, and ours are set again when they close.
+local M = {}
+CK.Mapping = M
+
+M.LAYERS = { "", "LT", "RT", "LTRT" }
+
+-- Every input, where it sits on a controller (x, y in the mapping window)
+M.INPUTS = {
+    { id = "LT", key = "PADLTRIGGER", x = 60, y = 40, layer = true },
+    { id = "LB", key = "PADLSHOULDER", x = 140, y = 40 },
+    { id = "RB", key = "PADRSHOULDER", x = 330, y = 40 },
+    { id = "RT", key = "PADRTRIGGER", x = 410, y = 40, layer = true },
+    { id = "UP", key = "PADDUP", x = 110, y = 126, bar = "up" },
+    { id = "LEFT", key = "PADDLEFT", x = 66, y = 170, bar = "left" },
+    { id = "RIGHT", key = "PADDRIGHT", x = 154, y = 170, bar = "right" },
+    { id = "DOWN", key = "PADDDOWN", x = 110, y = 214, bar = "down" },
+    { id = "SELECT", key = "PADBACK", x = 200, y = 150 },
+    { id = "START", key = "PADFORWARD", x = 270, y = 150 },
+    { id = "Y", key = "PAD4", x = 360, y = 126, bar = "y" },
+    { id = "X", key = "PAD3", x = 316, y = 170, bar = "x" },
+    { id = "B", key = "PAD2", x = 404, y = 170, bar = "b" },
+    { id = "A", key = "PAD1", x = 360, y = 214, bar = "a" },
+    { id = "L3", key = "PADLSTICK", x = 170, y = 270 },
+    { id = "R3", key = "PADRSTICK", x = 300, y = 270 },
+    { id = "L4", paddle = true, x = 80, y = 372 },
+    { id = "L5", paddle = true, x = 160, y = 372 },
+    { id = "R5", paddle = true, x = 310, y = 372 },
+    { id = "R4", paddle = true, x = 390, y = 372 },
+}
+M.BY_ID = {}
+for _, input in ipairs(M.INPUTS) do M.BY_ID[input.id] = input end
+
+-- Gamepad buttons the client reports for back paddles (Xbox Elite, DualSense
+-- Edge...); Steam Input sends keyboard keys instead, learned by pressing
+M.PADDLE_KEYS = { L4 = "PADPADDLE2", R4 = "PADPADDLE1", L5 = "PADPADDLE4", R5 = "PADPADDLE3" }
+
+-- The game's gamepad bar for each layer, and its fixed top face buttons
+M.LAYER_BAR = { [""] = "top", LT = "left", RT = "right", LTRT = "bottom" }
+
+local function settings() return CK.db.settings end
+
+function M:Enabled()
+    return CK.db and settings().modules.mapping
+end
+
+function M:InputKey(input)
+    if input.paddle then
+        local cfg = settings().paddles[input.id]
+        return cfg and cfg.key or M.PADDLE_KEYS[input.id]
+    end
+    return input.key
+end
+
+---------------------------------------------------------------------------
+-- Trigger layers: the triggers act as keyboard modifiers when the client's
+-- GamePadEmulateShift / Ctrl / Alt settings name them
+---------------------------------------------------------------------------
+local EMULATE = { { "ALT", "GamePadEmulateAlt" }, { "CTRL", "GamePadEmulateCtrl" }, { "SHIFT", "GamePadEmulateShift" } }
+
+function M:TriggerModifier(button)
+    for _, e in ipairs(EMULATE) do
+        if GetCVar(e[2]) == button then return e[1] end
+    end
+end
+
+-- RT as a modifier too (the game's own gamepad setting, like LT = Shift):
+-- with it, RT + a paddle is a key of its own, so the RT and LT + RT layers
+-- exist for the extra buttons. Takes a free modifier, Alt then Ctrl.
+local FREE = { [""] = true, none = true, NONE = true }
+
+function M:SetTriggerModifier(button, on)
+    if InCombatLockdown() then return CK:BlockedByCombat() end
+    if on then
+        if self:TriggerModifier(button) then return end
+        for _, cvar in ipairs({ "GamePadEmulateAlt", "GamePadEmulateCtrl" }) do
+            if FREE[GetCVar(cvar) or ""] then
+                SetCVar(cvar, button)
+                break
+            end
+        end
+    else
+        for _, e in ipairs(EMULATE) do
+            if GetCVar(e[2]) == button then SetCVar(e[2], "none") end
+        end
+    end
+    self:Apply()
+    CK.Paddles:Apply()
+end
+
+function M:CanBeModifier(button)
+    if self:TriggerModifier(button) then return true end
+    return FREE[GetCVar("GamePadEmulateAlt") or ""] or FREE[GetCVar("GamePadEmulateCtrl") or ""] or false
+end
+
+-- Key name prefix of a layer ("SHIFT-"...), nil when a trigger of the layer
+-- is not a modifier (that layer then only exists on the game's bars)
+function M:LayerPrefix(layer)
+    if layer == "" then return "" end
+    local held = {}
+    if layer:find("LT", 1, true) then
+        local mod = self:TriggerModifier("PADLTRIGGER")
+        if not mod then return nil end
+        held[mod] = true
+    end
+    if layer:find("RT", 1, true) then
+        local mod = self:TriggerModifier("PADRTRIGGER")
+        if not mod then return nil end
+        held[mod] = true
+    end
+    local prefix = ""
+    for _, e in ipairs(EMULATE) do
+        if held[e[1]] then prefix = prefix .. e[1] .. "-" end
+    end
+    return prefix
+end
+
+function M:Combo(input, layer)
+    local key, prefix = self:InputKey(input), self:LayerPrefix(layer)
+    return key and prefix and (prefix .. key)
+end
+
+---------------------------------------------------------------------------
+-- What the game does with an input (nil: free)
+---------------------------------------------------------------------------
+M.bound = {}    -- combo -> what we bound there
+
+function M:NativeBinding(combo)
+    local action = GetBindingAction(combo, true)
+    if action == self.bound[combo] then action = GetBindingAction(combo, false) end
+    if action and action ~= "" then return action end
+    if C_KeyBindings and C_KeyBindings.GetBindingByKey and Enum and Enum.BindingContext then
+        local ok, context = pcall(C_KeyBindings.GetBindingByKey, combo, Enum.BindingContext.GamepadModeInGameCore)
+        if ok and type(context) == "string" and context ~= "" then return context end
+    end
+end
+
+-- The game's gamepad bar button for an input and a layer
+function M:NativeBarButton(input, layer)
+    if not input.bar then return end
+    return CK.Paddles:NativeButton("bar:" .. M.LAYER_BAR[layer] .. ":" .. input.bar)
+end
+
+local FIXED_FACE = { a = "JUMP", x = "INTERACT", b = "BACK", y = "INSPECT" }
+-- The game's own pictures for its fixed functions
+local FIXED_ICON = {
+    JUMP = { atlas = "gamepad-ability-icon-jump" },
+    INTERACT = { texture = "Interface\\Cursor\\Interact" },
+    BACK = { atlas = "128-redbutton-exit" },
+    INSPECT = { atlas = "crosshair_inspect_32" },
+}
+
+-- Label and icon of the game's own function, for the mapping page (icons:
+-- see CK.Paddles.SetIcon)
+function M:NativeInfo(input, layer)
+    if input.layer then
+        return input.id == "LT" and L.NAT_LAYER_LEFT or L.NAT_LAYER_RIGHT, { glyph = input.id }
+    end
+    if layer == "" and FIXED_FACE[input.bar] then
+        return L["NAT_" .. FIXED_FACE[input.bar]], FIXED_ICON[FIXED_FACE[input.bar]]
+    end
+    local native = self:NativeBarButton(input, layer)
+    if native then
+        local slot = native.action
+        local name = slot and CK.Paddles.SlotName(slot)
+        local icon = slot and CK.Paddles.SlotTexture(slot)
+        return name or L.MAP_EMPTY_SLOT, icon, true
+    end
+    if input.id == "LB" then
+        return layer == "" and L.NAT_TARGET_FRIEND or L.MAP_GAME, { atlas = "gamepad-targeting-friendly" }
+    end
+    if input.id == "RB" then
+        return layer == "" and L.NAT_TARGET_ENEMY or L.MAP_GAME, { atlas = "gamepad-targeting-hostile" }
+    end
+    if layer == "" and input.id == "START" then return self:NativeCommandInfo("OPENRADIAL") end
+    if layer == "" and input.id == "SELECT" then return self:NativeCommandInfo("TOGGLEUIFOCUS") end
+    local combo = self:Combo(input, layer)
+    local action = combo and self:NativeBinding(combo)
+    if not action then return nil end
+    return self:NativeCommandInfo(action)
+end
+
+---------------------------------------------------------------------------
+-- The game's gamepad bar slots (D-pad, A / B / X / Y in each layer): what
+-- they hold is changed the way the game's own action bar editor does it
+-- (picked up and placed in the slot, out of combat). The button itself stays
+-- the game's. The fixed face buttons alone (jump, interact...) are no slot.
+---------------------------------------------------------------------------
+function M:NativeSlot(input, layer)
+    if not input.bar or (layer == "" and FIXED_FACE[input.bar]) then return nil end
+    local native = self:NativeBarButton(input, layer)
+    local slot = native and native.action
+    if type(slot) == "number" and slot > 0 then return slot end
+end
+
+-- "spell:133" for what a slot holds
+function M:SlotAction(slot)
+    if not (slot and C_ActionBar.HasAction(slot)) then return nil end
+    local kind, id = GetActionInfo(slot)
+    if kind == "spell" then return "spell:" .. id end
+    if kind == "item" then return "item:" .. id end
+    if kind == "macro" then
+        local name = GetActionText and GetActionText(slot) or (GetMacroInfo and (GetMacroInfo(id)))
+        return name and ("macro:" .. name)
+    end
+end
+
+function M:PlaceInSlot(slot, action)
+    if CK:BlockedByCombat() then return false end
+    local kind, value = (action or ""):match("^(%a+):(.+)$")
+    ClearCursor()
+    if kind == "spell" then
+        local pickup = C_Spell and C_Spell.PickupSpell or PickupSpell
+        pickup(tonumber(value))
+    elseif kind == "item" then
+        local pickup = C_Item and C_Item.PickupItem or PickupItem
+        pickup(tonumber(value))
+    elseif kind == "macro" then
+        PickupMacro(value)
+    end
+    if not GetCursorInfo() then return false end
+    PlaceAction(slot)
+    -- What was there comes back on the cursor: let it go
+    ClearCursor()
+    return true
+end
+
+function M:ClearSlot(slot)
+    if CK:BlockedByCombat() then return end
+    ClearCursor()
+    PickupAction(slot)
+    ClearCursor()
+end
+
+-- "free", "native", "slot", "locked" (layer unavailable) for an input
+function M:State(input, layer)
+    if input.layer then return "native" end
+    -- The bars' buttons, and LB / RB (targeting, and the game's class
+    -- actions on LT + LB / RT + RB) always belong to the game, in every
+    -- layer: the game switches its bars itself, triggers modifiers or not
+    if input.bar then return self:NativeSlot(input, layer) and "slot" or "native" end
+    if input.id == "LB" or input.id == "RB" then return "native" end
+    local combo = self:Combo(input, layer)
+    if not combo then return "locked" end
+    -- A paddle's key was learned for it
+    if input.paddle then return "free" end
+    if self.snapshot and self.snapshot[combo] ~= nil then
+        return self.snapshot[combo] and "native" or "free"
+    end
+    return self:NativeBinding(combo) and "native" or "free"
+end
+
+-- Free / native state of every combo, taken before the window binds the pad
+function M:TakeSnapshot()
+    self.snapshot = nil
+    local snapshot = {}
+    for _, input in ipairs(M.INPUTS) do
+        for _, layer in ipairs(M.LAYERS) do
+            local combo = self:Combo(input, layer)
+            if combo then snapshot[combo] = self:NativeBinding(combo) ~= nil end
+        end
+    end
+    self.snapshot = snapshot
+end
+
+function M:DropSnapshot()
+    self.snapshot = nil
+end
+
+---------------------------------------------------------------------------
+-- Assignments: settings.mapping["L3:LT"] = "cmd:TOGGLERUN" | "spell:133" |
+-- "item:5512" | "macro:Name" | "bar:bottom:a"
+---------------------------------------------------------------------------
+function M:Get(inputId, layer)
+    return settings().mapping[inputId .. ":" .. layer]
+end
+
+function M:Set(inputId, layer, action)
+    settings().mapping[inputId .. ":" .. layer] = action
+    self:Apply()
+    CK.Paddles:Apply()
+end
+
+---------------------------------------------------------------------------
+-- Actions: names, icons
+---------------------------------------------------------------------------
+local COMMAND_ICONS = {
+    CONTROLLERKEYBOARD_TOGGLE = "Interface\\ChatFrame\\UI-ChatIcon-Chat-Up",
+    CONTROLLERKEYBOARD_MAP = "Interface\\Icons\\INV_Gizmo_02",
+    CONTROLLERKEYBOARD_CONFIG = "Interface\\Icons\\INV_Gizmo_02",
+    TOGGLEAUTORUN = { atlas = "Ping_Marker_Icon_OnMyWay", glyph = "LS" },
+    TOGGLERUN = "Interface\\Icons\\Ability_Tracking",
+    JUMP = { atlas = "gamepad-ability-icon-jump", glyph = "A" },
+    TOGGLEWORLDMAP = "Interface\\Icons\\INV_Misc_Map02",
+    OPENALLBAGS = "Interface\\Icons\\INV_Misc_Bag_08",
+    TOGGLEBACKPACK = "Interface\\Icons\\INV_Misc_Bag_08",
+    TOGGLECHARACTER0 = "Interface\\Icons\\INV_Chest_Cloth_17",
+    TOGGLESPELLBOOK = "Interface\\Icons\\INV_Misc_Book_09",
+    TOGGLETALENTS = "Interface\\Icons\\Ability_Marksmanship",
+    TOGGLEQUESTLOG = "Interface\\Icons\\INV_Misc_Book_08",
+    TOGGLESOCIAL = "Interface\\Icons\\INV_Letter_15",
+    TOGGLEGAMEMENU = "Interface\\Icons\\INV_Misc_Gear_01",
+    TARGETNEARESTENEMY = "Interface\\Icons\\Ability_Hunter_SniperShot",
+    TARGETNEARESTFRIEND = "Interface\\Icons\\Spell_Holy_Heal",
+    INTERACTTARGET = "Interface\\Icons\\INV_Misc_Gear_01",
+    ASSISTTARGET = "Interface\\Icons\\Ability_Hunter_SniperShot",
+    FOLLOWTARGET = "Interface\\Icons\\Ability_Tracking",
+    TOGGLESHEATH = "Interface\\Icons\\INV_Sword_04",
+    SITORSTAND = "Interface\\Icons\\Spell_Nature_Sleep",
+    TOGGLEUI = "Interface\\Icons\\INV_Misc_Spyglass_03",
+    SCREENSHOT = "Interface\\Icons\\INV_Misc_Spyglass_03",
+}
+local COMMAND_ICON = "Interface\\Icons\\INV_Misc_Key_03"
+
+-- The game's own gamepad bindings have no name of their own
+local NATIVE_COMMANDS = {
+    OPENRADIAL = { "NAT_START", "Interface\\Icons\\INV_Misc_Gear_01" },
+    TOGGLEUIFOCUS = { "NAT_SELECT", "Interface\\Icons\\INV_Misc_Spyglass_02" },
+    TOGGLEPINGSYSTEM = { "NAT_PING", { atlas = "Ping_Marker_Icon_Assist", glyph = "RS" } },
+    TOGGLEPINGLISTENER = { "NAT_PING", { atlas = "Ping_Marker_Icon_Assist", glyph = "RS" } },
+}
+
+-- Name and icon of a binding of the game's (a command, or a click on one
+-- of its gamepad buttons)
+function M:NativeCommandInfo(action)
+    local known = NATIVE_COMMANDS[action] or (action:find("^TOGGLEPING") and NATIVE_COMMANDS.TOGGLEPINGSYSTEM)
+    if known then return L[known[1]], known[2] end
+    if action:find("^CLICK ") then return L.MAP_GAME end
+    local name = CK.Paddles:CommandName(action)
+    if name == action then name = L.MAP_GAME end
+    return name, COMMAND_ICONS[action]
+end
+
+-- Game functions offered first, the most missed on a gamepad
+M.COMMON = {
+    "TOGGLERUN", "TOGGLEAUTORUN", "TOGGLEGAMEMENU", "TOGGLEWORLDMAP", "OPENALLBAGS",
+    "TOGGLECHARACTER0", "TOGGLESPELLBOOK", "TOGGLETALENTS", "TOGGLEQUESTLOG", "TOGGLESOCIAL",
+    "CONTROLLERKEYBOARD_TOGGLE", "CONTROLLERKEYBOARD_CONFIG", "TARGETNEARESTENEMY", "ASSISTTARGET", "FOLLOWTARGET",
+    "SITORSTAND", "TOGGLESHEATH", "TOGGLEUI", "SCREENSHOT",
+}
+
+-- "Name (Rank 3)": the spell book holds each rank of a spell
+function M.SpellName(id, rank)
+    local name = C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(id)
+    if not name then return nil end
+    rank = rank or (C_Spell.GetSpellSubtext and C_Spell.GetSpellSubtext(id))
+    if rank and rank ~= "" then name = name .. " |cff9d9a8c(" .. rank .. ")|r" end
+    return name
+end
+
+function M:ActionName(action)
+    if not action then return nil end
+    local kind, value = action:match("^(%a+):(.+)$")
+    if kind == "cmd" then
+        return CK.Paddles:CommandName(value)
+    elseif kind == "spell" then
+        return M.SpellName(tonumber(value)) or value
+    elseif kind == "item" then
+        local id = tonumber(value)
+        return C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(id) or value
+    elseif kind == "macro" then
+        return value
+    elseif kind == "bar" then
+        return CK.Paddles:ActionLabel(action)
+    end
+end
+
+function M:ActionIcon(action)
+    if not action then return nil end
+    local kind, value = action:match("^(%a+):(.+)$")
+    if kind == "cmd" then
+        return COMMAND_ICONS[value] or COMMAND_ICON
+    elseif kind == "spell" then
+        return C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(tonumber(value))
+    elseif kind == "item" then
+        return C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(tonumber(value))
+    elseif kind == "macro" then
+        local _, icon = GetMacroInfo(value)
+        return icon
+    elseif kind == "bar" then
+        return CK.Paddles:ActionIcon(action)
+    end
+end
+
+---------------------------------------------------------------------------
+-- Catalogue for the mapping window: { header = "..." } or
+-- { action = "...", name = "...", icon = ... }
+---------------------------------------------------------------------------
+M.TABS = { "game", "spells", "items", "macros", "bar" }
+-- The game's slots only take spells, items and macros
+M.SLOT_TABS = { "spells", "items", "macros" }
+
+local function commandEntry(command)
+    return { action = "cmd:" .. command, name = CK.Paddles:CommandName(command),
+        icon = COMMAND_ICONS[command] or COMMAND_ICON }
+end
+
+function M:Catalog(tab)
+    local list = {}
+    if tab == "game" then
+        local known, cats, byCategory = {}, {}, {}
+        for i = 1, GetNumBindings and GetNumBindings() or 0 do
+            local command, category = GetBinding(i)
+            if command and command ~= "" and category and not command:find("^HEADER_") and not command:find("^CLICK ") then
+                known[command] = true
+                local cat = byCategory[category]
+                if not cat then
+                    cat = { name = _G[category] or category, commands = {} }
+                    byCategory[category] = cat
+                    cats[#cats + 1] = cat
+                end
+                table.insert(cat.commands, command)
+            end
+        end
+        list[#list + 1] = { header = L.CAT_COMMON }
+        for _, command in ipairs(M.COMMON) do
+            if known[command] then list[#list + 1] = commandEntry(command) end
+        end
+        for _, cat in ipairs(cats) do
+            list[#list + 1] = { header = cat.name }
+            for _, command in ipairs(cat.commands) do list[#list + 1] = commandEntry(command) end
+        end
+    elseif tab == "spells" and C_SpellBook and C_SpellBook.GetNumSpellBookSkillLines then
+        local bank = Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player or 0
+        local spellType = Enum.SpellBookItemType and Enum.SpellBookItemType.Spell
+        for line = 1, C_SpellBook.GetNumSpellBookSkillLines() do
+            local info = C_SpellBook.GetSpellBookSkillLineInfo(line)
+            if info and not info.shouldHide then
+                local first = true
+                for i = info.itemIndexOffset + 1, info.itemIndexOffset + info.numSpellBookItems do
+                    local item = C_SpellBook.GetSpellBookItemInfo(i, bank)
+                    if item and item.spellID and not item.isPassive and not item.isOffSpec
+                        and (not spellType or item.itemType == spellType) then
+                        if first then
+                            list[#list + 1] = { header = info.name }
+                            first = false
+                        end
+                        list[#list + 1] = { action = "spell:" .. item.spellID, icon = item.iconID,
+                            name = M.SpellName(item.spellID, item.subName) or item.name }
+                    end
+                end
+            end
+        end
+    elseif tab == "items" and C_Container then
+        local seen = {}
+        for bag = 0, NUM_BAG_SLOTS or 4 do
+            for slot = 1, C_Container.GetContainerNumSlots(bag) or 0 do
+                local id = C_Container.GetContainerItemID(bag, slot)
+                if id and not seen[id] and C_Item.GetItemSpell and C_Item.GetItemSpell(id) then
+                    seen[id] = true
+                    list[#list + 1] = { action = "item:" .. id,
+                        name = C_Item.GetItemNameByID(id) or ("item:" .. id), icon = C_Item.GetItemIconByID(id) }
+                end
+            end
+        end
+    elseif tab == "macros" and GetNumMacros then
+        local account, character = GetNumMacros()
+        local perAccount = MAX_ACCOUNT_MACROS or 120
+        for i = 1, account do
+            local name, icon = GetMacroInfo(i)
+            if name then list[#list + 1] = { action = "macro:" .. name, name = name, icon = icon } end
+        end
+        for i = perAccount + 1, perAccount + character do
+            local name, icon = GetMacroInfo(i)
+            if name then list[#list + 1] = { action = "macro:" .. name, name = name, icon = icon } end
+        end
+    elseif tab == "bar" then
+        for _, layer in ipairs(M.LAYERS) do
+            list[#list + 1] = { header = CK.Paddles:LayerLabel(layer) }
+            for _, input in ipairs(M.INPUTS) do
+                if input.bar and not (layer == "" and FIXED_FACE[input.bar]) then
+                    local action = "bar:" .. M.LAYER_BAR[layer] .. ":" .. input.bar
+                    list[#list + 1] = { action = action, name = CK.Paddles:ActionLabel(action),
+                        icon = CK.Paddles:ActionIcon(action) }
+                end
+            end
+        end
+    end
+    return list
+end
+
+---------------------------------------------------------------------------
+-- Bindings
+---------------------------------------------------------------------------
+local owner
+local buttons = {}      -- comboId -> secure button (spells, items, macros)
+
+local function secureButton(comboId)
+    local b = buttons[comboId]
+    if not b then
+        local n = 0
+        for _ in pairs(buttons) do n = n + 1 end
+        b = CK.NewFrame("Button", "ControllerKeyboardMapButton" .. (n + 1), nil, "SecureActionButtonTemplate")
+        b:RegisterForClicks("AnyDown", "AnyUp")
+        b:SetAttribute("useOnKeyDown", true)
+        -- The extra button on screen shows the press
+        local inputId = comboId:match("^(%w+):")
+        b:SetScript("PreClick", function(_, _, down)
+            if down ~= false then CK.Paddles:NotifyPress(inputId) end
+        end)
+        b:Hide()
+        buttons[comboId] = b
+    end
+    return b
+end
+
+local function bindAction(combo, comboId, action)
+    local kind, value = action:match("^(%a+):(.+)$")
+    if kind == "cmd" then
+        SetOverrideBinding(owner, false, combo, value)
+        M.bound[combo] = value
+    elseif kind == "bar" then
+        local native = CK.Paddles:NativeButton(action)
+        local name = native and native:GetName()
+        if name then
+            SetOverrideBindingClick(owner, false, combo, name, "LeftButton")
+            M.bound[combo] = "CLICK " .. name .. ":LeftButton"
+        end
+    elseif kind == "spell" or kind == "item" or kind == "macro" then
+        local b = secureButton(comboId)
+        b:SetAttribute("type", kind)
+        b:SetAttribute("spell", kind == "spell" and tonumber(value) or nil)
+        b:SetAttribute("item", kind == "item" and ("item:" .. value) or nil)
+        b:SetAttribute("macro", kind == "macro" and value or nil)
+        SetOverrideBindingClick(owner, false, combo, b:GetName(), "LeftButton")
+        M.bound[combo] = "CLICK " .. b:GetName() .. ":LeftButton"
+    end
+end
+
+-- Ours were replaced (a gamepad window of the game rebinds the pad when it
+-- closes): set them again. Only then, so the game's own refreshes don't
+-- make us rebind for nothing.
+function M:Repair()
+    if self.pending then return self:Apply() end
+    for combo, want in pairs(self.bound) do
+        if GetBindingAction(combo, true) ~= want then return self:Apply() end
+    end
+end
+
+-- No gamepad window has the focus (the game's own HUD bindings are active)
+function M:CoreActive()
+    local manager = GamepadMode and GamepadMode.FrameControlsManager
+    if manager and manager.GetActiveFrame and manager:GetActiveFrame() then return false end
+    return not (CK.Config and CK.Config:IsOpen())
+end
+
+function M:Apply()
+    if InCombatLockdown() or not self:CoreActive() then
+        self.pending = true
+        return
+    end
+    self.pending = false
+    self.applying = true
+    owner = owner or CK.NewFrame("Frame")
+    ClearOverrideBindings(owner)
+    wipe(self.bound)
+    if not self:Enabled() then
+        self.applying = false
+        return
+    end
+    for comboId, action in pairs(settings().mapping) do
+        local inputId, layer = comboId:match("^(%w+):(%a*)$")
+        local input = inputId and M.BY_ID[inputId]
+        -- Never on an input the game uses
+        if input and type(action) == "string" and self:State(input, layer) == "free" then
+            bindAction(self:Combo(input, layer), comboId, action)
+        end
+    end
+    self.applying = false
+end
+
+-- Labels of keys and pad buttons ("LB", "Start", "L4"...)
+local PAD_GLYPHS = {
+    PAD1 = "A", PAD2 = "B", PAD3 = "X", PAD4 = "Y", PADLSHOULDER = "LB", PADRSHOULDER = "RB",
+    PADLTRIGGER = "LT", PADRTRIGGER = "RT", PADLSTICK = "LS", PADRSTICK = "RS",
+    PADDUP = "DPAD_UP", PADDDOWN = "DPAD_DOWN", PADDLEFT = "DPAD_LEFT", PADDRIGHT = "DPAD_RIGHT",
+}
+local PAD_NAMES = { PADFORWARD = "Start", PADBACK = "Select" }
+
+local function keyLabel(key)
+    if PAD_GLYPHS[key] then return CK:GlyphMarkup(PAD_GLYPHS[key], 16) end
+    if PAD_NAMES[key] then return PAD_NAMES[key] end
+    local paddle = key:match("^PADPADDLE(%d)$")
+    if paddle then
+        for id, k in pairs(M.PADDLE_KEYS) do
+            if k == key then return id end
+        end
+    end
+    for _, id in ipairs(CK.Paddles.ORDER) do
+        if settings().paddles[id] and settings().paddles[id].key == key then return id end
+    end
+    return GetBindingText and GetBindingText(key) or key
+end
+
+-- "RB + D-pad down": the panel's shortcut, a button held then another
+function M:ChordLabel(chord)
+    if not chord then return "-" end
+    return keyLabel(chord.hold) .. " + " .. keyLabel(chord.press)
+end
+
+---------------------------------------------------------------------------
+-- Events
+---------------------------------------------------------------------------
+function M:Init()
+    -- Paddle actions set before 0.5.0 lived with the paddles
+    for id, cfg in pairs(settings().paddles) do
+        if cfg.action then
+            settings().mapping[id .. ":"] = settings().mapping[id .. ":"] or cfg.action
+            cfg.action, cfg.cat = nil, nil
+        end
+    end
+    local events = CreateFrame("Frame")
+    events:RegisterEvent("PLAYER_ENTERING_WORLD")
+    events:RegisterEvent("PLAYER_REGEN_ENABLED")
+    events:RegisterEvent("CVAR_UPDATE")
+    events:SetScript("OnEvent", function(_, event, name)
+        if event == "CVAR_UPDATE" and not (name and tostring(name):find("GamePadEmulate")) then return end
+        -- Let the game set its own bindings first
+        C_Timer.After(event == "PLAYER_ENTERING_WORLD" and 1 or 0, function()
+            if event == "PLAYER_REGEN_ENABLED" then M:Repair() else M:Apply() end
+        end)
+    end)
+    -- The game sets its own pad bindings at many moments (its windows, its
+    -- targeting...), and an override binding replaces any other on its key:
+    -- after a change that isn't ours, check ours a moment later. Never more
+    -- than a few times in a row, should the game answer each of ours.
+    local recent = {}
+    local function changed()
+        if M.applying or M.repairQueued or InCombatLockdown() then return end
+        local now = GetTime()
+        while recent[1] and recent[1] < now - 3 do table.remove(recent, 1) end
+        if #recent >= 6 then return end
+        M.repairQueued = true
+        C_Timer.After(0.15, function()
+            M.repairQueued = false
+            if not InCombatLockdown() and M:CoreActive() then
+                recent[#recent + 1] = GetTime()
+                M:Repair()
+            end
+        end)
+    end
+    for _, name in ipairs({ "SetOverrideBinding", "SetOverrideBindingClick", "SetOverrideBindingSpell",
+        "SetOverrideBindingItem", "SetOverrideBindingMacro", "ClearOverrideBindings" }) do
+        if _G[name] then hooksecurefunc(name, changed) end
+    end
+    -- The game's gamepad windows rebind the pad when they close
+    if EventRegistry and EventRegistry.RegisterCallback then
+        EventRegistry:RegisterCallback("Gamepad.RefreshFrameFocus", function()
+            C_Timer.After(0, function()
+                if M:CoreActive() and not InCombatLockdown() then M:Repair() end
+            end)
+        end, M)
+    end
+end

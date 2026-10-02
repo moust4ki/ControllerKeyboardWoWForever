@@ -7,6 +7,11 @@ Everything is also clickable with the mouse, so it works with the Steam Controll
 The look follows WoW Forever's gamepad UI: bronze and gold rims, Friz Quadrata font, the game's own
 button icons.
 
+Besides the keyboard, a few quality of life modules for gamepad players: a **gamepad mapping**
+window that adds the missing game functions (run / walk, game menu...) on the free buttons and the
+**back paddles** without changing WoW Forever's own gamepad UI, **quest items** marked "do not sell",
+and **quest links** in the chat. Each module can be turned off in the options.
+
 ## Languages
 
 The interface is translated into English, French, German, Spanish and Italian, following the game
@@ -110,6 +115,79 @@ With `/w`, first pick the recipient: type the name (names may contain a space) a
 suggestion (recent correspondents, group members, online friends, guild) or press A to confirm what
 you typed; then type the message. Deleting on an empty message goes back to the name.
 
+## Quest links and drafts
+
+- The channel row ends with a **Quests** chip: select it to turn the suggestions row into the list of
+  your quests, then insert one with the right stick click.
+- Links inserted with **Shift+click**, or with the game's own **Share in chat** (gamepad quest log:
+  Y > Share in chat), go into the keyboard's message.
+- When the game closes the chat (another panel opens, combat), the message is kept as a **draft**
+  and comes back with the chat: type "LFM", open the quest log, share the quest, and the keyboard
+  holds "LFM [quest]". B empties it as usual; a draft is dropped after 10 minutes.
+- Backspace deletes a link as a whole.
+
+## Configuration panel
+
+**RB + D-pad down** opens the addon's own panel (only watched, never bound: the game's own buttons stay as they are;
+the General tab learns any other pair: press A on it, then hold a button and press a second one;
+also `/ck config`, a
+key binding, or *Options > AddOns > Controller Keyboard*). It is driven with the gamepad (LB / RB:
+tabs, D-pad: move and change values, A: choose, B: close) or the mouse.
+
+- **General**: every function, each with its own switch (keyboard, auto-open, quest links,
+  Shift+click links, drafts, sticky channel, quest item tooltip / sale warning / merchant warning,
+  gamepad mapping, extra buttons on screen, RB + D-pad down), button icons and font.
+- **Keyboard**: size, position, input method, layout, sticks, prediction.
+- **Gamepad**: the mapping below.
+
+## Gamepad mapping
+
+The Gamepad tab (`/ck map`) shows the whole controller, in its four trigger layers: alone, LT, RT,
+LT + RT (hold the triggers, or click the layer tabs).
+
+- **The game's own buttons stay as they are.** They are shown with what they do and its icon: jump,
+  interact, back, inspect, targeting, Start menu...
+- **The gamepad bar's slots** (D-pad and A / B / X / Y in the four layers, but the fixed jump /
+  interact / back / inspect) take a spell, an item or a macro: press A on one, pick it, and it goes
+  in the game's own slot, like with its action bar editor (X empties it).
+- **The free inputs get the missing functions**: L3 / R3, trigger combinations nothing is bound to
+  (LT + Start...) and the back paddles. Press A on one and pick, with LB / RB for the tabs:
+  - **Game**: run / walk, autorun, game menu, map, bags, character, spellbook, quest log, open the
+    keyboard... then every key binding of the game, by its own categories;
+  - **Spells**, **Items** (usable ones in your bags), **Macros**;
+  - **Bar**: press a button of the gamepad action bar ("LT + RT A"...).
+- X removes, B goes back / closes. Everything is clickable with the mouse too.
+
+### Back paddles (L4 / R4 / L5 / R5) and extra buttons
+
+For the Steam Deck and other controllers with back paddles: set each paddle to a keyboard key in
+Steam Input (F13 to F16 for example), then **Identify the back paddles** (under the controller) asks
+you to press each one in turn; B skips a paddle your controller doesn't have. Y on one paddle learns
+it again. `/ck keys` lists the keys the game receives. Controllers whose paddles the game sees
+directly (PADPADDLE1-4) work as they are.
+
+L3 / R3 can be shown too (General tab), with what the game does with them (autorun, ping...) or what
+you put on them. Spells are listed with their rank.
+
+The extra buttons that do something (back paddles, L3, R3) appear around the gamepad action bar, in
+its round slot style: the action's icon, count, cooldown and usability, the held trigger layer's
+action, and the game's pressed look when you press them. **Place the bar and extra buttons** moves the game's gamepad bar by steps with the D-pad (only its
+place on the screen changes, out of combat; X puts it back; the extra buttons follow it), and puts each
+extra button
+on one of the fixed places around the bar's controls (two columns on the outer side, two rows above and
+two below): the D-pad chooses the bar or a button (LB / RB too), A picks it up, then the D-pad moves it
+(a button goes from place to place, onto a taken place the two buttons swap), A puts it down and B puts
+it back; the mouse clicks a button then a place; the right side mirrors the left (Y turns it
+off), X puts a button back. Places follow the compact layout.
+
+## Quest items
+
+Item tooltips show an orange **"Quest item: do not sell"** line on quest items, including the items a
+quest asks to collect (cloth, ore, meat...) that the game itself does not mark, and in the bags those
+items get a slowly pulsing orange glow. Selling one to a
+merchant shows a warning with a reminder of the Buyback tab; with the gamepad bag tooltips turned
+off, selecting one at a merchant warns too.
+
 ## Prediction
 
 - **Word completion**: English, French, German, Spanish and Italian dictionaries of 12,000 words
@@ -126,8 +204,9 @@ you typed; then type the message. Deleting on an empty message goes back to the 
 
 ## Options
 
-*Escape > Options > AddOns > Controller Keyboard*:
+In the configuration panel (RB + D-pad down, `/ck config`):
 
+- every function on or off (General tab);
 - input method (daisywheel / split keyboard), keyboard layout (AZERTY / QWERTY), stick dead
   zone, stick response (linear, gentle, fast), magnet, cursor lines;
 - lock position, open automatically, only when the gamepad is active;
@@ -155,10 +234,14 @@ you typed; then type the message. Deleting on an empty message goes back to the 
 | `/ck reset` | reset the keyboard position |
 | `/ck stats` | statistics |
 | `/ck forget confirm` | forget learned words |
+| `/ck config` | configuration panel (also RB + D-pad down) |
+| `/ck map` | gamepad mapping (free buttons, back paddles) |
+| `/ck keys` | list the keys and buttons the game receives (back paddles) |
 | `/ck glyphs` | list the game's gamepad button icons |
 | `/ck debug` | print received buttons and sticks |
 
-A **"Toggle keyboard"** key binding is also available in *Escape > Key Bindings > AddOns*.
+**"Toggle keyboard"**, **"Controller Keyboard configuration"** and **"Gamepad mapping"** key bindings
+are also available in *Escape > Key Bindings > AddOns*.
 
 ## Technical notes
 
@@ -170,11 +253,22 @@ A **"Toggle keyboard"** key binding is also available in *Escape > Key Bindings 
   chat itself, creates its frames outside the gamepad UI's watch, and sends with the mouse through a
   secure macro button.
 - Gamepad buttons are bound (override bindings) only while typing, and released before combat.
+- The gamepad mapping never changes WoW Forever's gamepad UI. An input is "free" only when no game
+  binding uses it (checked with ours removed); our bindings are plain override bindings of the
+  addon's own frame, set out of combat while none of the game's gamepad windows has the focus, below
+  the game's own window bindings, and set again when such a window closes. A paddle on a bar button
+  is bound to a click on the game's button, which the game runs like its own D-pad and face buttons.
+  The paddles on screen are plain frames that only read the game's buttons, so they update in
+  combat.
+- Quest items only add a line through the tooltip API and watch the buyback list; links and the
+  chat's focus are followed through hooks and the game's own events, never by calling its chat code.
 - B is bound only while the message holds text; the binding is removed when B is released, so with an
   empty message B goes back to the game, which closes the chat.
 - Code layout: `Message.lua` is the common core (message, prediction, channels, sending),
   `Wheel.lua` and `StickKeyboard.lua` are the input methods, `UI.lua` the common panel, `Input.lua`
-  the pad buttons and sticks.
+  the pad buttons and sticks; `ConfigWindow.lua` the configuration panel (`Options.lua` its General
+  and Keyboard rows, `MapWindow.lua` its Gamepad tab); `Mapping.lua` / `Paddles.lua`,
+  `QuestItems.lua` and `QuestLinks.lua` are the modules.
 
 ## Development
 

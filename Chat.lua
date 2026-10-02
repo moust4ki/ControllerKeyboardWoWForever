@@ -3,7 +3,20 @@ local L = CK.L
 
 ---------------------------------------------------------------------------
 -- Chat integration
+--
+-- The ChatEdit_* globals are only deprecated aliases (loaded with the
+-- loadDeprecationFallbacks CVar): the game itself calls ChatFrameUtil.
 ---------------------------------------------------------------------------
+function CK.ActiveChatWindow()
+    local get = ChatFrameUtil and ChatFrameUtil.GetActiveWindow or ChatEdit_GetActiveWindow
+    return get and get()
+end
+
+local function openChat(text)
+    local open = ChatFrameUtil and ChatFrameUtil.OpenChat or ChatFrame_OpenChat
+    open(text)
+end
+
 function CK:IsGamepadActive()
     if self.gamepadActive ~= nil then return self.gamepadActive end
     return C_GamePad ~= nil and C_GamePad.GetActiveDeviceID ~= nil
@@ -23,6 +36,7 @@ function CK:OnChatActivated(eb)
         end
         if CK:IsOpen() and CK.editBox == eb then return end
         local s = CK.db.settings
+        if not s.modules.keyboard then return end
         if forced or (s.autoOpen and (not s.onlyWithGamepad or CK:IsGamepadActive())) then
             CK:Open(eb)
         end
@@ -40,36 +54,36 @@ function CK:OnChatDeactivated(eb)
 end
 
 function CK:HookChat()
-    if ChatEdit_ActivateChat then
-        hooksecurefunc("ChatEdit_ActivateChat", function(eb) CK:OnChatActivated(eb) end)
-    end
-    if ChatEdit_DeactivateChat then
-        hooksecurefunc("ChatEdit_DeactivateChat", function(eb) CK:OnChatDeactivated(eb) end)
-    end
     -- Learn slash commands: remember the last text typed in each edit box
-    -- (the command is already cleared when ChatEdit_SendText returns)
+    -- (a command is already run and cleared when the text is sent)
     local lastTyped = {}
-    if ChatEdit_SendText then
-        hooksecurefunc("ChatEdit_SendText", function(eb)
-            local text = lastTyped[eb]
-            lastTyped[eb] = nil
-            if text and text:sub(1, 1) == "/" then CK.Predict:LearnCommand(text) end
-        end)
+    local function onSend(eb)
+        local text = lastTyped[eb]
+        lastTyped[eb] = nil
+        -- Sent with Enter on a physical keyboard: the keyboard's copy is sent too
+        if eb == CK.editBox and CK:IsOpen() then CK:SetText("") end
+        if text and text:sub(1, 1) == "/" then CK.Predict:LearnCommand(text) end
     end
-    if ChatEdit_DeactivateChat then
-        hooksecurefunc("ChatEdit_DeactivateChat", function(eb) lastTyped[eb] = nil end)
+    -- The edit box's SendText announces itself (listening taints nothing)
+    if EventRegistry and EventRegistry.RegisterCallback then
+        EventRegistry:RegisterCallback("ChatFrame.OnEditBoxPreSendText", function(_, eb) onSend(eb) end, CK)
+    elseif ChatEdit_SendText then
+        hooksecurefunc("ChatEdit_SendText", onSend)
     end
 
     for i = 1, NUM_CHAT_WINDOWS or 10 do
         local eb = _G["ChatFrame" .. i .. "EditBox"]
         if eb then
-            eb:HookScript("OnTextChanged", function(box)
+            eb:HookScript("OnTextChanged", function(box, userInput)
                 local text = box:GetText()
                 if text and text ~= "" then lastTyped[box] = text end
-                CK:OnChatTextChanged(box)
+                CK:OnChatTextChanged(box, userInput)
             end)
             eb:HookScript("OnEditFocusGained", function(box) CK:OnChatActivated(box) end)
-            eb:HookScript("OnEditFocusLost", function(box) CK:OnChatDeactivated(box) end)
+            eb:HookScript("OnEditFocusLost", function(box)
+                lastTyped[box] = nil
+                CK:OnChatDeactivated(box)
+            end)
             eb:HookScript("OnHide", function(box) CK:OnChatDeactivated(box) end)
         end
     end
@@ -87,6 +101,10 @@ end
 
 -- Key binding / slash command: open the chat with the keyboard, or close it
 function ControllerKeyboard_Toggle()
+    if not CK.db.settings.modules.keyboard then
+        CK:Print(CK.L.KEYBOARD_OFF)
+        return
+    end
     if CK:IsOpen() then
         CK:Close("toggle")
         return
@@ -94,11 +112,11 @@ function ControllerKeyboard_Toggle()
     -- Opening the chat from addon code in combat taints the gamepad UI
     if CK:BlockedByCombat() then return end
     CK.forceOpen = true
-    local active = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()
+    local active = CK.ActiveChatWindow()
     if active and active:HasFocus() then
         CK:Open(active)
     else
-        ChatFrame_OpenChat("")
+        openChat("")
     end
     CK.forceOpen = false
 end
@@ -113,11 +131,15 @@ local function slash(msg)
     local cmd, arg = (msg or ""):lower():match("^[ \t\r\n]*([^ \t\r\n]*)[ \t\r\n]*(.-)[ \t\r\n]*$")
 
     if cmd == "" then
+        if not s.modules.keyboard then
+            CK:Print(L.KEYBOARD_OFF)
+            return
+        end
         -- The chat edit box is still sending this command: open once it is closed
         C_Timer.After(0, function()
             if CK:BlockedByCombat() then return end
             CK.forceOpen = true
-            ChatFrame_OpenChat("")
+            openChat("")
             CK.forceOpen = false
         end)
     elseif cmd == "auto" then
@@ -182,11 +204,13 @@ local function slash(msg)
         else
             CK:Print(L.FORGET_CONFIRM)
         end
+    elseif cmd == "map" or cmd == "config" or cmd == "options" then
+        -- The chat edit box is still sending this command: open once it is closed
+        CK.Config:OpenWhenFree(cmd == "map" and "gamepad" or nil)
+    elseif cmd == "keys" then
+        CK:DetectKeys()
     elseif cmd == "glyphs" then
         CK:ListGlyphAtlases()
-    elseif cmd == "options" or cmd == "config" then
-        -- Opening the settings from addon code could be blocked by the gamepad UI
-        CK:Print(L.OPTIONS_WHERE)
     elseif cmd == "debug" then
         s.debug = not s.debug
         CK.seenSticks = nil
@@ -227,7 +251,13 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
         CK:InitDB()
     elseif event == "PLAYER_LOGIN" then
         CK.Predict:Load()
-        CK:HookChat()
+        local function safe(fn) xpcall(fn, geterrorhandler()) end
+        safe(function() CK:HookChat() end)
+        safe(function() CK:HookLinks() end)
+        safe(function() CK.QuestItems:Init() end)
+        safe(function() CK.Mapping:Init() end)
+        safe(function() CK.Paddles:Init() end)
+        safe(function() CK.Config:Init() end)
         -- Build the frames now, never while the chat is open (see Input.lua)
         if InCombatLockdown() then CK.buildPending = true else CK:BuildUI() end
         CK:RegisterOptions()

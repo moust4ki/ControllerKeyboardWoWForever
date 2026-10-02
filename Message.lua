@@ -49,9 +49,10 @@ function CK:SetChatAttr(key, value)
     self.chatAttrs[key] = value
 end
 
--- Text typed on a physical keyboard, or cleared by the game after sending
-function CK:OnChatTextChanged(eb)
-    if eb ~= self.editBox then return end
+-- Text typed on a physical keyboard (links inserted by the game are caught
+-- by the Shift+click hook instead, see QuestLinks.lua)
+function CK:OnChatTextChanged(eb, userInput)
+    if eb ~= self.editBox or not userInput then return end
     self.buffer = eb:GetText() or ""
     self:Refresh()
 end
@@ -66,6 +67,7 @@ end
 -- Keyboard without the chat (after /ck lock, to place it): A sends with the
 -- secure macro button, B closes
 function CK:OpenStandalone()
+    if not self.db.settings.modules.keyboard then return end
     if self:BlockedByCombat() then return end
     if not self.frame then self:BuildUI() end
     if self:IsOpen() then return end
@@ -119,8 +121,17 @@ end
 -- Keep the end of long messages visible
 local MAX_PREVIEW = 80
 local function previewTail(text)
+    text = CK.DisplayText(text)
     if #text <= MAX_PREVIEW then return text end
     local start = #text - MAX_PREVIEW + 1
+    -- Never start inside a colored [link]: move back to its color code
+    local from = 1
+    while true do
+        local s, e = text:find("|c%x%x%x%x%x%x%x%x.-|r", from)
+        if not s or s > start then break end
+        if e >= start then start = s break end
+        from = e + 1
+    end
     while start <= #text do
         local b = text:byte(start)
         if b < 128 or b >= 192 then break end
@@ -149,7 +160,10 @@ function CK:Refresh()
     local n = self.db.settings.numSuggestions
     local _, spaces = text:gsub(" ", "")
     self.state.commandMode = text:sub(1, 1) == "/" and spaces <= 1
-    if self.state.commandMode then
+    if self:InQuestList() then
+        -- Quest links: the suggestions row lists the quests in progress
+        self.state.suggestions = self:QuestListSuggestions(n)
+    elseif self.state.commandMode then
         self.state.suggestions = CK.Predict:QueryCommands(text, n)
     elseif self:WhisperNameMode() then
         -- Typing the name of a /w (names may hold a space): suggest people
@@ -159,7 +173,7 @@ function CK:Refresh()
         local ctx = CK.Predict:Context(text:sub(1, #text - #prefix))
         self.state.suggestions = CK.Predict:Query(prefix, ctx, n)
     end
-    self.state.selected = 1
+    if not self:InQuestList() then self.state.selected = 1 end
     self:UpdateSuggestions()
     self:UpdateChannels()
     self:UpdateRows()
@@ -202,12 +216,21 @@ function CK:Backspace()
         self:Refresh()
         return
     end
+    local link = CK.TrailingLink(text)
+    if link then
+        self:SetText(text:sub(1, #text - #link))
+        return
+    end
     self:SetText(CK.DropLastChar(text))
 end
 
 -- B with a message: empty it. With an empty message B belongs to the game,
 -- which closes the chat (see CK:UpdateCancelBinding)
 function CK:CancelMessage()
+    if self:InQuestList() then
+        self:CloseQuestList()
+        return
+    end
     self:SetText("")
 end
 
@@ -218,6 +241,12 @@ function CK:DeleteWord()
 end
 
 function CK:AcceptSuggestion(index)
+    if self:InQuestList() then
+        -- index is a position in the visible window
+        local first = self.state.questIndex - self.state.selected + 1
+        self:InsertQuestLink(index and (first + index - 1))
+        return true
+    end
     local word = self.state.suggestions[index or self.state.selected]
     if not word then return false end
     if self.state.commandMode then
@@ -421,6 +450,7 @@ function CK:SetChannel(i)
         self.whisperTarget = self.editBox:GetAttribute("tellTarget")
     end
     self.chatAttrs = CK.CHANNEL_LIST[i].attrs(self)
+    self.state.questChip = false
     self:ApplyStickyChannel()
     self:Refresh()
 end
@@ -446,10 +476,18 @@ end
 function CK:CycleChannel(delta)
     delta = delta or 1
     local n = #CK.CHANNEL_LIST
-    local index = self:CurrentChannelIndex() or (delta > 0 and 0 or n + 1)
-    for step = 1, n do
-        local i = (index - 1 + step * delta) % n + 1
-        if self:ChannelAvailable(i) then
+    -- With the quest links module, the "Quests" chip is one more stop
+    local chip = self.db.settings.modules.questLinks
+    local count = chip and n + 1 or n
+    local index = (chip and self.state.questChip) and n + 1
+        or self:CurrentChannelIndex() or (delta > 0 and 0 or count + 1)
+    for step = 1, count do
+        local i = (index - 1 + step * delta) % count + 1
+        if i == n + 1 then
+            self.state.questChip = true
+            self:Refresh()
+            return
+        elseif self:ChannelAvailable(i) then
             self:SetChannel(i)
             return
         end
@@ -475,18 +513,34 @@ function CK:FocusSuggestions() self:SetActiveRow("suggestions") end
 -- inserting anything; on the suggestions row, insert the selected one
 function CK:RowSelect()
     if self.state.activeRow == "channels" then
-        self:SetActiveRow("suggestions")
+        if self.state.questChip then
+            self:OpenQuestList()
+        else
+            self:SetActiveRow("suggestions")
+        end
     else
         self:AcceptSuggestion()
     end
 end
 
 function CK:NavPrev()
-    if self.state.activeRow == "channels" then self:PrevChannel() else self:PrevSuggestion() end
+    if self.state.activeRow == "channels" then
+        self:PrevChannel()
+    elseif self:InQuestList() then
+        self:MoveInQuestList(-1)
+    else
+        self:PrevSuggestion()
+    end
 end
 
 function CK:NavNext()
-    if self.state.activeRow == "channels" then self:NextChannel() else self:NextSuggestion() end
+    if self.state.activeRow == "channels" then
+        self:NextChannel()
+    elseif self:InQuestList() then
+        self:MoveInQuestList(1)
+    else
+        self:NextSuggestion()
+    end
 end
 
 -- The message is sent by the secure macro button (see Input.lua): calling the
@@ -538,13 +592,35 @@ function CK:BlockedByCombat()
     return true
 end
 
+-- A message left when the game closed the chat (a panel opened, combat...)
+-- is kept as a draft, like on a phone, and comes back with the chat: type
+-- "LFM", open the quest log, "Share in chat", and the keyboard holds
+-- "LFM [quest]". B empties it as usual.
+local DRAFT_TIME = 600
+local KEEP_DRAFT = {
+    ["chat deactivated"] = true, ["focus lost (OnUpdate)"] = true, combat = true, toggle = true,
+}
+
+function CK:TakeDraft(chatText)
+    local draft = self.draft
+    self.draft = nil
+    if not draft or GetTime() - draft.time > DRAFT_TIME then return chatText end
+    -- The chat opened on a command (/w, reply...), or already holds the text
+    if chatText:sub(1, 1) == "/" or chatText:sub(1, #draft.text) == draft.text then return chatText end
+    if chatText == "" then return draft.text end
+    local sep = draft.text:match("[ \t]$") and "" or " "
+    return draft.text .. sep .. chatText
+end
+
 function CK:Open(eb)
+    if not self.db.settings.modules.keyboard then return end
     if self:BlockedByCombat() then return end
     if not self.frame then self:BuildUI() end
     -- Keep a message typed with the mouse when the chat is reopened;
-    -- otherwise start from what the chat holds (physical keyboard)
+    -- otherwise start from the draft and what the chat holds (physical
+    -- keyboard, a link the game opened the chat with)
     if not (self.standalone and self.buffer and self.buffer ~= "") then
-        self.buffer = eb:GetText() or ""
+        self.buffer = self:TakeDraft(eb:GetText() or "")
     end
     self.standalone = false
     self.chatAttrs = nil
@@ -571,11 +647,17 @@ function CK:Close(reason)
         self:DisableButtons()
     end
     self.closing = false
+    if KEEP_DRAFT[reason] and self.db.settings.features.drafts
+        and self.buffer and self.buffer:find("[^ \t\r\n]") then
+        self.draft = { text = self.buffer, time = GetTime() }
+    end
     self.standalone = false
     self.buffer = nil
     self.chatAttrs = nil
     self.editBox = nil
     self.state.aim = nil
+    self.state.questList = nil
+    self.state.questChip = false
     self:GetMethod():Reset()
     self.repeatFn = nil
 end

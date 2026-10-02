@@ -10,6 +10,11 @@ Steam Controller trackpad.
 The look matches WoW Forever's gamepad UI: bronze and gold rims, Friz Quadrata font, the game's own
 button icons.
 
+It also brings quality of life modules for gamepad players, each one can be turned off: a
+**gamepad mapping** that adds the missing game functions on the free buttons and the **back
+paddles**, without changing WoW Forever's own gamepad UI, **quest items** marked "do not sell", and
+**quest links** in the chat.
+
 ## Two input methods
 
 **Daisywheel**
@@ -48,6 +53,37 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
   disabled in combat, so it cannot cause blocked actions or freezes.
 - **Options panel**: input method, keyboard layout, stick dead zone and response, magnet, 4 window
   sizes, Blizzard fonts, Xbox / PlayStation button icons, suggestion language, and more.
+
+## Modules
+
+**Configuration panel**
+RB + D-pad down (or `/ck config`) opens the addon's own panel, driven with the gamepad or the mouse:
+General (every function can be turned on or off), Keyboard and Gamepad tabs.
+
+**Gamepad mapping**
+The Gamepad tab shows your whole controller in its four trigger layers. The buttons WoW Forever uses stay
+exactly as they are and show what they do; the free ones get the missing functions: L3 / R3, unused
+trigger combinations (LT + Start...) and the back paddles can run a game function (run / walk,
+autorun, game menu, map, bags, any key binding of the game), a spell, an item, a macro, or press a
+button of the gamepad action bar.
+
+**Back paddles (L4 / R4 / L5 / R5)**
+Steam Deck and other controllers: set each paddle to a keyboard key in Steam Input (F13 to F16 for
+example), then "Identify the back paddles" asks for each one in turn. The extra buttons (back
+paddles, L3, R3) are shown around the gamepad action bar, in its own round slot style, with the
+action's icon, count and cooldown, and press down like the game's buttons. Place each one where you
+want among fixed places around the bar's controls, with the D-pad or the mouse, mirrored left / right.
+
+**Quest items**
+An orange "Quest item: do not sell" line in item tooltips, including the items a quest asks to
+collect (cloth, ore, meat...) that the game does not mark, and a warning with a Buyback reminder if
+you sell one anyway.
+
+**Quest links and drafts**
+A "Quests" chip in the channel row lists your quests and inserts their links. Links from Shift+click
+or from the game's own "Share in chat" go into the message. When the game closes the chat (a panel
+opens), your message is kept as a draft: type "LFM", share a quest from the quest log, and the
+keyboard holds "LFM [quest]".
 
 ## Gamepad controls
 
@@ -101,8 +137,11 @@ Install with the CurseForge app, or extract the zip into
 - `/ck lang fr|en|de|es|it|both`: suggestion and accent language
 - `/ck lock`: lock / unlock the position (unlocking shows the keyboard to move it)
 - `/ck scale 1.2`: any size (the options offer 4 presets)
+- `/ck config`: configuration panel (also RB + D-pad down)
+- `/ck map`: gamepad mapping (free buttons, back paddles)
+- `/ck keys`: list the keys the game receives (to set up back paddles)
 - `/ck help`: all commands
-- Options: *Escape > Options > AddOns > Controller Keyboard*
+- Options: RB + D-pad down, `/ck config`, or *Escape > Options > AddOns > Controller Keyboard*
 
 ## Compatibility
 

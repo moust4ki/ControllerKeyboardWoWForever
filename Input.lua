@@ -305,7 +305,7 @@ end
 function CK:UpdateCancelBinding()
     if not self.bindingsActive or self.standalone or InCombatLockdown() then return end
     if self.padDown and self.padDown.PAD2 then return end
-    local want = self:GetText() ~= ""
+    local want = self:GetText() ~= "" or self:InQuestList()
     if want == self.cancelBound then return end
     if want then
         SetOverrideBindingClick(self.frame, true, "PAD2", bindingButtonName("PAD2"))
@@ -335,7 +335,7 @@ function CK:OnCombatEnded()
     local eb = self.reopenAfterCombat
     self.reopenAfterCombat = nil
     if not eb then
-        local active = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()
+        local active = CK.ActiveChatWindow()
         if active and active:HasFocus() then eb = active end
     end
     if eb and eb:HasFocus() and not self:IsOpen() then
