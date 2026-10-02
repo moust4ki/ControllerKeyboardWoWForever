@@ -28,6 +28,7 @@ QuestItems.lua
 QuestLinks.lua
 Paddles.lua
 Mapping.lua
+Vibration.lua
 ConfigWindow.lua
 MapWindow.lua
 Options.lua

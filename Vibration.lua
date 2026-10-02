@@ -1,0 +1,347 @@
+local _, CK = ...
+
+-- Module "vibrations": the controller rumbles on the game events the player
+-- picks. Each event can be turned on or off, with a pattern of its own, and
+-- one intensity for all. Only the two standard motors are used (no trigger
+-- motors): every controller the game drives feels them.
+--
+-- WoW Forever hides some combat values from addons (secret values): the
+-- player's exact health may be one of them in combat. The events that need
+-- it then do nothing, and the Vibrations tab says so.
+local V = {}
+CK.Vibration = V
+
+-- Patterns: steps of { low motor, high motor, seconds }; 0, 0 is a pause
+V.PATTERNS = {
+    { key = "micro", steps = { { 0, 0.35, 0.04 } } },
+    { key = "tick", steps = { { 0, 0.7, 0.07 } } },
+    { key = "double", steps = { { 0, 0.7, 0.07 }, { 0, 0, 0.09 }, { 0, 0.7, 0.07 } } },
+    { key = "pulse", steps = { { 0.8, 0.5, 0.18 } } },
+    { key = "long", steps = { { 0.8, 0.4, 0.6 } } },
+    { key = "heart", steps = { { 0.9, 0, 0.09 }, { 0, 0, 0.12 }, { 0.6, 0, 0.09 } } },
+    { key = "rise", steps = { { 0.3, 0.2, 0.12 }, { 0.6, 0.4, 0.12 }, { 1, 0.6, 0.18 } } },
+}
+local PATTERN = {}
+for i, p in ipairs(V.PATTERNS) do
+    p.index = i
+    PATTERN[p.key] = p
+end
+
+-- The events, by group, with their default state and pattern. "health": needs
+-- the player's health; "needs": shown once that module of ours exists.
+V.GROUPS = { "combat", "social", "progress", "addon" }
+V.EVENTS = {
+    { key = "lowHealth", group = "combat", on = true, pattern = "heart", health = true },
+    { key = "bigHit", group = "combat", on = true, pattern = "pulse", health = true },
+    { key = "death", group = "combat", on = true, pattern = "long" },
+    { key = "interrupted", group = "combat", on = true, pattern = "double" },
+    { key = "lossOfControl", group = "combat", on = true, pattern = "pulse" },
+    { key = "aggro", group = "combat", on = false, pattern = "tick" },
+    { key = "combat", group = "combat", on = false, pattern = "tick" },
+    { key = "proc", group = "combat", on = false, pattern = "tick" },
+    { key = "actionFailed", group = "combat", on = false, pattern = "micro" },
+    { key = "whisper", group = "social", on = true, pattern = "double" },
+    { key = "invite", group = "social", on = true, pattern = "pulse" },
+    { key = "readyCheck", group = "social", on = true, pattern = "pulse" },
+    { key = "rezSummon", group = "social", on = true, pattern = "pulse" },
+    { key = "tradeDuel", group = "social", on = false, pattern = "tick" },
+    { key = "levelUp", group = "progress", on = true, pattern = "rise" },
+    { key = "quest", group = "progress", on = true, pattern = "tick" },
+    { key = "rareLoot", group = "progress", on = false, pattern = "tick" },
+    { key = "bagsFull", group = "progress", on = true, pattern = "double" },
+    { key = "durability", group = "progress", on = false, pattern = "tick" },
+    { key = "lowStock", group = "addon", on = true, pattern = "pulse", needs = "Supplies" },
+    { key = "lowSpace", group = "addon", on = true, pattern = "pulse", needs = "Supplies" },
+    { key = "wheelTick", group = "addon", on = true, pattern = "micro", needs = "ConsumableWheel" },
+    { key = "keyPress", group = "addon", on = false, pattern = "micro" },
+}
+local EVENT = {}
+for _, e in ipairs(V.EVENTS) do EVENT[e.key] = e end
+
+-- settings.vibration = { enabled, intensity, events = { key = { on, pattern } } }
+function V:Settings()
+    local s = CK.db.settings.vibration
+    for _, e in ipairs(V.EVENTS) do
+        local cfg = s.events[e.key]
+        if type(cfg) ~= "table" then
+            cfg = { on = e.on, pattern = e.pattern }
+            s.events[e.key] = cfg
+        end
+        if not PATTERN[cfg.pattern] then cfg.pattern = e.pattern end
+    end
+    return s
+end
+
+-- The events of a group the Vibrations tab lists
+function V:GroupEvents(group)
+    local list = {}
+    for _, e in ipairs(V.EVENTS) do
+        if e.group == group and (not e.needs or CK[e.needs]) then list[#list + 1] = e end
+    end
+    return list
+end
+
+function V:IsUnavailable(key)
+    return EVENT[key] and EVENT[key].health and self.healthHidden or false
+end
+
+function V:NextPattern(key, delta)
+    local p = PATTERN[key] or V.PATTERNS[1]
+    return V.PATTERNS[(p.index - 1 + delta) % #V.PATTERNS + 1].key
+end
+
+---------------------------------------------------------------------------
+-- Playing a pattern
+---------------------------------------------------------------------------
+local timers = {}
+
+local function motors(low, high)
+    C_GamePad.SetVibration("Low", low)
+    C_GamePad.SetVibration("High", high)
+end
+
+local function later(delay, fn)
+    if delay <= 0 then
+        fn()
+    else
+        timers[#timers + 1] = C_Timer.NewTimer(delay, fn)
+    end
+end
+
+function V:Stop()
+    for _, t in ipairs(timers) do t:Cancel() end
+    wipe(timers)
+    if C_GamePad and C_GamePad.StopVibration then C_GamePad.StopVibration() end
+end
+
+-- A pattern at the global intensity (times strength, 0 to 1); the newest
+-- one replaces the one playing
+function V:Play(key, strength)
+    if not (C_GamePad and C_GamePad.SetVibration and CK.db) then return end
+    local pattern = PATTERN[key] or PATTERN.tick
+    local gain = math.max(0, math.min(1, self:Settings().intensity * (strength or 1)))
+    self:Stop()
+    local t = 0
+    for _, step in ipairs(pattern.steps) do
+        local low, high, length = step[1] * gain, step[2] * gain, step[3]
+        -- Sent again every 0.1 s: holds on a client that lets it fade
+        local at = 0
+        repeat
+            later(t + at, function() motors(low, high) end)
+            at = at + 0.1
+        until at >= length
+        t = t + length
+    end
+    later(t, function() C_GamePad.StopVibration() end)
+end
+
+-- An event happened: its pattern, if it is on (the same event at most every
+-- 0.4 s)
+local last = {}
+function V:Fire(key, strength)
+    if not CK.db then return end
+    local s = self:Settings()
+    local cfg = s.events[key]
+    if not (s.enabled and cfg and cfg.on) then return end
+    local now = GetTime()
+    if last[key] and now - last[key] < 0.4 then return end
+    last[key] = now
+    self:Play(cfg.pattern, strength)
+end
+
+---------------------------------------------------------------------------
+-- Health: a heartbeat while low in combat, a pulse on a big hit
+---------------------------------------------------------------------------
+local function secret(v)
+    return issecretvalue ~= nil and issecretvalue(v) or false
+end
+
+function V:ReadHealth()
+    local health, max = UnitHealth("player"), UnitHealthMax("player")
+    if secret(health) or secret(max) then
+        self.healthHidden = true
+        self.healthPct = nil
+    else
+        self.healthPct = max and max > 0 and health / max or nil
+    end
+end
+
+function V:UpdateHeart()
+    local s = self:Settings()
+    local pct = self.healthPct
+    local beating = s.enabled and s.events.lowHealth.on and pct and pct > 0 and pct < 0.35
+        and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")
+    local interval = beating and (pct < 0.2 and 0.7 or 1.2) or nil
+    if interval == self.heartInterval then return end
+    if self.heart then self.heart:Cancel() end
+    self.heart, self.heartInterval = nil, interval
+    if interval then
+        self:Play(s.events.lowHealth.pattern)
+        self.heart = C_Timer.NewTicker(interval, function() V:Play(V:Settings().events.lowHealth.pattern) end)
+    end
+end
+
+function V:OnHit(amount)
+    local max = UnitHealthMax("player")
+    if secret(amount) or secret(max) then
+        self.healthHidden = true
+        return
+    end
+    local share = type(amount) == "number" and max and max > 0 and amount / max or 0
+    if share >= 0.10 then self:Fire("bigHit", math.min(1, 0.5 + share * 2.5)) end
+end
+
+---------------------------------------------------------------------------
+-- Game messages
+---------------------------------------------------------------------------
+-- "You receive loot: %s." -> a pattern that finds the link
+local function lootPattern(text)
+    if type(text) ~= "string" then return nil end
+    -- "%1$s" (some languages) is "%s"
+    text = text:gsub("%%%d%$([sd])", "%%%1")
+    text = text:gsub("([%(%)%.%+%-%*%?%[%]%^%$])", "%%%1")
+    text = text:gsub("%%s", "(.+)")
+    text = text:gsub("%%d", "%%d+")
+    return "^" .. text .. "$"
+end
+
+-- Built on first use, from the game's own messages
+local selfLoot
+local function selfLootPatterns()
+    if not selfLoot then
+        selfLoot = {}
+        for _, name in ipairs({ "LOOT_ITEM_SELF", "LOOT_ITEM_SELF_MULTIPLE", "LOOT_ITEM_PUSHED_SELF",
+            "LOOT_ITEM_PUSHED_SELF_MULTIPLE" }) do
+            selfLoot[#selfLoot + 1] = lootPattern(_G[name])
+        end
+    end
+    return selfLoot
+end
+
+local function selfLootQuality(text)
+    if type(text) ~= "string" or secret(text) then return nil end
+    for _, pattern in ipairs(selfLootPatterns()) do
+        local link = text:match(pattern)
+        if link then
+            local item = link:match("|H(item:[^|]+)|h")
+            local get = C_Item and C_Item.GetItemInfo or GetItemInfo
+            return item and get and select(3, get(item))
+        end
+    end
+end
+
+local questDone
+local function questProgress(message)
+    if type(message) ~= "string" or secret(message) then return false end
+    questDone = questDone or lootPattern(ERR_QUEST_COMPLETE_S) or false
+    if questDone and message:match(questDone) then return true end
+    -- "Gnoll Paw: 8/8": an objective done
+    local have, need = message:match("(%d+)%s*/%s*(%d+)")
+    return have ~= nil and have == need and tonumber(need) > 0
+end
+
+local function durabilityLow()
+    for slot = 1, 19 do
+        local current, max = GetInventoryItemDurability(slot)
+        if current and max and max > 0 and current / max <= 0.2 then return true end
+    end
+    return false
+end
+
+---------------------------------------------------------------------------
+-- Events
+---------------------------------------------------------------------------
+local HANDLERS = {
+    PLAYER_DEAD = function() V:Fire("death") V:UpdateHeart() end,
+    UNIT_HEALTH = function(unit)
+        if unit ~= "player" then return end
+        V:ReadHealth()
+        V:UpdateHeart()
+    end,
+    UNIT_COMBAT = function(unit, action, _, amount)
+        if unit == "player" and action == "WOUND" then V:OnHit(amount) end
+    end,
+    UNIT_SPELLCAST_INTERRUPTED = function(unit, _, _, interruptedBy)
+        -- Interrupted by someone (moving also cancels a cast: no interrupter)
+        if unit == "player" and interruptedBy ~= nil then V:Fire("interrupted") end
+    end,
+    LOSS_OF_CONTROL_ADDED = function(unit)
+        if unit == nil or unit == "player" then V:Fire("lossOfControl") end
+    end,
+    UNIT_THREAT_SITUATION_UPDATE = function(unit)
+        if unit ~= "player" then return end
+        local status = UnitThreatSituation("player")
+        if secret(status) then return end
+        if status and status >= 2 and (V.threat or 0) < 2 then V:Fire("aggro") end
+        V.threat = status
+    end,
+    PLAYER_REGEN_DISABLED = function()
+        V:Fire("combat")
+        V:ReadHealth()
+        V:UpdateHeart()
+    end,
+    PLAYER_REGEN_ENABLED = function() V:UpdateHeart() end,
+    SPELL_ACTIVATION_OVERLAY_SHOW = function() V:Fire("proc") end,
+    UI_ERROR_MESSAGE = function(_, message)
+        if message == ERR_INV_FULL or message == ERR_BAG_FULL then
+            V:Fire("bagsFull")
+        else
+            V:Fire("actionFailed")
+        end
+    end,
+    CHAT_MSG_WHISPER = function() V:Fire("whisper") end,
+    CHAT_MSG_BN_WHISPER = function() V:Fire("whisper") end,
+    PARTY_INVITE_REQUEST = function() V:Fire("invite") end,
+    READY_CHECK = function(initiator)
+        if initiator ~= UnitName("player") then V:Fire("readyCheck") end
+    end,
+    RESURRECT_REQUEST = function() V:Fire("rezSummon") end,
+    CONFIRM_SUMMON = function() V:Fire("rezSummon") end,
+    TRADE_REQUEST = function() V:Fire("tradeDuel") end,
+    DUEL_REQUESTED = function() V:Fire("tradeDuel") end,
+    PLAYER_LEVEL_UP = function() V:Fire("levelUp") end,
+    UI_INFO_MESSAGE = function(_, message)
+        if questProgress(message) then V:Fire("quest") end
+    end,
+    CHAT_MSG_LOOT = function(text)
+        local quality = selfLootQuality(text)
+        if quality and quality >= 3 then V:Fire("rareLoot") end
+    end,
+    UPDATE_INVENTORY_DURABILITY = function()
+        local low = durabilityLow()
+        if low and not V.durabilityWasLow then V:Fire("durability") end
+        V.durabilityWasLow = low
+    end,
+}
+
+-- /ec vibe [pattern]: what this client allows, then a pattern
+function V:Diagnose(key)
+    local L = CK.L
+    local api = C_GamePad and C_GamePad.SetVibration ~= nil
+    local device = C_GamePad and C_GamePad.GetActiveDeviceID and C_GamePad.GetActiveDeviceID()
+    self:ReadHealth()
+    local health = self.healthHidden and L.VIB_DIAG_HIDDEN
+        or (self.healthPct and format("%d %%", self.healthPct * 100 + 0.5) or "?")
+    CK:Print(L.VIB_DIAG, tostring(api), tostring(device), health, tostring(self:Settings().enabled))
+    local names = {}
+    for _, p in ipairs(V.PATTERNS) do names[#names + 1] = p.key end
+    key = key and key ~= "" and key or "pulse"
+    if not PATTERN[key] then
+        CK:Print(L.VIB_DIAG_PATTERNS, table.concat(names, ", "))
+        return
+    end
+    self:Play(key)
+end
+
+function V:Init()
+    self:Settings()
+    local f = CreateFrame("Frame")
+    for event in pairs(HANDLERS) do pcall(f.RegisterEvent, f, event) end
+    f:SetScript("OnEvent", function(_, event, ...) HANDLERS[event](...) end)
+    -- The chat keyboard: a key typed
+    for _, name in ipairs({ "TypeChar", "Space", "Backspace" }) do
+        hooksecurefunc(CK, name, function() V:Fire("keyPress") end)
+    end
+    self.durabilityWasLow = durabilityLow()
+    self:ReadHealth()
+end

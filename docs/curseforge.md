@@ -11,6 +11,8 @@ without changing it:
   missing game functions (run / walk, game menu, map...) on the free buttons and the **back paddles**
   (Steam Deck, Elite, Edge...).
 - **Quests**: the items your quests ask for (meat, cloth...) get an orange quest border in your bags and a "do not sell" line naming the quest, quest links in the chat.
+- **Vibrations**: the controller vibrates on the events you pick (low health, interrupted, whisper,
+  invite, level up, bags full...), each with its own pattern.
 
 Everything is driven with the gamepad (RB + D-pad down opens the configuration), every function can
 be turned off, and the look matches WoW Forever's gamepad UI.
@@ -64,7 +66,14 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
 
 **Configuration panel**
 RB + D-pad down (or `/ec config`) opens the addon's own panel, driven with the gamepad or the mouse:
-General (every function can be turned on or off), Keyboard and Gamepad tabs.
+General (every function can be turned on or off), Keyboard, Gamepad and Vibrations tabs.
+
+**Vibrations**
+The controller vibrates on the game events you choose: combat (low health heartbeat, big hit, death,
+interrupted, loss of control, aggro...), social (whisper, invite, ready check, resurrection...) and
+progress (level up, quest objective, rare loot, bags full...). Each event has its own switch and its
+own pattern (tick, double tick, pulse, heartbeat, crescendo...), with one intensity for all. Any
+controller the game drives vibrates.
 
 **Gamepad mapping**
 The Gamepad tab shows your whole controller in its four trigger layers. The buttons WoW Forever uses stay

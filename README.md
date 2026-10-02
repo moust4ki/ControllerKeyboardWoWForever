@@ -145,6 +145,7 @@ tabs, D-pad: move and change values, A: choose, B: close) or the mouse.
   gamepad mapping, extra buttons on screen, RB + D-pad down), button icons and font.
 - **Keyboard**: size, position, input method, layout, sticks, prediction.
 - **Gamepad**: the mapping below.
+- **Vibrations**: the controller vibrations below.
 
 ## Gamepad mapping
 
@@ -192,6 +193,23 @@ two below): the D-pad chooses the bar or a button (LB / RB too), A picks it up, 
 (a button goes from place to place, onto a taken place the two buttons swap), A puts it down and B puts
 it back; the mouse clicks a button then a place; the right side mirrors the left (Y turns it
 off), X puts a button back. Places follow the compact layout.
+
+## Vibrations
+
+The controller vibrates on the game events you choose (Vibrations tab): one switch and one intensity
+for all, then each event with its own box and its own pattern (micro tick, tick, double tick, pulse,
+long, heartbeat, crescendo); Y or the Test button plays it.
+
+- **Combat**: low health (a heartbeat, faster below 20 %), big hit taken, death, your spell
+  interrupted (by someone, not by moving), loss of control, aggro, entering combat, spell proc,
+  action impossible.
+- **Social**: whisper, group or raid invite, ready check, resurrection or summon, trade or duel.
+- **Progress**: level up, quest objective or quest complete, rare loot, bags full, gear almost broken.
+- **Easy Controller**: a key typed on the chat keyboard.
+
+Only the two standard motors are used, so any controller the game drives vibrates. WoW Forever may
+hide your exact health from addons in combat: low health and big hit then cannot work, and the tab
+says so. `/ec vibe [pattern]` tells what the client allows and plays a pattern.
 
 ## Quest items
 
@@ -251,6 +269,7 @@ In the configuration panel (RB + D-pad down, `/ec config`):
 | `/ec config` | configuration panel (also RB + D-pad down) |
 | `/ec map` | gamepad mapping (free buttons, back paddles) |
 | `/ec keys` | list the keys and buttons the game receives (back paddles) |
+| `/ec vibe [pattern]` | test the controller vibration |
 | `/ec glyphs` | list the game's gamepad button icons |
 | `/ec debug` | print received buttons and sticks |
 

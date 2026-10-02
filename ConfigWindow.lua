@@ -12,7 +12,7 @@ CK.Config = C
 local WIDTH, HEIGHT = 820, 580
 local kit
 
-C.TABS = { "general", "keyboard", "gamepad" }
+C.TABS = { "general", "keyboard", "gamepad", "vibration" }
 C.pages = {}
 
 function C:IsOpen()
@@ -24,7 +24,9 @@ function C:Page()
 end
 
 ---------------------------------------------------------------------------
--- Option lists (General, Keyboard): rows from Options.lua
+-- Option lists (General, Keyboard...): rows from Options.lua. Kinds:
+-- header, info, check, choice (< value >), button, toggle (a check with a
+-- choice, and an optional test: Y or its button)
 ---------------------------------------------------------------------------
 local ListPage = {}
 ListPage.__index = ListPage
@@ -70,6 +72,12 @@ function ListPage:Build(parent)
         r.next = kit.buildButton(r, ">", function() page:Step(r.index, 1) end)
         r.next:SetSize(24, 20)
         r.next:SetPoint("LEFT", r.value, "RIGHT", 6, 0)
+        r.test = kit.buildButton(r, L.CFG_TEST, function()
+            local row = r.index and page.list[r.index]
+            if row and row.test then row.test() end
+        end)
+        r.test:SetSize(78, 20)
+        r.test:SetPoint("RIGHT", r.prev, "LEFT", -14, 0)
         r:SetScript("OnClick", function(self, button)
             if self.index then
                 page.index = self.index
@@ -133,7 +141,7 @@ end
 
 function ListPage:Step(index, delta)
     local row = self.list[index]
-    if row and row.kind == "choice" then
+    if row and (row.kind == "choice" or row.kind == "toggle") then
         row.step(delta)
         self.list = self.rows()
         C:Render()
@@ -143,7 +151,7 @@ end
 function ListPage:Activate()
     local row = self.list[self.index or 0]
     if not row then return end
-    if row.kind == "check" then
+    if row.kind == "check" or row.kind == "toggle" then
         row.set(not row.get())
     elseif row.kind == "choice" then
         row.step(1)
@@ -165,14 +173,15 @@ function ListPage:Render()
         if row then
             local indent = row.indent and 30 or 0
             local enabled = not row.disabled or not row.disabled()
+            local boxed = row.kind == "check" or row.kind == "toggle"
             r.select:SetShown(index == self.index)
-            r.box:SetShown(row.kind == "check")
-            r.tick:SetShown(row.kind == "check" and row.get() and true or false)
+            r.box:SetShown(boxed)
+            r.tick:SetShown(boxed and row.get() and true or false)
             r.box:ClearAllPoints()
             r.box:SetPoint("LEFT", 8 + indent, 0)
             r.label:ClearAllPoints()
-            r.label:SetPoint("LEFT", (row.kind == "check" and 36 or 10) + indent, 0)
-            r.label:SetPoint("RIGHT", row.kind == "choice" and -300 or -10, 0)
+            r.label:SetPoint("LEFT", (boxed and 36 or 10) + indent, 0)
+            r.label:SetPoint("RIGHT", (row.kind == "toggle" and -400) or (row.kind == "choice" and -300) or -10, 0)
             r.label:SetText(row.kind == "button" and ("|cffffd100" .. row.text .. "|r") or row.text)
             if row.kind == "header" then
                 r.label:SetTextColor(unpack(kit.C.gold))
@@ -182,11 +191,19 @@ function ListPage:Render()
             else
                 r.label:SetTextColor(unpack(enabled and kit.C.btn or { 0.5, 0.48, 0.42 }))
             end
-            local choice = row.kind == "choice"
+            local choice = row.kind == "choice" or row.kind == "toggle"
             r.value:SetShown(choice)
             r.prev:SetShown(choice)
             r.next:SetShown(choice)
-            if choice then r.value:SetText(row.get()) end
+            r.test:SetShown(row.test ~= nil)
+            if row.kind == "toggle" then
+                -- Its value is greyed while the box is off
+                r.value:SetText(row.value())
+                r.value:SetTextColor(unpack(row.get() and kit.C.btn or { 0.5, 0.48, 0.42 }))
+            elseif choice then
+                r.value:SetText(row.get())
+                r.value:SetTextColor(unpack(kit.C.btn))
+            end
         end
     end
 end
@@ -198,6 +215,8 @@ function ListPage:Press(name)
         self:Step(self.index, name == "LEFT" and -1 or 1)
     elseif name == "A" then
         self:Activate()
+    elseif name == "Y" and self.list[self.index or 0] and self.list[self.index].test then
+        self.list[self.index].test()
     else
         return false
     end
@@ -205,10 +224,15 @@ function ListPage:Press(name)
 end
 
 function ListPage:Help(g)
-    return {
+    local help = {
         g("DPAD_UP") .. " " .. L.MAP_P_MOVE, g("DPAD_LEFT") .. " " .. L.CFG_P_CHANGE,
-        g("A") .. " " .. L.MAP_P_CHOOSE, g("LB") .. g("RB") .. " " .. L.MAP_P_TAB, g("B") .. " " .. L.MAP_P_CLOSE,
+        g("A") .. " " .. L.MAP_P_CHOOSE,
     }
+    local row = self.list and self.list[self.index or 0]
+    if row and row.test then help[#help + 1] = g("Y") .. " " .. L.CFG_TEST end
+    help[#help + 1] = g("LB") .. g("RB") .. " " .. L.MAP_P_TAB
+    help[#help + 1] = g("B") .. " " .. L.MAP_P_CLOSE
+    return help
 end
 
 ---------------------------------------------------------------------------
@@ -252,21 +276,24 @@ function C:Build()
     title:SetTextColor(unpack(kit.C.gold))
     title:SetText("Easy Controller")
 
+    -- The tabs share the room between the title and the close button
     f.tabs = {}
+    local left, right = 214, WIDTH - 70
+    local step = math.floor((right - left) / #C.TABS)
     local lb = f:CreateTexture(nil, "OVERLAY")
     lb:SetSize(22, 22)
-    lb:SetPoint("TOPLEFT", 214, -12)
+    lb:SetPoint("TOPRIGHT", f, "TOPLEFT", left - 4, -12)
     f.lbGlyph = lb
     for i, key in ipairs(C.TABS) do
         local t = kit.buildButton(f, L["CFG_TAB_" .. key:upper()], function() C:SetTab(key) end)
-        t:SetSize(130, 26)
-        t:SetPoint("TOPLEFT", 240 + (i - 1) * 136, -10)
+        t:SetSize(step - 6, 26)
+        t:SetPoint("TOPLEFT", left + (i - 1) * step, -10)
         t.key = key
         f.tabs[i] = t
     end
     local rb = f:CreateTexture(nil, "OVERLAY")
     rb:SetSize(22, 22)
-    rb:SetPoint("TOPLEFT", 240 + #C.TABS * 136, -12)
+    rb:SetPoint("TOPLEFT", left + #C.TABS * step - 2, -12)
     f.rbGlyph = rb
     local close = kit.buildButton(f, "X", function() C:Close() end)
     close:SetSize(26, 24)

@@ -211,6 +211,8 @@ local function slash(msg)
         CK:DetectKeys()
     elseif cmd == "glyphs" then
         CK:ListGlyphAtlases()
+    elseif cmd == "vibe" then
+        CK.Vibration:Diagnose(arg)
     elseif cmd == "debug" then
         s.debug = not s.debug
         CK.seenSticks = nil
@@ -261,6 +263,7 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
         safe(function() CK.Mapping:Init() end)
         safe(function() CK.Paddles:Init() end)
         safe(function() CK.Config:Init() end)
+        safe(function() CK.Vibration:Init() end)
         -- Build the frames now, never while the chat is open (see Input.lua)
         if InCombatLockdown() then CK.buildPending = true else CK:BuildUI() end
         CK:RegisterOptions()

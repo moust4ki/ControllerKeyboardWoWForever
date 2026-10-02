@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0
+
+- **Vibrations.** The controller vibrates on the game events you choose, in a new Vibrations tab:
+  one switch and one intensity, then each event with its own box and pattern (micro tick, tick,
+  double tick, pulse, long, heartbeat, crescendo), tested with Y. Combat (low health heartbeat, big
+  hit, death, interrupted, loss of control, aggro, entering combat, proc, action impossible), social
+  (whisper, invite, ready check, resurrection or summon, trade or duel), progress (level up, quest
+  objective, rare loot, bags full, gear almost broken) and the chat keyboard's keys. `/ec vibe` tests
+  it.
+- The configuration panel's tabs share the room, for the new ones.
+- The addon list shows Easy Controller's icon.
+
 ## 1.1.1
 
 - Mapping window: the gamepad bar slots that hold a flyout (hunter aspects, tracking, pets) or

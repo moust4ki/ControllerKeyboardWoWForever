@@ -64,6 +64,11 @@ local function list()
     function b.button(text, func, indent)
         rows[#rows + 1] = { kind = "button", text = text, func = func, indent = indent }
     end
+    -- A box with a choice beside it, and a test (Y)
+    function b.toggle(text, get, set, value, step, test, tip)
+        rows[#rows + 1] = { kind = "toggle", text = text, get = get, set = set, value = value, step = step,
+            test = test, tip = tip }
+    end
     return rows, b
 end
 
@@ -259,8 +264,56 @@ local function keyboardRows()
     return rows
 end
 
+-- Vibrations: one switch and intensity, then each event with its pattern
+local function vibrationRows()
+    local V = CK.Vibration
+    local s = V:Settings()
+    local rows, b = list()
+
+    b.header(L.CFG_TAB_VIBRATION)
+    b.check(L.VIB_ENABLE, function() return s.enabled end, function(v)
+        s.enabled = v
+        if v then V:Play("pulse") else V:Stop() end
+        V:UpdateHeart()
+    end)
+    if not s.enabled then
+        b.info(L.VIB_OFF_INFO)
+        return rows
+    end
+    b.choice(L.VIB_INTENSITY, function() return format("%d %%", s.intensity * 100 + 0.5) end, function(d)
+        s.intensity = math.min(1, math.max(0.2, math.floor((s.intensity + d * 0.1) * 10 + 0.5) / 10))
+        V:Play("pulse")
+    end, true)
+    b.info(L.VIB_INFO)
+    for _, group in ipairs(V.GROUPS) do
+        local events = V:GroupEvents(group)
+        if #events > 0 then
+            b.header(L["VIB_H_" .. group:upper()])
+            for _, e in ipairs(events) do
+                local cfg = s.events[e.key]
+                local text = L["VIB_E_" .. e.key:upper()]
+                local tip
+                if V:IsUnavailable(e.key) then
+                    text = text .. " |cff9d9a8c(" .. L.VIB_UNAVAILABLE .. ")|r"
+                    tip = L.VIB_UNAVAILABLE_TIP
+                end
+                b.toggle(text, function() return cfg.on end, function(v)
+                    cfg.on = v
+                    if v then V:Play(cfg.pattern) end
+                    if e.key == "lowHealth" then V:UpdateHeart() end
+                end, function() return L["VIB_P_" .. cfg.pattern:upper()] end, function(d)
+                    cfg.pattern = V:NextPattern(cfg.pattern, d)
+                    V:Play(cfg.pattern)
+                end, function() V:Play(cfg.pattern) end, tip)
+            end
+        end
+    end
+    return rows
+end
+
 CK.Config.pages.general = CK.Config.NewListPage(generalRows)
 CK.Config.pages.keyboard = CK.Config.NewListPage(keyboardRows)
+CK.Config.pages.vibration = CK.Config.NewListPage(vibrationRows)
 
 ---------------------------------------------------------------------------
 -- The game's settings panel (Escape > Options > AddOns > Controller
