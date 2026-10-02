@@ -710,10 +710,17 @@ end
 local owner
 local takeOwner         -- the game's buttons replaced: priority bindings
 
--- Every key set on an owner taken away, one by one (a binding to one of the
--- game's gamepad commands may outlive ClearOverrideBindings), then the rest
+-- Every key set on an owner taken away, then the owner cleared. A binding
+-- to one of the game's gamepad commands (ping, Start menu...) outlives
+-- both ClearOverrideBindings and a nil binding, but not another binding of
+-- the key: each key first goes to a button that does nothing.
+local noop
 local function unbindAll(o, record, priority)
-    for combo in pairs(record) do SetOverrideBinding(o, priority, combo, nil) end
+    noop = noop or CK.NewFrame("Button", "ControllerKeyboardNoopButton")
+    for combo in pairs(record) do
+        SetOverrideBindingClick(o, priority, combo, noop:GetName(), "LeftButton")
+        SetOverrideBinding(o, priority, combo, nil)
+    end
     ClearOverrideBindings(o)
     wipe(record)
 end
@@ -1014,18 +1021,27 @@ function M:UpdateMarks()
             mark.bg:SetPoint("BOTTOMRIGHT", -3, 3)
             mark.bg:SetColorTexture(0.04, 0.04, 0.04, 1)
             mark.icon = mark:CreateTexture(nil, "OVERLAY")
-            mark.icon:SetPoint("TOPLEFT", 6, -6)
-            mark.icon:SetPoint("BOTTOMRIGHT", -6, 6)
-            for _, tex in ipairs({ mark.bg, mark.icon }) do
+            -- The round the picture shows through
+            local round = { mark.bg, CK.NewFrame("Frame", nil, mark) }
+            round[2]:SetPoint("TOPLEFT", 6, -6)
+            round[2]:SetPoint("BOTTOMRIGHT", -6, 6)
+            for i, tex in ipairs({ mark.bg, mark.icon }) do
                 local mask = mark:CreateMaskTexture()
                 mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-                mask:SetAllPoints(tex)
+                mask:SetAllPoints(round[i])
                 tex:AddMaskTexture(mask)
             end
             marks[native] = mark
         end
         mark:SetFrameLevel(native:GetFrameLevel() + 3)
-        CK.Paddles.SetIcon(mark.icon, self:ActionIcon(action))
+        local icon = self:ActionIcon(action)
+        -- The game's own pictures (jump, ping...) come with their ring:
+        -- larger than the round, it stays outside
+        local zoom = type(icon) == "table" and icon.atlas and -2 or 6
+        mark.icon:ClearAllPoints()
+        mark.icon:SetPoint("TOPLEFT", zoom, -zoom)
+        mark.icon:SetPoint("BOTTOMRIGHT", -zoom, zoom)
+        CK.Paddles.SetIcon(mark.icon, icon)
         mark:Show()
     end
 end
@@ -1057,6 +1073,10 @@ function M:BindingTest()
     SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("6 set TOGGLEPINGSYSTEM")
     SetOverrideBinding(f, true, key, nil) show("7 set nil")
     ClearOverrideBindings(f) show("8 ClearOverrideBindings")
+    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("9 set TOGGLEPINGSYSTEM")
+    SetOverrideBindingClick(f, true, key, "ControllerKeyboardNoopButton", "LeftButton") show("10 set a click")
+    SetOverrideBinding(f, true, key, nil) show("11 set nil")
+    ClearOverrideBindings(f) show("12 ClearOverrideBindings")
     self.applying = false
 end
 
