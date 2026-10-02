@@ -60,7 +60,8 @@ A new Alerts › Inventory section.
     "better" in WoW Forever: its equipment flyout leaves it empty.
   - "Better": a higher item level for the same slot (rings, trinkets and one-hand weapons against the
     weaker of the two), only for what the character can wear (armor type, weapons, level, class).
-    Chosen: the item level, and the class's armor type (or the type already worn in that slot).
+    Chosen: a score from the item's stats weighed for the class (and a hybrid's talent tree), the
+    class's armor type (or the type already worn in that slot); the item level when no stats.
 
 ## Set aside
 

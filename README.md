@@ -306,11 +306,16 @@ off, selecting one at a merchant warns too.
 ## Better items
 
 A green arrow at the bottom right of a bag item that would be better than what you wear in its slot
-(Alerts › Inventory): a higher item level, an item you can use (nothing in red in its tooltip: armor
-type, weapon skill, level, class), of your class's armor type or of the type you already wear there
-(no cloth arrow for a warrior; plate from level 40 for warriors and paladins, mail for hunters and
-shamans). Rings, trinkets and one-hand weapons (when you can dual wield) are compared with the weaker
-of the two you wear; an empty slot takes anything.
+(Alerts › Inventory). Items are compared by their stats, weighed for your class: a weapon's damage
+per second first, then strength, agility, stamina, intellect, spirit, attack and spell power, armor,
+each with its weight (a hybrid's by the talent tree with the most points: a holy paladin weighs
+intellect and healing, a protection one stamina and armor). The side panel shows your weights. Only
+for what you can use (nothing in red in its tooltip: armor type, weapon skill, level, class), of
+your class's armor type or of the type you already wear there (no cloth arrow for a warrior; plate
+from level 40 for warriors and paladins, mail for hunters and shamans). Rings, trinkets and one-hand
+weapons (when you can dual wield) are compared with the weaker of the two you wear, a two-hand weapon
+with both hands, and with a two-hand weapon worn a one-hand weapon has to beat it whole. A client
+that gives no stats compares the item levels.
 
 ## At merchants
 

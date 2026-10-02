@@ -79,7 +79,8 @@ local function moduleRows(b)
         get = function() return mods.questItems end,
         set = function(v) mods.questItems = v end,
         onY = function() Config:SetTab("alerts", 3) end, yVerb = L.V_SETTINGS })
-    b.check({ id = "m_up", label = L.LBL_UPGRADES, status = L.STATUS_ITEM_LEVEL, tip = L.TIP_UPGRADES,
+    b.check({ id = "m_up", label = L.LBL_UPGRADES, status = L.STATUS_CLASS_STATS, tip = L.TIP_UPGRADES,
+        extra = function() return CK.Upgrades:ScaleText() end,
         get = function() return mods.upgrades end,
         set = function(v)
             mods.upgrades = v
@@ -541,7 +542,8 @@ end
 local function inventoryRows(b)
     local mods = settings().modules
     b.header(L.SEC_INVENTORY)
-    b.check({ id = "i_up", label = L.LBL_UPGRADES, status = L.STATUS_ITEM_LEVEL, tip = L.TIP_UPGRADES,
+    b.check({ id = "i_up", label = L.LBL_UPGRADES, status = L.STATUS_CLASS_STATS, tip = L.TIP_UPGRADES,
+        extra = function() return CK.Upgrades:ScaleText() end,
         get = function() return mods.upgrades end,
         set = function(v)
             mods.upgrades = v
