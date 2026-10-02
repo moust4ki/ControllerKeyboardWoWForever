@@ -10,13 +10,14 @@ without changing it:
 - **Gamepad mapping**: your whole controller in one window; fill the gamepad bar's slots, and put the
   missing game functions (run / walk, game menu, map...) on the free buttons and the **back paddles**
   (Steam Deck, Elite, Edge...).
-- **Quests**: the items your quests ask for (meat, cloth...) get an orange quest border in your bags and a "do not sell" line naming the quest, quest links in the chat.
+- **Quests**: the items your quests ask for (meat, cloth...) get an orange quest border in your
+  bags and a "do not sell" line naming the quest; quest links in the chat.
 - **Vibrations**: the controller vibrates on the events you pick (interrupted, whisper, invite,
   level up, bags full...), each with its own pattern.
 - **Supplies**: a button per resource (bag space, ammo, soul shards, reagents, any item) that glows
   when you run low.
 - **Consumables wheel**: one key opens a wheel of your food, drinks, potions, healthstone, bandages,
-  elixirs...; aim with the right stick, A uses. Works in combat.
+  elixirs...; point with the left stick, A uses. Works in combat.
 
 Everything is driven with the gamepad (RB + D-pad down opens the configuration), every function can
 be turned off, and the look matches WoW Forever's gamepad UI.
@@ -75,9 +76,11 @@ tabs.
 
 **Consumables wheel**
 A key of its own (any free button, or a back paddle in any trigger layer) opens a wheel drawn like
-the game's own radial menu, 8 consumables a page (LB / RB for more), from your bags: food, drink, healing and mana potions, healthstone, mana gem, bandages,
-buff food, elixirs and flasks, scrolls, the best first. The right stick aims (or the D-pad), A uses,
-B closes, the mouse works too. It works in combat (food and drink greyed there).
+the game's own radial menu, 8 consumables a page (LB / RB for more), from your bags: food, drink,
+healing and mana potions, healthstone, mana gem, bandages, buff food, elixirs and flasks, scrolls,
+the best first. Point with the left stick and press A to use; B cancels; the mouse works too. While
+it is open, and until you let the stick go, your character doesn't move, so eating isn't cut short.
+It works in combat (food and drink greyed there).
 
 **Supplies**
 A round button per resource: free bag slots, your ammunition, your class reagents (soul shards,
@@ -174,6 +177,8 @@ Install with the CurseForge app, or extract the zip into
 - `/ec config`: configuration panel (also RB + D-pad down)
 - `/ec map`: gamepad mapping (free buttons, back paddles)
 - `/ec keys`: list the keys the game receives (to set up back paddles)
+- `/ec vibe [pattern]`: test the controller vibration
+- `/ec wheel`: what the consumables wheel holds, and why an item is not in it
 - `/ec help`: all commands
 - Options: RB + D-pad down, `/ec config`, or *Escape > Options > AddOns > Easy Controller - Forever*
 
@@ -182,7 +187,8 @@ Install with the CurseForge app, or extract the zip into
 Made for **WoW Forever** and its gamepad UI. The keyboard is disabled in combat (the game blocks too
 many actions there) and comes back by itself after combat if the chat is still open.
 
-Source code and issues: [GitHub](https://github.com/moust4ki/EasyControllerWowForever)
+Source code and issues: [GitHub](https://github.com/moust4ki/EasyControllerWowForever) - Roadmap:
+[ROADMAP.md](https://github.com/moust4ki/EasyControllerWowForever/blob/main/ROADMAP.md)
 
 *Dictionaries derived from FrequencyWords by Hermit Dave (CC-BY-SA-4.0). Code under the MIT license.*
 

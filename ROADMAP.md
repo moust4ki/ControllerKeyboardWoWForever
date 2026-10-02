@@ -1,54 +1,36 @@
 # Roadmap
 
 Everything planned for Easy Controller - Forever, so nothing gets lost. Each feature is built, tested
-in game, then released on GitHub and CurseForge. Done items move to the [CHANGELOG](CHANGELOG.md).
+in game, then released on GitHub and CurseForge. Done items move to the [CHANGELOG](CHANGELOG.md)
+(1.2.0: vibrations, supplies, consumables wheel).
 
-## 1.2.0: vibrations, supplies, consumables wheel (built, testing in game)
+## 1.3.0: the game's own gamepad functions, on any button
 
-- [x] **Vibrations** tab: one switch and one intensity, then each event with its box and its pattern
-  (Off or micro tick, tick, double tick, pulse, long, heartbeat, crescendo). The D-pad picks the
-  pattern, A tests it, X turns it on or off.
-  - 23 events: combat, social, progress, Easy Controller (low supplies, little room, wheel ticks,
-    chat keyboard keys).
-  - [ ] In-game check: `/ec vibe`, how the patterns feel (length, strength).
-  - [ ] **Low health** and **big hit**: WoW Forever hides the player's health from addons in
-    combat. Look for another signal (the game's own low health warning), or remove them.
-- [x] **Supplies** tab: one round button per resource (free bag slots, equipped ammunition, class
-  reagents, any item added from the bags), its count, and a glow under its low threshold, stronger
-  and redder down to the critical one. Each resource on or off, thresholds set with the D-pad. The
-  bar is placed freely (mouse drag while unlocked, or the D-pad), growing in 4 directions, 3 sizes;
-  a click opens the bags. Low supplies and little room vibrate.
-  - [ ] In-game check: detection (reagent item IDs of WoW Forever), the glow, the placement.
-- [x] **Consumables wheel** (Wheel tab): a key of its own (Gamepad tab, Items list, any free button
-  or back paddle in any layer; or the game's key bindings) opens a wheel drawn with the game's radial
-  menu art, 8 consumables a page (LB / RB, up to 3 pages):
-  food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
-  elixirs and flasks, scrolls; the best of each kind first, the variants after (an option). The
-  a stick chooses (the choice stays when it is let go), A uses, B cancels; the D-pad and the
-  mouse too; the sticks are taken while open
-  (camera and character still). Secure: works in combat
-  (food and drink greyed there); its content changes out of combat only. "Wheel ticks" vibrate.
-  - [ ] In-game check: a stick to choose and A, in and out of combat; the choice kept when the
-    stick is let go; the sticks taken while open; the kinds found in the bags.
+How WoW Forever does it: jump, back (stop casting / targeting, clear the target), interact and
+inspect are the four fixed buttons of the gamepad bar's top layer (A, B, X, Y alone), with their
+function built in; the Start menu, interface focus, ping, ally / enemy targeting and the left /
+right bars are the game's own key bindings, which it sets again whenever one of its gamepad windows
+closes.
 
-- [x] The addon list shows the addon's icon.
-- [ ] Release 1.2.0.
-
-## 1.3.0: remap the game's own buttons
-
-- Remap the buttons WoW Forever uses itself (jump, interact, back / cancel, inspect, targeting,
-  Start and Select menus...): give their functions to other buttons, and other functions to them.
-- To investigate first: how Forever binds them (its input binding manager, priority overrides,
-  the GamepadModeInGameCore binding context), whether an addon can change them without tainting or
-  breaking the native gamepad UI, and a way back to the game's own layout.
+- [ ] **Move a game function to another button** (a back paddle, L3, a free combination...): the
+  Gamepad tab's Game list gets a "gamepad functions" section. The four fixed ones press the game's
+  own button (its behaviour exactly: the smart interact, jump and sit...); the others are the
+  game's own bindings.
+- [ ] **Put something else on a button the game uses** (A, B, X, Y alone, LB / RB, Start, Select,
+  L3 / R3): only with a priority binding of ours over the game's, taken away while one of its
+  gamepad windows has the focus (so its menus keep A / B), and set again when it closes. Limit: in
+  combat bindings can't change, so a window opened in combat gives the button back to the game
+  until the fight ends. To decide together before building it.
 
 ## To decide
 
+- **Vibrations, low health and big hit**: WoW Forever hides the player's health from addons in
+  combat. Look for another signal (the game's own low health warning), or remove them.
 - **Chat keyboard, writing in the chat box**: let the game send the message natively when the text
   is unchanged; never bring back text already sent or erased.
 
 ## By hand on CurseForge (no API for these)
 
-- [ ] Rename the project to "Easy Controller - Forever".
+- [x] Rename the project to "Easy Controller - Forever".
 - [ ] Paste [docs/curseforge.md](docs/curseforge.md) as the description, the one-line summary, and
   [docs/icon.png](docs/icon.png) as the logo.

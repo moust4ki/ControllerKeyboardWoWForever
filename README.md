@@ -2,7 +2,7 @@
 
 # Easy Controller - Forever
 
-*Formerly Controller Keyboard.*
+*Formerly Controller Keyboard.* Download: [CurseForge](https://www.curseforge.com/wow/addons/easy-controller-forever)
 
 **WoW Forever's gamepad play, made easy**, without changing the game's own gamepad UI: a **chat
 keyboard** with word prediction, a **gamepad mapping** (the gamepad bar's slots, game functions on
