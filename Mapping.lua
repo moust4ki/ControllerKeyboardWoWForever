@@ -396,7 +396,18 @@ function M:ReplacedActive(input, layer)
     return self:GetReplaced(input.id, layer) ~= nil and self:OwnKeys() and self:Replaceable(input, layer)
 end
 
+-- What the game itself runs on an input: its bar button, else its binding
+function M:NativeAction(input, layer)
+    if input.bar then return "bar:" .. M.LAYER_BAR[layer] .. ":" .. input.bar end
+    local combo = self:Combo(input, layer)
+    local command = combo and self:NativeBinding(combo)
+    return command and not command:find("^CLICK ") and ("cmd:" .. command) or nil
+end
+
 function M:SetReplaced(inputId, layer, action)
+    -- The game's own function chosen: the button given back to it
+    local input = M.BY_ID[inputId]
+    if action and input and action == self:NativeAction(input, layer) then action = nil end
     settings().replaced[inputId .. ":" .. layer] = action
     if action then
         for _, t in ipairs(TRIGGERS) do
@@ -698,6 +709,14 @@ end
 ---------------------------------------------------------------------------
 local owner
 local takeOwner         -- the game's buttons replaced: priority bindings
+
+-- Every key set on an owner taken away, one by one (a binding to one of the
+-- game's gamepad commands may outlive ClearOverrideBindings), then the rest
+local function unbindAll(o, record, priority)
+    for combo in pairs(record) do SetOverrideBinding(o, priority, combo, nil) end
+    ClearOverrideBindings(o)
+    wipe(record)
+end
 local buttons = {}      -- comboId -> secure button (spells, items, macros)
 
 local function secureButton(comboId)
@@ -897,10 +916,8 @@ function M:Apply()
     self.applying = true
     owner = owner or CK.NewFrame("Frame")
     takeOwner = takeOwner or CK.NewFrame("Frame")
-    ClearOverrideBindings(owner)
-    ClearOverrideBindings(takeOwner)
-    wipe(self.bound)
-    wipe(self.taken)
+    unbindAll(owner, self.bound, false)
+    unbindAll(takeOwner, self.taken, true)
     if self:Enabled() then
         for comboId, action in pairs(settings().mapping) do
             local inputId, layer = comboId:match("^(%w+):(%a*)$")
@@ -965,8 +982,7 @@ end
 function M:Release()
     if InCombatLockdown() or not (takeOwner and next(self.taken)) then return end
     self.applying = true
-    ClearOverrideBindings(takeOwner)
-    wipe(self.taken)
+    unbindAll(takeOwner, self.taken, true)
     self.applying = false
     self.pending = true
 end
@@ -990,20 +1006,58 @@ function M:UpdateMarks()
     for native, action in pairs(wanted) do
         local mark = marks[native]
         if not mark then
+            -- An opaque round hides the game's picture, inside its ring
             mark = CK.NewFrame("Frame", nil, native)
             mark:SetAllPoints(native.icon or native)
+            mark.bg = mark:CreateTexture(nil, "ARTWORK")
+            mark.bg:SetPoint("TOPLEFT", 3, -3)
+            mark.bg:SetPoint("BOTTOMRIGHT", -3, 3)
+            mark.bg:SetColorTexture(0.04, 0.04, 0.04, 1)
             mark.icon = mark:CreateTexture(nil, "OVERLAY")
-            mark.icon:SetAllPoints()
-            local mask = mark:CreateMaskTexture()
-            mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-            mask:SetAllPoints(mark.icon)
-            mark.icon:AddMaskTexture(mask)
+            mark.icon:SetPoint("TOPLEFT", 6, -6)
+            mark.icon:SetPoint("BOTTOMRIGHT", -6, 6)
+            for _, tex in ipairs({ mark.bg, mark.icon }) do
+                local mask = mark:CreateMaskTexture()
+                mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                mask:SetAllPoints(tex)
+                tex:AddMaskTexture(mask)
+            end
             marks[native] = mark
         end
         mark:SetFrameLevel(native:GetFrameLevel() + 3)
         CK.Paddles.SetIcon(mark.icon, self:ActionIcon(action))
         mark:Show()
     end
+end
+
+-- /ec binds test: how the client takes back a binding to one of the game's
+-- gamepad commands, on a key nobody uses
+function M:BindingTest()
+    if CK:BlockedByCombat() then return end
+    local key = "ALT-CTRL-SHIFT-F12"
+    self.testOwner = self.testOwner or CK.NewFrame("Frame")
+    local f = self.testOwner
+    local context = Enum and Enum.BindingContext and Enum.BindingContext.GamepadModeInGameCore
+    local function show(step)
+        local game
+        if context and C_KeyBindings and C_KeyBindings.GetBindingByKey then
+            local ok, value = pcall(C_KeyBindings.GetBindingByKey, key, context)
+            game = ok and value or nil
+        end
+        DEFAULT_CHAT_FRAME:AddMessage(format("  %s: %s | gamepad context: %s", step,
+            tostring(GetBindingAction(key, true)), tostring(game)))
+    end
+    self.applying = true
+    show("0 before")
+    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("1 set TOGGLEPINGSYSTEM")
+    ClearOverrideBindings(f) show("2 ClearOverrideBindings")
+    SetOverrideBinding(f, true, key, nil) show("3 set nil")
+    SetOverrideBinding(f, true, key, "TOGGLEAUTORUN") show("4 set TOGGLEAUTORUN")
+    ClearOverrideBindings(f) show("5 ClearOverrideBindings")
+    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("6 set TOGGLEPINGSYSTEM")
+    SetOverrideBinding(f, true, key, nil) show("7 set nil")
+    ClearOverrideBindings(f) show("8 ClearOverrideBindings")
+    self.applying = false
 end
 
 -- /ec binds: the game's buttons replaced, and what each key runs now
