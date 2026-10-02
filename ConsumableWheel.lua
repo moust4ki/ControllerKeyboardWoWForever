@@ -94,11 +94,12 @@ function W.Category(id)
     if HEALTHSTONES[id] then return "healthstone" end
     if MANA_GEMS[id] then return "manaGem" end
     local _, _, _, _, _, classID, subClassID = C_Item.GetItemInfoInstant(id)
-    if classID ~= 0 then return nil end
     local spell = C_Item.GetItemSpell and C_Item.GetItemSpell(id)
-    if not spell then return nil end
     local n = names()
-    if subClassID == 7 or spell == n.firstAid then return "bandage" end
+    -- Bandages: by their First Aid spell, whatever class the client gives them
+    if (spell and spell == n.firstAid) or (classID == 0 and subClassID == 7) then return "bandage" end
+    if classID ~= 0 then return nil end
+    if not spell then return nil end
     if subClassID == 4 then return "scroll" end
     if subClassID == 2 or subClassID == 3 then return "elixir" end
     if subClassID == 5 or spell == n.food or spell == n.drink then
@@ -110,7 +111,45 @@ function W.Category(id)
     local text = tooltipText(id)
     if text:find((MANA or "mana"):lower(), 1, true) then return "manaPotion" end
     if text:find((HEALTH or "health"):lower(), 1, true) then return "healthPotion" end
-    if subClassID == 1 then return "elixir" end
+    if subClassID == 1 or subClassID == 13 then return "elixir" end
+end
+
+-- Why an item of the bags is not in the wheel (for /ec wheel), or nil
+function W.Reason(id)
+    local cat = W.Category(id)
+    if not cat then
+        local _, _, _, _, _, classID, subClassID = C_Item.GetItemInfoInstant(id)
+        local spell = C_Item.GetItemSpell and C_Item.GetItemSpell(id)
+        return format("- (class %s/%s, use: %s)", tostring(classID), tostring(subClassID), tostring(spell))
+    end
+    if not settings().categories[cat] then return cat .. ": " .. L.WHEEL_DIAG_OFF end
+    local get = C_Item.GetItemInfo or GetItemInfo
+    local _, _, _, _, minLevel = get(id)
+    if minLevel and minLevel > (UnitLevel("player") or 0) then return cat .. ": " .. format(L.WHEEL_DIAG_LEVEL, minLevel) end
+    return nil, cat
+end
+
+-- /ec wheel: what is in it, what is not and why
+function W:Diagnose()
+    local wheel = self.frame
+    CK:Print(L.WHEEL_DIAG, wheel and wheel:GetAttribute("ck-total") or 0, wheel and wheel:GetAttribute("ck-pages") or 0,
+        tostring(settings().enabled), tostring(InCombatLockdown()), tostring(self.pending or false))
+    local seen = {}
+    for bag = 0, NUM_BAG_SLOTS or 4 do
+        for slot = 1, C_Container.GetContainerNumSlots(bag) or 0 do
+            local id = C_Container.GetContainerItemID(bag, slot)
+            if id and not seen[id] then
+                seen[id] = true
+                local why, cat = W.Reason(id)
+                local name = C_Item.GetItemNameByID(id) or ("item:" .. id)
+                if cat then
+                    DEFAULT_CHAT_FRAME:AddMessage(format("  |cff40ff40+|r %s: %s", name, L["WHEEL_CAT_" .. cat:upper()]))
+                elseif not why:find("^%- %(class 7") and not why:find("^%- %(class [1-9]%d*/") then
+                    DEFAULT_CHAT_FRAME:AddMessage(format("  |cff9d9a8c-|r %s %s", name, why))
+                end
+            end
+        end
+    end
 end
 
 -- The best first: required level, then item level
@@ -166,20 +205,19 @@ end
 
 ---------------------------------------------------------------------------
 -- The secure part. The wheel frame owns the keys it takes while open (A,
--- B, the D-pad, with every modifier a trigger may add); its snippets read
--- the right stick from the game's gamepad state. Each slot direction is a
--- unit vector ("ck-x3", "ck-y3"): the aimed slot is the closest one.
+-- B, LB / RB, with every modifier a trigger may add); its snippets read the
+-- left stick from the game's gamepad state when A is pressed. Each slot
+-- direction is a unit vector ("ck-x3", "ck-y3"): the aimed slot is the
+-- closest one. Nothing is remembered: the stick back in the middle aims at
+-- nothing.
 ---------------------------------------------------------------------------
 local PREFIXES = ",SHIFT-,CTRL-,ALT-,CTRL-SHIFT-,ALT-SHIFT-,ALT-CTRL-,ALT-CTRL-SHIFT-,"
--- The left stick chooses (the right one is the game's, for its own wheels)
-local STICK_KEYS = "PADLSTICKUP,PADLSTICKDOWN,PADLSTICKLEFT,PADLSTICKRIGHT,"
 
 -- A page's items into the 8 slots' buttons (from the wheel's attributes:
 -- "ck-p2-5" is page 2, slot 5)
 local APPLY_PAGE = [[
     local page = owner:GetAttribute("page") or 1
     owner:SetAttribute("count", owner:GetAttribute("ck-count-p" .. page) or 0)
-    owner:SetAttribute("selected", 0)
     for i = 1, 8 do
         local b = owner:GetFrameRef("slot" .. i)
         local item = owner:GetAttribute("ck-p" .. page .. "-" .. i)
@@ -200,11 +238,10 @@ local PAGE = [[
     return false
 ]]
 
--- `slot`: the slot the left stick points at (past half its course), else
--- the last choice (the stick's, or the D-pad's), else 0
+-- `slot`: the slot the left stick points at now (past half its course), else 0
 local AIMED = [[
     local count = owner:GetAttribute("count") or 0
-    local slot = owner:GetAttribute("selected") or 0
+    local slot = 0
     local state = GetGamePadState()
     local stick = state and state.sticks and state.sticks[owner:GetAttribute("ck-stick") or 1]
     if stick and stick.len and stick.len > ]] .. AIM .. [[ then
@@ -227,40 +264,10 @@ local SHOW = [[
     for prefix in gmatch(owner:GetAttribute("ck-prefixes"), "([^,]*),") do
         owner:SetBindingClick(true, prefix .. "PAD1", "ControllerKeyboardWheelUse")
         owner:SetBindingClick(true, prefix .. "PAD2", "ControllerKeyboardWheelClose")
-        owner:SetBindingClick(true, prefix .. "PADDLEFT", "ControllerKeyboardWheelPrev")
-        owner:SetBindingClick(true, prefix .. "PADDUP", "ControllerKeyboardWheelPrev")
-        owner:SetBindingClick(true, prefix .. "PADDRIGHT", "ControllerKeyboardWheelNext")
-        owner:SetBindingClick(true, prefix .. "PADDDOWN", "ControllerKeyboardWheelNext")
-        owner:SetBindingClick(true, prefix .. "PADRSTICK", "ControllerKeyboardWheelClose")
         owner:SetBindingClick(true, prefix .. "PADLSHOULDER", "ControllerKeyboardWheelPage", "LB")
         owner:SetBindingClick(true, prefix .. "PADRSHOULDER", "ControllerKeyboardWheelPage", "RB")
-        for key in gmatch(owner:GetAttribute("ck-stickkeys"), "([^,]+),") do
-            owner:SetAttribute("ck-held-" .. key, 0)
-            owner:SetBindingClick(true, prefix .. key, "ControllerKeyboardWheelStick", key)
-        end
     end
     owner:SetBindingClick(true, "ESCAPE", "ControllerKeyboardWheelClose")
-]]
-
--- The left stick's direction keys (their name comes as the click's button):
--- they move the choice, which stays when the stick goes back to the middle
--- (A uses it). A press aims from a third of the way out; a release only from
--- far out (the stick springing back must not change the choice).
-local STICK_KEY = [[
-    if button == "LeftButton" then return false end
-    local count = owner:GetAttribute("count") or 0
-    local state = GetGamePadState()
-    local stick = state and state.sticks and state.sticks[owner:GetAttribute("ck-stick") or 1]
-    local len = stick and stick.len or 0
-    if len > (down and 0.35 or 0.7) then
-        local best, bestDot = 0, -2
-        for i = 1, 8 do
-            local dot = stick.x * (owner:GetAttribute("ck-x" .. i) or 0) + stick.y * (owner:GetAttribute("ck-y" .. i) or 0)
-            if dot > bestDot then best, bestDot = i, dot end
-        end
-        owner:SetAttribute("selected", best <= count and best or 0)
-    end
-    return false
 ]]
 
 local HIDE = [[
@@ -286,8 +293,7 @@ local TOGGLE = [[
     return false
 ]]
 
--- A: the item chosen (the stick still pushed, else its last choice, or the
--- D-pad's); nothing chosen: nothing
+-- A: the item the left stick points at; the stick in the middle: nothing
 local USE = [[
     if not down then return false end
     ]] .. AIMED .. [[
@@ -299,22 +305,6 @@ local USE = [[
 local DONE = HIDE
 
 local CLOSE = HIDE .. " return false"
-
-local function turn(delta)
-    return [[
-        if not down then return false end
-        local count = owner:GetAttribute("count") or 0
-        if count == 0 then return false end
-        local slot = owner:GetAttribute("selected") or 0
-        if slot < 1 then
-            slot = ]] .. (delta > 0 and "1" or "count") .. [[
-        else
-            slot = (slot - 1 + ]] .. delta .. [[) % count + 1
-        end
-        owner:SetAttribute("selected", slot)
-        return false
-    ]]
-end
 
 -- A button for the wheel's keys: a secure action button, its OnClick
 -- wrapped by the wheel
@@ -343,7 +333,6 @@ function W:Build()
     wheel:Hide()
     wheel:SetAttribute("count", 0)
     wheel:SetAttribute("ck-total", 0)
-    wheel:SetAttribute("selected", 0)
     wheel:SetAttribute("page", 1)
     wheel:SetMovable(true)
     wheel:SetClampedToScreen(true)
@@ -361,7 +350,6 @@ function W:Build()
     -- camera and the character still get them
     wheel:SetScript("OnGamePadStick", function() W:Track() end)
     wheel:SetAttribute("ck-prefixes", PREFIXES)
-    wheel:SetAttribute("ck-stickkeys", STICK_KEYS)
     -- Each slot's direction, from the middle
     for i = 1, SEGMENTS do
         wheel:SetAttribute("ck-x" .. i, math.cos(angleOf(i)))
@@ -378,9 +366,7 @@ function W:Build()
     self.use = use
     keyButton("ControllerKeyboardWheelClose", wheel, CLOSE)
     -- The stick direction keys: their presses and releases move the choice
-    keyButton("ControllerKeyboardWheelStick", wheel, STICK_KEY, nil, "AnyDown", "AnyUp")
-    keyButton("ControllerKeyboardWheelPrev", wheel, turn(-1))
-    keyButton("ControllerKeyboardWheelNext", wheel, turn(1))
+
     keyButton("ControllerKeyboardWheelPage", wheel, PAGE)
 
     -- What is drawn: the game's radial menu art, under the slots' buttons
@@ -403,25 +389,28 @@ function W:Build()
         t:SetBlendMode("ADD")
     end)
     view.highlight:Hide()
-    -- In the middle: the aimed item (or what to do), then B and the pages
-    view.name = view:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    view.name:SetPoint("BOTTOM", bg, "CENTER", 0, 8)
-    view.name:SetWidth(128)
-    view.name:SetWordWrap(true)
-    view.count = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    view.count:SetPoint("TOP", bg, "CENTER", 0, 2)
-    view.count:SetWidth(124)
-    view.count:SetWordWrap(true)
+    -- Under the wheel, the game's banner: the aimed item (or what to do);
+    -- below it, the pages and the help
+    view.bottom = view:CreateTexture(nil, "BACKGROUND")
+    view.bottom:SetPoint("TOP", bg, "BOTTOM", 0, 8)
+    atlas(view.bottom, "gamepad-radial-menu-bottomtext", function(t)
+        t:SetSize(320, 70)
+        t:SetColorTexture(0, 0, 0, 0.5)
+    end)
+    view.name = view:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    view.name:SetPoint("TOP", view.bottom, "TOP", 0, -14)
+    view.name:SetWidth(300)
+    view.name:SetWordWrap(false)
+    view.count = view:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    view.count:SetPoint("TOP", view.name, "BOTTOM", 0, -4)
+    view.count:SetWidth(300)
+    view.count:SetWordWrap(false)
     view.help = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    view.help:SetPoint("TOP", view.count, "BOTTOM", 0, -6)
+    view.help:SetPoint("TOP", view.bottom, "BOTTOM", 0, -4)
     view.pages = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     view.pages:SetPoint("TOP", view.help, "BOTTOM", 0, -4)
     view:SetScript("OnUpdate", function() W:Track() end)
-    view:SetScript("OnShow", function()
-        W:StickKeys(true)
-        W:Paint()
-    end)
-    view:SetScript("OnHide", function() W:StickKeys(false) end)
+    view:SetScript("OnShow", function() W:Paint() end)
 
     self.segments, self.buttons = {}, {}
     for i = 1, SEGMENTS do
@@ -524,7 +513,6 @@ function W:Fill()
         -- Page 1 in the buttons, as the snippet does
         wheel:SetAttribute("page", 1)
         wheel:SetAttribute("count", wheel:GetAttribute("ck-count-p1"))
-        wheel:SetAttribute("selected", 0)
         for i, b in ipairs(self.buttons) do
             local item = wheel:GetAttribute("ck-p1-" .. i)
             b:SetAttribute("type", item and "item" or nil)
@@ -608,8 +596,6 @@ function W:Aimed()
         end
         return best and best <= count and best or nil
     end
-    local selected = wheel:GetAttribute("selected") or 0
-    return selected >= 1 and selected <= count and selected or nil
 end
 
 function W:Track()
@@ -617,12 +603,6 @@ function W:Track()
     -- A page turned (LB / RB, secure): draw it
     if (self.frame:GetAttribute("page") or 1) ~= self.painted then return self:Paint() end
     local i = self:Aimed()
-    -- Out of combat the choice is noted as the stick aims, and stays when
-    -- it is let go (in combat the game doesn't let an addon note it: A reads
-    -- the stick still pushed, or the D-pad's choice)
-    if i and not InCombatLockdown() and self.frame:IsShown() and self.frame:GetAttribute("selected") ~= i then
-        self.frame:SetAttribute("selected", i)
-    end
     if i == self.aimed then return end
     self.aimed = i
     local item = i and self:PageItems()[i]
@@ -724,45 +704,22 @@ function W:PlacementPress(name)
 end
 
 ---------------------------------------------------------------------------
--- The game's stick direction keys (GamePadStickAxisButtons): they let
--- secure code keep the left stick's choice. On only while the wheel is open
--- (kept on, they break the game's own stick wheels: the hunter's aspects...),
--- the player's value given back when it closes, or after combat, or at the
--- next login if the game refused it then. Camera speeds an earlier version
--- changed are given back too.
+-- Game settings earlier versions changed, given back as they were: the
+-- stick direction keys (GamePadStickAxisButtons: kept on, they broke the
+-- game's own stick wheels) and the camera speeds
 ---------------------------------------------------------------------------
-local STICK_CVAR = "GamePadStickAxisButtons"
-
-local function getCVar(name)
-    local get = C_CVar and C_CVar.GetCVar or GetCVar
-    local ok, value = pcall(get, name)
-    return ok and value ~= nil and tostring(value) or nil
-end
-
 local function setCVar(name, value)
     local set = C_CVar and C_CVar.SetCVar or SetCVar
     return pcall(set, name, value)
 end
 
-function W:StickKeys(on)
-    local s = settings()
-    local current = getCVar(STICK_CVAR)
-    if current == nil then return end
-    if on then
-        if current ~= "1" then
-            if s.stickButtonsWas == nil then s.stickButtonsWas = current end
-            setCVar(STICK_CVAR, "1")
-        end
-    elseif s.stickButtonsWas ~= nil then
-        setCVar(STICK_CVAR, s.stickButtonsWas)
-        if getCVar(STICK_CVAR) == s.stickButtonsWas then s.stickButtonsWas = nil end
-    end
-end
-
 function W:RestoreSettings()
     if InCombatLockdown() then return end
     local s = settings()
-    if not (self.frame and self.frame:IsShown()) then self:StickKeys(false) end
+    if s.stickButtonsWas ~= nil then
+        setCVar("GamePadStickAxisButtons", s.stickButtonsWas)
+        s.stickButtonsWas = nil
+    end
     if s.camera then
         for cvar, value in pairs(s.camera) do setCVar(cvar, value) end
         s.camera = nil

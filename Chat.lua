@@ -213,6 +213,8 @@ local function slash(msg)
         CK:ListGlyphAtlases()
     elseif cmd == "vibe" then
         CK.Vibration:Diagnose(arg)
+    elseif cmd == "wheel" then
+        CK.ConsumableWheel:Diagnose()
     elseif cmd == "debug" then
         s.debug = not s.debug
         CK.seenSticks = nil

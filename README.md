@@ -240,13 +240,12 @@ kind can be left out (Wheel tab).
 
 - Give it a key in the Gamepad tab (Items list: any free button, or a back paddle in any layer) or
   in *Escape > Key Bindings > AddOns*.
-- Open: **the left stick** chooses an item (going back to the middle keeps the choice), **A** uses
-  it, **B** cancels; the wheel's key closes it too. The right stick stays the game's (for its own
-  spell wheels). The D-pad and the mouse work too. While it is open it takes the sticks, like the
-  game's own wheels: the camera and the character stay still.
-- In combat the choice is kept through the game's stick direction keys (its
-  *GamePadStickAxisButtons* setting), turned on only while the wheel is open and given back as it
-  was when it closes: the game's own stick wheels (the hunter's aspects...) are left alone.
+- Open: **point at an item with the left stick and press A** to use it (the stick back in the middle
+  points at nothing); **B** cancels; LB / RB turn the pages; the wheel's key closes it too. The right
+  stick stays the game's (for its own spell wheels). The mouse works too. While it is open it takes
+  the sticks, like the game's own wheels: the camera and the character stay still. The aimed item's
+  name shows in the game's banner under the wheel.
+- No game setting is changed. `/ec wheel` lists what the wheel holds, and why an item is not in it.
 - It sits in the middle of the screen (unlocked, drag the open wheel with the mouse, or move it with
   the D-pad from the Wheel tab).
 - It works **in combat**: the wheel and the keys it takes are secure, run by the game. Food and drink
@@ -313,6 +312,7 @@ In the configuration panel (RB + D-pad down, `/ec config`):
 | `/ec map` | gamepad mapping (free buttons, back paddles) |
 | `/ec keys` | list the keys and buttons the game receives (back paddles) |
 | `/ec vibe [pattern]` | test the controller vibration |
+| `/ec wheel` | what the consumables wheel holds, and why an item is not in it |
 | `/ec glyphs` | list the game's gamepad button icons |
 | `/ec debug` | print received buttons and sticks |
 
