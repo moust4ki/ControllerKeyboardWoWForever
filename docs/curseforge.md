@@ -154,7 +154,7 @@ Install with the CurseForge app, or extract the zip into
 Made for **WoW Forever** and its gamepad UI. The keyboard is disabled in combat (the game blocks too
 many actions there) and comes back by itself after combat if the chat is still open.
 
-Source code and issues: [GitHub](https://github.com/moust4ki/ControllerKeyboardWoWForever)
+Source code and issues: [GitHub](https://github.com/moust4ki/EasyControllerWowForever)
 
 *Dictionaries derived from FrequencyWords by Hermit Dave (CC-BY-SA-4.0). Code under the MIT license.*
 

@@ -5,7 +5,7 @@
 ## Author: moust4ki
 ## Version: 1.0.0
 ## SavedVariables: ControllerKeyboardDB
-## X-Website: https://github.com/moust4ki/ControllerKeyboardWoWForever
+## X-Website: https://github.com/moust4ki/EasyControllerWowForever
 ## X-Curse-Project-ID: 1712492
 
 Core.lua
