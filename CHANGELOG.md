@@ -21,9 +21,9 @@
   8 consumables a page (LB / RB turn the pages, up to 3), from the bags:
   food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
   elixirs and flasks, scrolls, the best of each kind first and the other variants after. The right
-  push a stick towards an item and let it go to use it, like the game's radial menu (the game's
-  stick direction keys, GamePadStickAxisButtons, kept on while the wheel is on); B cancels; the
-  wheel's key held then let go, A, the D-pad and the mouse work too. While open it takes the sticks,
+  the left stick chooses an item (going back to the middle keeps the choice), A uses it, B cancels;
+  the right stick stays the game's; the D-pad and the mouse work too. The game's stick direction
+  keys (GamePadStickAxisButtons) are on only while the wheel is open, given back when it closes. While open it takes the sticks,
   like the game's wheels: the camera and the character stay still. In the middle of the screen
   (or placed with the mouse or the D-pad). It works in combat (secure
   frames and snippets; food and drink greyed there). Wheel tab: each kind on or off, the variants.

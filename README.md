@@ -240,13 +240,13 @@ kind can be left out (Wheel tab).
 
 - Give it a key in the Gamepad tab (Items list: any free button, or a back paddle in any layer) or
   in *Escape > Key Bindings > AddOns*.
-- Open, like the game's own radial menu: **push a stick** (left or right) towards an item and **let
-  it go** to use it; **B** cancels. The wheel's key held then let go uses the item aimed too; A, the
-  D-pad and the mouse work as well. While it is open it takes the sticks, like the game's own
-  wheels: the camera and the character stay still.
-- Letting a stick go is seen through the game's stick direction keys: the wheel keeps the game's
-  *GamePadStickAxisButtons* setting on while it is turned on (it cannot be changed in combat), and
-  gives your own value back when it is turned off.
+- Open: **the left stick** chooses an item (going back to the middle keeps the choice), **A** uses
+  it, **B** cancels; the wheel's key closes it too. The right stick stays the game's (for its own
+  spell wheels). The D-pad and the mouse work too. While it is open it takes the sticks, like the
+  game's own wheels: the camera and the character stay still.
+- In combat the choice is kept through the game's stick direction keys (its
+  *GamePadStickAxisButtons* setting), turned on only while the wheel is open and given back as it
+  was when it closes: the game's own stick wheels (the hunter's aspects...) are left alone.
 - It sits in the middle of the screen (unlocked, drag the open wheel with the mouse, or move it with
   the D-pad from the Wheel tab).
 - It works **in combat**: the wheel and the keys it takes are secure, run by the game. Food and drink

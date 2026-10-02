@@ -395,7 +395,6 @@ local function wheelRows()
     b.header(L.WHEEL_NAME)
     b.check(L.WHEEL_ENABLE, function() return s.enabled end, function(v)
         s.enabled = v
-        W:StickKeys(v)
         W:Fill()
     end)
     b.info(L.WHEEL_INFO)

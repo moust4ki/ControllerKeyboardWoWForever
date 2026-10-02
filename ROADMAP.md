@@ -24,12 +24,12 @@ in game, then released on GitHub and CurseForge. Done items move to the [CHANGEL
   menu art, 8 consumables a page (LB / RB, up to 3 pages):
   food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
   elixirs and flasks, scrolls; the best of each kind first, the variants after (an option). The
-  push a stick towards an item and let it go to use it (the game's stick direction keys); B
-  cancels; the key held then let go, A, the D-pad, the mouse too; the sticks are taken while open
+  a stick chooses (the choice stays when it is let go), A uses, B cancels; the D-pad and the
+  mouse too; the sticks are taken while open
   (camera and character still). Secure: works in combat
   (food and drink greyed there); its content changes out of combat only. "Wheel ticks" vibrate.
-  - [ ] In-game check: push / let go (stick direction keys), the sticks taken while open, in and out
-    of combat, the kinds found in the bags.
+  - [ ] In-game check: a stick to choose and A, in and out of combat; the choice kept when the
+    stick is let go; the sticks taken while open; the kinds found in the bags.
 
 - [x] The addon list shows the addon's icon.
 - [ ] Release 1.2.0.
