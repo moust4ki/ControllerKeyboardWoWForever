@@ -37,6 +37,15 @@ closes.
   - limit: what a wheel holds can only change out of combat (the game locks secure buttons in
     combat).
 
+## Next: automation at merchants
+
+Both turned on or off in Home › Modules, and set in a new Home › Automation section (under Look).
+
+- [ ] **Auto-sell junk**: at a merchant, the grey (poor quality) items of the bags are sold by
+  themselves; a line in the chat says how much they brought.
+- [ ] **Auto-repair**: at a merchant who repairs, the equipment is repaired by itself; a line in the
+  chat says what it cost (or that the money was short).
+
 ## To decide
 
 - **Chat keyboard, writing in the chat box**: let the game send the message natively when the text
