@@ -366,7 +366,11 @@ local function suppliesRows()
     end
 
     b.header(L.SUP_H_ADD)
-    b.button(S.showAdd and L.SUP_ADD_HIDE or L.SUP_ADD_SHOW, function() S.showAdd = not S.showAdd end)
+    b.button(S.showAdd and L.SUP_ADD_HIDE or L.SUP_ADD_SHOW, function()
+        S.showAdd = not S.showAdd
+        -- The list opens below: go to its first item, in view
+        if S.showAdd then CK.Config:Page().selectNext = true end
+    end)
     if S.showAdd then
         local items = S:BagItems()
         if #items == 0 then b.info(L.SUP_ADD_NONE) end

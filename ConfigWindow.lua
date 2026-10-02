@@ -160,6 +160,11 @@ function ListPage:Activate()
     end
     -- Rows can depend on others (indented options)
     self.list = self.rows()
+    -- A row that opened a list below it: on to its first entry
+    if self.selectNext then
+        self.selectNext = nil
+        return self:Move(1)
+    end
     C:Render()
 end
 
@@ -270,10 +275,24 @@ function C:Build()
     kit = CK.UIKit
     local f = CK.NewFrame("Frame", "ControllerKeyboardConfigFrame", UIParent)
     f:SetSize(WIDTH, HEIGHT)
-    f:SetPoint("CENTER", 0, 30)
     f:SetFrameStrata("DIALOG")
     f:EnableMouse(true)
     f:SetClampedToScreen(true)
+    -- Always movable with the mouse (its free parts: title, tabs row, edges)
+    f:SetMovable(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    f:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local point, _, _, x, y = self:GetPoint(1)
+        CK.db.settings.configPos = { point = point, x = math.floor(x + 0.5), y = math.floor(y + 0.5) }
+    end)
+    local pos = CK.db.settings.configPos
+    if type(pos) == "table" and pos.point then
+        f:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
+    else
+        f:SetPoint("CENTER", 0, 30)
+    end
     f:Hide()
     panel(f)
     self.frame = f
