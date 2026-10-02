@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.1
+
+- Mapping window: the gamepad bar slots that hold a flyout (hunter aspects, tracking, pets) or
+  anything else than a spell, an item or a macro show its name instead of "empty".
+- The actions the game won't take off its gamepad bars (hunter aspects, pet actions while the pet
+  has its bar) can no longer be replaced or cleared from the mapping window: it shows the game's own
+  message, like its action bar editor.
+- With a list open, the side panel no longer writes over the list's tabs.
+
 ## 1.1.0
 
 - The addon's folder and package are now **EasyController** (were ControllerKeyboard). Settings saved
