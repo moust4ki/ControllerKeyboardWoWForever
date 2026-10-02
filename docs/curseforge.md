@@ -73,8 +73,9 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
 
 **Configuration panel**
 RB + D-pad down (or `/ec config`) opens the addon's own panel, driven with the gamepad or the mouse:
-General (every function can be turned on or off), Keyboard, Gamepad, Vibrations, Supplies and Wheel
-tabs.
+Home (every module and its state), Gamepad (your controller drawn button by button), Wheels, Keyboard
+and Alerts (vibrations, supplies, quest items). Sections on the left, settings in the middle, what the
+selected one does on the right, and a help bar showing the buttons that work.
 
 **Consumables wheel**
 A key of its own (any free button, or a back paddle in any trigger layer) opens a wheel drawn like
@@ -97,8 +98,9 @@ own pattern (tick, double tick, pulse, heartbeat, crescendo...), with one intens
 controller the game drives vibrates.
 
 **Gamepad mapping**
-The Gamepad tab shows your whole controller in its four trigger layers. The buttons WoW Forever uses stay
-exactly as they are and show what they do; the free ones get the missing functions: L3 / R3, unused
+The Gamepad tab draws your whole controller over an Xbox controller, in its four trigger layers, each
+button with what it does and its state (the game's, a slot of its bar, yours, free, unavailable). The
+buttons WoW Forever uses stay exactly as they are; the free ones get the missing functions: L3 / R3, unused
 trigger combinations (LT + Start...) and the back paddles can run a game function (run / walk,
 autorun, game menu, map, bags, any key binding of the game), one of the game's own gamepad functions
 (jump, back, interact, inspect, Start menu, ping, targeting...), a spell, an item, a macro, or press

@@ -3,7 +3,8 @@
 Everything planned for Easy Controller - Forever, so nothing gets lost. Each feature is built, tested
 in game, then released on GitHub and CurseForge. Done items move to the [CHANGELOG](CHANGELOG.md)
 (1.2.0: vibrations, supplies, consumables wheel; 1.2.1: the game's gamepad functions anywhere, its
-buttons replaceable; 1.3.0: your own wheels, every button remappable from the start).
+buttons replaceable; 1.3.0: your own wheels, every button remappable from the start; 1.4.0: the new
+configuration panel).
 
 ## 1.2.1: the game's own gamepad functions, on any button
 
@@ -45,6 +46,22 @@ Both turned on or off in Home › Modules, and set in a new Home › Automation 
   themselves; a line in the chat says how much they brought.
 - [ ] **Auto-repair**: at a merchant who repairs, the equipment is repaired by itself; a line in the
   chat says what it cost (or that the money was short).
+
+## Next: inventory, better items
+
+A new Alerts › Inventory section.
+
+- [ ] **Upgrades in the bags**: a green up arrow at the bottom right of an item that would be better
+  than what is equipped in its slot.
+  - What the client gives: the item level (`C_Item.GetDetailedItemLevelInfo`, or `GetItemInfo`'s
+    fourth value), the item's slot (`itemEquipLoc`), the equipped items (`GetInventoryItemLink`), the
+    items that fit a slot (`GetInventoryItemsForSlot`, what the game's own new player tips use), and
+    the game's own green arrow picture (atlas `bags-greenarrow`). The game itself never computes
+    "better" in WoW Forever: its equipment flyout leaves it empty.
+  - "Better": a higher item level for the same slot (rings, trinkets and one-hand weapons against the
+    weaker of the two), only for what the character can wear (armor type, weapons, level, class).
+    To decide: item level alone, or item level and the class's main stats (a cloth caster item is
+    not better for a warrior, even with a higher level).
 
 ## To decide
 

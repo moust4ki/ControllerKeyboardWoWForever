@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.4.0
+
+- **A new configuration panel** (Claude Design). Five tabs: Home, Gamepad, Wheels, Keyboard and
+  Alerts. In each, its sections on the left, their settings in the middle, and on the right what the
+  selected one does; short labels, the long explanations in that side panel. The help bar at the
+  bottom shows where you are and only the buttons that work there (they can be clicked). LB / RB
+  change tabs, B goes back to the sections then closes; the panel reopens on the tab and section you
+  left. Forget learned words, Restore the game's buttons and Delete a wheel ask a second A (B, a move
+  or 4 seconds cancel). Short messages confirm what was done.
+- **Home**: every module with its state (input method, "N yours", "N tracked", "N events"), Y on one
+  jumps to its settings; the panel's shortcut; button glyphs, game icons and font.
+- **Gamepad**: your controller drawn over an Xbox controller, its 20 buttons where they are, each with
+  what it does in the layer shown (alone, LT, RT, LT + RT) and one of five states: the game's function,
+  a slot of the game's bar (gold ring), yours (cyan ring), free, unavailable (striped, with the reason).
+  The D-pad's slots are square, like the game's gamepad bar. The D-pad goes from button to button, up
+  to the layers, down to the actions; A opens the lists on the right (Game, Spells, Items with the
+  wheels first, Macros, Bar); X gives the button back, empties the slot or removes yours; Y learns a
+  paddle's key again. Under the controller: **Identify paddles** (the steps in the right panel, X skips
+  one), **Place bar**, **Display** (extra buttons next to the bar, L3 / R3, their names, RT as a
+  modifier) and **Restore (N)**.
+- **Wheels**: your wheels as cards, New wheel first, each showing its 8 slots, its name and the button
+  it is on. Its editor: the wheel with its slots around it, the lists always on the right; a choice
+  fills the slot aimed at and goes on to the next one, with a cyan diamond on what is already in the
+  wheel. Rename in a box over the wheel; **Assign a button** takes you to the Gamepad tab, where the
+  button you pick gets the wheel. The consumables wheel and the wheels' position have their own
+  sections.
+- **Keyboard**: opening, input, sticks (the dead zone is a slider), prediction, position.
+- **Alerts**: vibrations (each event: A turns it on or off, the D-pad picks its pattern, Y tests it,
+  the intensity is a slider), supplies (items added from your bags with the lists), quest items.
+
 ## 1.3.0
 
 - **Your own wheels** (Wheels tab, formerly Wheel): up to 8 wheels of your own, 8 slots each, filled

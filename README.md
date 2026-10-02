@@ -137,24 +137,30 @@ you typed; then type the message. Deleting on an empty message goes back to the 
 ## Configuration panel
 
 **RB + D-pad down** opens the addon's own panel (only watched, never bound: the game's own buttons stay as they are;
-the General tab learns any other pair: press A on it, then hold a button and press a second one;
-also `/ec config`, a
-key binding, or *Options > AddOns > Easy Controller - Forever*). It is driven with the gamepad (LB / RB:
-tabs, D-pad: move and change values, A: choose, B: close) or the mouse.
+Home › Shortcut learns any other pair: press A on it, then hold a button and press a second one;
+also `/ec config`, a key binding, or *Options > AddOns > Easy Controller - Forever*).
 
-- **General**: every function, each with its own switch (keyboard, auto-open, quest links,
-  Shift+click links, drafts, sticky channel, quest item tooltip / sale warning / merchant warning,
-  gamepad mapping, extra buttons on screen, RB + D-pad down), button icons and font.
-- **Keyboard**: size, position, input method, layout, sticks, prediction.
+Five tabs, LB / RB to go from one to the next. In each, its sections on the left, their settings in
+the middle, and on the right what the selected one does. The help bar at the bottom shows where you
+are and the buttons that work there (click them with the mouse too). The D-pad moves and changes
+values, A checks or chooses, B goes back to the sections, then closes. The panel reopens where you
+left it. Forgetting the learned words, restoring the game's buttons and deleting a wheel ask a
+second A.
+
+- **Home**: every module with its state, Y on one jumps to its settings; the panel's shortcut;
+  button glyphs (Xbox / PlayStation), the game's button icons, font.
 - **Gamepad**: the mapping below.
-- **Vibrations**: the controller vibrations below.
-- **Supplies**: the supplies buttons below.
-- **Wheel**: the consumables wheel below.
+- **Wheels**: your own wheels, the consumables wheel, where they open.
+- **Keyboard**: opening, input method and layout, size, sticks, prediction, position.
+- **Alerts**: the vibrations, the supplies buttons and the quest items below.
 
 ## Gamepad mapping
 
-The Gamepad tab (`/ec map`) shows the whole controller, in its four trigger layers: alone, LT, RT,
-LT + RT (hold the triggers, or click the layer tabs).
+The Gamepad tab (`/ec map`) draws your controller, each button where it is, with what it does in the
+layer shown: alone, LT, RT, LT + RT (the row above the controller, or hold the triggers). Each button
+is in one of five states: the game's function, a slot of the game's gamepad bar (gold ring), yours
+(cyan ring and diamond), free (+), unavailable (striped; the right panel says why). The D-pad goes
+from button to button, up to the layers, down to the actions under the controller.
 
 - **The game's own buttons** are shown with what they do and its icon: jump, interact, back, inspect,
   targeting, Start menu... They can be replaced too (below).
@@ -162,15 +168,17 @@ LT + RT (hold the triggers, or click the layer tabs).
   interact / back / inspect) take a spell, an item or a macro: press A on one, pick it, and it goes
   in the game's own slot, like with its action bar editor (X empties it).
 - **The free inputs get the missing functions**: L3 / R3, trigger combinations nothing is bound to
-  (LT + Start...) and the back paddles. Press A on one and pick, with LB / RB for the tabs:
+  (LT + Start...) and the back paddles. Press A on one and pick in the lists on the right, LB / RB
+  to change list:
   - **Game**: first **the game's own gamepad functions**: jump, back, interact and inspect (the
     game's fixed A / B / X / Y buttons, pressed: their own behaviour, the smart interact
     included), the Start menu, interface focus, ping, ally and enemy targeting (held); then run /
     walk, autorun, game menu, map, bags, character, spellbook, quest log, open the keyboard... and
     every key binding of the game, by its own categories;
-  - **Spells**, **Items** (usable ones in your bags), **Macros**;
+  - **Spells**, **Items** (your wheels first, then the usable items in your bags), **Macros**;
   - **Bar**: press a button of the gamepad action bar ("LT + RT A"...).
-- X removes, B goes back / closes. Everything is clickable with the mouse too.
+- X gives a button back to the game, empties a slot or removes yours; B closes the lists. Everything
+  is clickable with the mouse too.
 
 ### Replacing the game's own buttons
 
@@ -183,7 +191,7 @@ LT + RT (hold the triggers, or click the layer tabs).
   class and pet actions read them directly), and so do LT / RT.
 - Each layer needs a key of its own, so LT and RT become modifiers (the game's gamepad setting, like
   LT already sending Shift); the other layers of a replaced button keep what the game does there.
-- **Restore the game's buttons**, at the top right of the Gamepad tab (A, then A again to confirm),
+- **Restore (N)**, under the controller (A, then A again to confirm),
   gives every replaced button back to the game, as the game sets it. Only those: what you put in the
   game's slots, on the free buttons, on the paddles and in your wheels stays.
 - `/ec binds` lists the replaced keys and what each one runs right now.
@@ -191,24 +199,24 @@ LT + RT (hold the triggers, or click the layer tabs).
 ### Back paddles (L4 / R4 / L5 / R5) and extra buttons
 
 For the Steam Deck and other controllers with back paddles: set each paddle to a keyboard key in
-Steam Input (F13 to F16 for example), then **Identify the back paddles** (under the controller) asks
-you to press each one in turn; B skips a paddle your controller doesn't have. Y on one paddle learns
-it again. `/ec keys` lists the keys the game receives. Controllers whose paddles the game sees
+Steam Input (F13 to F16 for example), then **Identify paddles** (under the controller) asks you to
+press each one in turn; X skips a paddle your controller doesn't have, B stops. Y on one paddle
+learns it again. `/ec keys` lists the keys the game receives. Controllers whose paddles the game sees
 directly (PADPADDLE1-4) work as they are.
 
 The paddles have the four layers: alone, LT, RT, LT + RT. A trigger that is not a keyboard modifier
 in the game's gamepad settings (RT, by default) doesn't change the key a paddle sends: RT + L4 is the
 same key as L4. The addon then reads the triggers when the paddle is pressed, from the game's
 secure code, and runs that layer's **spell, item or macro**. A game function (run / walk, map...) is
-a key binding and needs a key of its own: on such a layer, turn on **"RT acts as a modifier"**
-(General tab), or the layers share it.
+a key binding and needs a key of its own: on such a layer, turn on **RT as a modifier**
+(Gamepad › Display), or the layers share it.
 
-L3 / R3 can be shown too (General tab), with what the game does with them (autorun, ping...) or what
+L3 / R3 can be shown too (Gamepad › Display), with what the game does with them (autorun, ping...) or what
 you put on them. Spells are listed with their rank.
 
 The extra buttons that do something (back paddles, L3, R3) appear around the gamepad action bar, in
 its round slot style: the action's icon, count, cooldown and usability, the held trigger layer's
-action, and the game's pressed look when you press them. **Place the bar and extra buttons** moves the game's gamepad bar by steps with the D-pad (only its
+action, and the game's pressed look when you press them. **Place bar** moves the game's gamepad bar by steps with the D-pad (only its
 place on the screen changes, out of combat; X puts it back; the extra buttons follow it), and puts each
 extra button
 on one of the fixed places around the bar's controls (two columns on the outer side, two rows above and
@@ -219,10 +227,10 @@ off), X puts a button back. Places follow the compact layout.
 
 ## Vibrations
 
-The controller vibrates on the game events you choose (Vibrations tab): one switch and one intensity
-for all, then each event with its own box and its own pattern (micro tick, tick, double tick, pulse,
-long, heartbeat, crescendo) or Off, all with the D-pad; A or the Test button plays it, X turns it
-on or off.
+The controller vibrates on the game events you choose (Alerts › Vibrations): one switch and one
+intensity for all, then each event with its own box and its own pattern (micro tick, tick, double
+tick, pulse, long, heartbeat, crescendo): A turns it on or off, the D-pad picks its pattern, Y tests
+it.
 
 - **Combat**: death, your spell interrupted (by someone, not by moving), loss of control, aggro, entering combat, spell proc,
   action impossible.
@@ -236,7 +244,7 @@ allows and plays a pattern.
 
 ## Supplies
 
-One round button per resource, in the gamepad bar's style (Supplies tab):
+One round button per resource, in the gamepad bar's style (Alerts › Supplies):
 
 - **free bag slots** (quivers, ammo pouches and soul bags apart), the **equipped ammunition**, the
   **class reagents** (soul shards, infernal stones, arcane powder, runes, candles, symbols, seeds,
@@ -246,7 +254,7 @@ One round button per resource, in the gamepad bar's style (Supplies tab):
 - the bar is **placed freely**: dragged with the mouse while unlocked, or moved with the D-pad
   ("Move with the D-pad"), growing right, left, down or up, in 3 sizes; a click opens the bags
   (through the game's own backpack button);
-- low supplies and little room left can vibrate (Vibrations tab).
+- low supplies and little room left can vibrate (Alerts › Vibrations).
 
 ## Consumables wheel
 
@@ -254,7 +262,7 @@ A key of its own opens a wheel of consumables from your bags, drawn with the gam
 art (its wheel, highlight and veil), the aimed item and the help in its middle: 8 per page, **LB / RB** turn the pages (up to 3). Food,
 drink, healing and mana potions, healthstone, mana gem, bandages (used on yourself), buff food,
 elixirs and flasks, scrolls. The best of each kind comes first, then the other variants you carry (an option); each
-kind can be left out (Wheel tab).
+kind can be left out (Wheels › Consumables).
 
 - Give it a key in the Gamepad tab (Items list: any free button, or a back paddle in any layer) or
   in *Escape > Key Bindings > AddOns*.
@@ -267,21 +275,24 @@ kind can be left out (Wheel tab).
 
 ### Your own wheels
 
-Up to 8 wheels of your own, made in the Wheels tab with the gamepad. **New wheel** (or A on a wheel)
-opens its editor: the wheel as the game draws it, its 8 slots around it. The D-pad (or LB / RB) goes
-from slot to slot, A opens the slot's list on the right (Spells, Items, Macros; LB / RB change it),
-A on an entry fills the slot and goes on to the next one, the list still open; X empties a slot, B
-goes back. **Rename** (Y) types its name with the addon's keyboard (A confirms, B cancels) or a
-physical one (Enter / Escape); **Delete** asks twice. Each wheel shows and works like the
-consumables wheel (left stick, A, B; in combat too) with its name in the banner, and gets a key of
-its own: Gamepad tab, Items list, on any free button or paddle (or the game's Key Bindings, under
-AddOns). What a wheel holds changes out of combat only.
+Up to 8 wheels of your own, made in Wheels › My wheels with the gamepad: a card per wheel (its 8
+slots, its name, the button it is on), **New wheel** first. A on a card opens its editor: the wheel,
+its name and count in the middle, its 8 slots around it, and the lists on the right (Spells, Items,
+Macros; LB / RB change list). The D-pad (or LB / RB) goes from slot to slot; A aims the lists at a
+slot, and a choice fills it and goes on to the next one, the lists still open (a cyan diamond marks
+what is already in the wheel); X empties a slot, B goes back. **Rename** (Y) types its name in a box
+over the wheel, with the addon's keyboard (A confirms, B cancels) or a physical one (Enter / Escape);
+**Assign a button** takes you to the Gamepad tab, where the button you pick gets the wheel;
+**Delete** asks twice. Each wheel shows and works like the consumables wheel (left stick, A, B; in
+combat too) with its name in the banner, and gets a key of its own: Assign a button, the Gamepad
+tab's Items list (any free button or paddle), or the game's Key Bindings (under AddOns). What a wheel
+holds changes out of combat only.
 - It sits in the middle of the screen (unlocked, drag the open wheel with the mouse, or move it with
-  the D-pad from the Wheel tab).
+  the D-pad: Wheels › Position).
 - It works **in combat**: the wheel and the keys it takes are secure, run by the game. Food and drink
   are greyed there (the game forbids them in combat). Its content is updated out of combat only (a
   rule of the game).
-- Moving from slot to slot can vibrate (Vibrations tab).
+- Moving from slot to slot can vibrate (Alerts › Vibrations).
 
 ## Quest items
 
@@ -310,7 +321,7 @@ off, selecting one at a merchant warns too.
 
 In the configuration panel (RB + D-pad down, `/ec config`):
 
-- every function on or off (General tab);
+- every module on or off (Home › Modules), each one's settings in its own tab;
 - input method (daisywheel / split keyboard), keyboard layout (AZERTY / QWERTY), stick dead
   zone, stick response (linear, gentle, fast), magnet, cursor lines;
 - lock position, open automatically, only when the gamepad is active;
@@ -373,20 +384,23 @@ are also available in *Escape > Key Bindings > AddOns*.
   empty message B goes back to the game, which closes the chat.
 - Code layout: `Message.lua` is the common core (message, prediction, channels, sending),
   `Wheel.lua` and `StickKeyboard.lua` are the input methods, `UI.lua` the common panel, `Input.lua`
-  the pad buttons and sticks; `ConfigWindow.lua` the configuration panel (`Options.lua` its General
-  and Keyboard rows, `MapWindow.lua` its Gamepad tab); `Mapping.lua` / `Paddles.lua`,
+  the pad buttons and sticks; `ConfigWindow.lua` the configuration panel (`ConfigKit.lua` its parts,
+  `Options.lua` the Home, Wheels, Keyboard and Alerts tabs, `MapWindow.lua` the Gamepad tab,
+  `MyWheels.lua` the wheels' cards and editor); `Mapping.lua` / `Paddles.lua`,
   `QuestItems.lua` and `QuestLinks.lua` are the modules.
 
 ## Roadmap
 
-What is planned next (consumables wheel, remapping the game's own buttons...) is in
+What is planned next (automation at merchants, better items in the bags...) is in
 [ROADMAP.md](ROADMAP.md).
 
 ## Development
 
-Textures (PNG sources in `design/textures/`, converted to TGA for the game):
+Textures (PNG sources in `design/textures/`, converted to TGA for the game; the shapes and the
+controller silhouette are drawn by `render_textures.py`):
 
 ```bash
+python tools/render_textures.py
 python tools/convert_textures.py
 ```
 

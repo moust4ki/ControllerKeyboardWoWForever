@@ -120,7 +120,7 @@ end
 
 -- A filled box with an edge: radius 3 (edge 2) or 4 (edge 1 or 2)
 function K.Box(parent, radius, edge, layer, sub)
-    local box = { fill = K.Slice(parent, "ck_box" .. radius, layer, sub) }
+    local box = { fill = K.Slice(parent, format("ck_box%d", radius), layer, sub) }
     if edge then box.line = K.Slice(parent, format("ck_box%d_line%d", radius, edge), layer, (sub or 0) + 1) end
     function box:SetPoints(region, inset)
         self.fill:SetPoints(region, inset)
