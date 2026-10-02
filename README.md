@@ -223,7 +223,8 @@ One round button per resource, in the gamepad bar's style (Supplies tab):
 - the count, and under the **low threshold** a glow that grows stronger, faster and redder down to
   the **critical threshold**; each resource can be turned off, its thresholds set with the D-pad;
 - the bar is **placed freely**: dragged with the mouse while unlocked, or moved with the D-pad
-  ("Move with the D-pad"), horizontal or vertical, in 3 sizes; a click opens the bags;
+  ("Move with the D-pad"), growing right, left, down or up, in 3 sizes; a click opens the bags
+  (through the game's own backpack button);
 - low supplies and little room left can vibrate (Vibrations tab).
 
 ## Quest items

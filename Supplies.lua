@@ -6,8 +6,9 @@ local L = CK.L
 -- (soul shards, powders, candles, poisons...) and any item the player adds.
 -- Each shows its count; under its "low" threshold it glows, stronger and
 -- faster down to its "critical" one, where the glow is red. One bar of
--- buttons, placed freely (mouse drag while unlocked, or the D-pad), and a
--- click opens the bags. Nothing of the game's is changed.
+-- buttons, placed freely (mouse drag while unlocked, or the D-pad), growing
+-- in one of 4 directions, and a click opens the bags. Nothing of the game's
+-- is changed.
 local S = {}
 CK.Supplies = S
 
@@ -161,7 +162,8 @@ local function setGlow(b, severity)
         return
     end
     local glow = glowFor(b)
-    local size = b.size * (1.45 + 0.35 * severity)
+    -- Just around the slot's rim (the texture's ring is at its edge)
+    local size = b.size * (1.1 + 0.15 * severity)
     glow:SetSize(size, size)
     glow:SetVertexColor(ORANGE[1] + (RED[1] - ORANGE[1]) * severity, ORANGE[2] + (RED[2] - ORANGE[2]) * severity,
         ORANGE[3] + (RED[3] - ORANGE[3]) * severity)
@@ -177,10 +179,10 @@ local function setGlow(b, severity)
     if not glow.pulse:IsPlaying() then glow.pulse:Play() end
 end
 
-local function tooltip(b)
+local function tooltip(owner, b)
     local r = b.resource
     if not r or S.moving then return end
-    GameTooltip:SetOwner(b, "ANCHOR_TOP")
+    GameTooltip:SetOwner(owner, "ANCHOR_TOP")
     GameTooltip:SetText(r.name, 1, 1, 1)
     GameTooltip:AddLine(format(L.SUP_TIP_COUNT, r.count), 1, 0.82, 0)
     GameTooltip:AddLine(format(L.SUP_TIP_THRESHOLDS, r.cfg.low, r.cfg.critical), 0.7, 0.7, 0.7)
@@ -206,42 +208,60 @@ function S:BuildBar()
     self:Place()
 end
 
+-- A slot, and over it a secure button: a click presses the game's own
+-- backpack button, like a click of the player's (opening the bags from an
+-- addon's code is forbidden in gamepad mode). Created out of combat only.
+local BACKPACK = "MainMenuBarBackpackButton"
+
 function S:Button(i)
     local bar = self.bar
     local b = bar.buttons[i]
     if b then return b end
     b = CK.Paddles:CreateSlot(bar, SIZES[2])
-    b:EnableMouse(true)
-    b:RegisterForDrag("LeftButton")
     b.count:ClearAllPoints()
     b.count:SetPoint("BOTTOM", 0, 1)
-    b:SetScript("OnEnter", tooltip)
-    b:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    b:SetScript("OnMouseUp", function(_, button)
-        if button == "LeftButton" and not S.dragged and ToggleAllBags then ToggleAllBags() end
-        S.dragged = nil
+    local click = CK.NewFrame("Button", "ControllerKeyboardSupplyButton" .. i, bar, "SecureActionButtonTemplate")
+    click:SetFrameLevel(b:GetFrameLevel() + 10)
+    click:RegisterForClicks("LeftButtonUp")
+    click:RegisterForDrag("LeftButton")
+    if _G[BACKPACK] then
+        click:SetAttribute("type", "click")
+        click:SetAttribute("clickbutton", _G[BACKPACK])
+    end
+    click:SetScript("OnEnter", function(self) tooltip(self, b) end)
+    click:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    click:SetScript("OnDragStart", function()
+        if not settings().locked and not InCombatLockdown() then bar:StartMoving() end
     end)
-    b:SetScript("OnDragStart", function()
-        if not settings().locked then
-            S.dragged = true
-            bar:StartMoving()
-        end
-    end)
-    b:SetScript("OnDragStop", function()
+    click:SetScript("OnDragStop", function()
         bar:StopMovingOrSizing()
         S:SavePosition()
     end)
+    b.click = click
     bar.buttons[i] = b
     return b
 end
 
--- Size and layout of the buttons (they keep their size when it changes)
+-- Size of a slot (it keeps its size when unchanged)
 local function resize(b, size)
     if b.size == size then return end
     b.size = size
     b:SetSize(size, size)
     b.visual:SetSize(size, size)
+    b.click:SetSize(size, size)
 end
+
+-- The 4 ways the bar grows from its first button
+S.DIRECTIONS = {
+    { key = "right", x = 1, y = 0, anchor = "LEFT" },
+    { key = "left", x = -1, y = 0, anchor = "RIGHT" },
+    { key = "down", x = 0, y = -1, anchor = "TOP" },
+    { key = "up", x = 0, y = 1, anchor = "BOTTOM" },
+}
+local DIRECTION = {}
+for _, d in ipairs(S.DIRECTIONS) do DIRECTION[d.key] = d end
+-- Before 1.2: "row" and "column"
+local OLD_LAYOUT = { row = "right", column = "down" }
 
 function S:Place()
     local bar = self.bar
@@ -263,20 +283,25 @@ function S:Enabled()
     return CK.db and settings().enabled
 end
 
--- Counts, glows and the vibration when a resource gets lower
+-- What a slot shows: icon, count, glow
+local function fill(b, r, severity, level)
+    b.resource = r
+    CK.Paddles.SetIcon(b.icon, r.icon)
+    b.count:SetText(r.count)
+    b.count:SetTextColor(1, level == 2 and 0.25 or (level == 1 and 0.65 or 1), level > 0 and 0.2 or 1)
+    setGlow(b, severity)
+end
+
+-- Counts, glows and the vibration when a resource gets lower. The buttons'
+-- number, places and sizes only change out of combat (the game locks its
+-- secure buttons in combat): until then the ones there show what they can.
 function S:Refresh()
     if not CK.db then return end
     local s = settings()
-    if not s.enabled then
-        if self.bar then self.bar:Hide() end
-        return
-    end
-    self:BuildBar()
-    local bar = self.bar
-    local size = SIZES[s.size] or SIZES[2]
-    local shown = 0
+    s.layout = OLD_LAYOUT[s.layout] or s.layout
+    local list = {}
     self.levels = self.levels or {}
-    for _, r in ipairs(self:Resources()) do
+    for _, r in ipairs(s.enabled and self:Resources() or {}) do
         local severity = S.Severity(r.count, r.cfg)
         local level = severity >= 1 and 2 or (severity > 0 and 1 or 0)
         -- Worse than before: a vibration (not when the addon starts)
@@ -285,29 +310,49 @@ function S:Refresh()
             CK.Vibration:Fire(r.kind == "bags" and "lowSpace" or "lowStock")
         end
         self.levels[r.key] = level
-        if r.cfg.on then
-            shown = shown + 1
-            local b = self:Button(shown)
-            resize(b, size)
-            b.resource = r
-            CK.Paddles.SetIcon(b.icon, r.icon)
-            b.count:SetText(r.count)
-            b.count:SetTextColor(1, level == 2 and 0.25 or (level == 1 and 0.65 or 1), level > 0 and 0.2 or 1)
-            setGlow(b, severity)
-            b:ClearAllPoints()
-            local offset = (shown - 1) * (size + 8)
-            if s.layout == "column" then
-                b:SetPoint("TOP", bar, "TOP", 0, -offset)
-            else
-                b:SetPoint("LEFT", bar, "LEFT", offset, 0)
-            end
-            b:Show()
-        end
+        if r.cfg.on then list[#list + 1] = { r = r, severity = severity, level = level } end
     end
-    for i = shown + 1, #bar.buttons do bar.buttons[i]:Hide() end
-    local length = math.max(1, shown * (size + 8) - 8)
-    if s.layout == "column" then bar:SetSize(size, length) else bar:SetSize(length, size) end
-    bar:SetShown(shown > 0 or self.moving or false)
+
+    local size = SIZES[s.size] or SIZES[2]
+    local layout = table.concat({ tostring(s.enabled), #list, size, s.layout }, ":")
+    if InCombatLockdown() then
+        if self.bar then
+            for i, item in ipairs(list) do
+                local b = self.bar.buttons[i]
+                if b and b:IsShown() then fill(b, item.r, item.severity, item.level) end
+            end
+        end
+        self.pendingLayout = layout ~= self.layout or nil
+        return
+    end
+    self.pendingLayout = nil
+    if not s.enabled then
+        if self.bar then self.bar:Hide() end
+        self.layout = layout
+        return
+    end
+    self:BuildBar()
+    local bar = self.bar
+    local d = DIRECTION[s.layout] or DIRECTION.right
+    for i, item in ipairs(list) do
+        local b = self:Button(i)
+        resize(b, size)
+        local offset = (i - 1) * (size + 8)
+        for _, frame in ipairs({ b, b.click }) do
+            frame:ClearAllPoints()
+            frame:SetPoint(d.anchor, bar, d.anchor, d.x * offset, d.y * offset)
+            frame:Show()
+        end
+        fill(b, item.r, item.severity, item.level)
+    end
+    for i = #list + 1, #bar.buttons do
+        bar.buttons[i]:Hide()
+        bar.buttons[i].click:Hide()
+    end
+    local length = math.max(1, #list * (size + 8) - 8)
+    if d.x ~= 0 then bar:SetSize(length, size) else bar:SetSize(size, length) end
+    bar:SetShown(#list > 0 or self.moving or false)
+    self.layout = layout
 end
 
 ---------------------------------------------------------------------------
@@ -352,6 +397,7 @@ function S:StopPlacement()
 end
 
 function S:PlacementPress(name)
+    if InCombatLockdown() then return end
     if MOVES[name] then
         local point, _, _, x, y = self.bar:GetPoint(1)
         self.bar:ClearAllPoints()
@@ -415,12 +461,14 @@ end
 function S:Init()
     local f = CreateFrame("Frame")
     for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "BAG_UPDATE_DELAYED", "PLAYER_EQUIPMENT_CHANGED",
-        "UNIT_INVENTORY_CHANGED", "GET_ITEM_INFO_RECEIVED" }) do
+        "UNIT_INVENTORY_CHANGED", "GET_ITEM_INFO_RECEIVED", "PLAYER_REGEN_ENABLED" }) do
         pcall(f.RegisterEvent, f, event)
     end
     local queued
     f:SetScript("OnEvent", function(_, event, unit)
         if event == "UNIT_INVENTORY_CHANGED" and unit ~= "player" then return end
+        -- After a fight: the layout that waited
+        if event == "PLAYER_REGEN_ENABLED" and not S.pendingLayout then return end
         if queued then return end
         queued = true
         C_Timer.After(0.1, function()

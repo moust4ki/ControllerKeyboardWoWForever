@@ -338,8 +338,10 @@ local function suppliesRows()
         S:StartPlacement()
     end, true)
     b.button(L.SUP_RESET, function() S:ResetPosition() end, true)
-    b.pick(L.SUP_LAYOUT, { { key = "row", name = L.SUP_ROW }, { key = "column", name = L.SUP_COLUMN } }, s, "layout",
-        function() S:Refresh() end, true)
+    -- The way the bar grows from its first button
+    local directions = {}
+    for _, d in ipairs(S.DIRECTIONS) do directions[#directions + 1] = { key = d.key, name = L["SUP_DIR_" .. d.key:upper()] } end
+    b.pick(L.SUP_LAYOUT, directions, s, "layout", function() S:Refresh() end, true)
     local sizes = { L.SIZE_SMALL, L.SIZE_NORMAL, L.SIZE_LARGE }
     b.choice(L.SUP_SIZE, function() return sizes[s.size] or sizes[2] end, function(d)
         s.size = ((s.size or 2) - 1 + d) % #sizes + 1

@@ -16,7 +16,7 @@ in game, then released on GitHub and CurseForge. Done items move to the [CHANGEL
 - [x] **Supplies** tab: one round button per resource (free bag slots, equipped ammunition, class
   reagents, any item added from the bags), its count, and a glow under its low threshold, stronger
   and redder down to the critical one. Each resource on or off, thresholds set with the D-pad. The
-  bar is placed freely (mouse drag while unlocked, or the D-pad), horizontal or vertical, 3 sizes;
+  bar is placed freely (mouse drag while unlocked, or the D-pad), growing in 4 directions, 3 sizes;
   a click opens the bags. Low supplies and little room vibrate.
   - [ ] In-game check: detection (reagent item IDs of WoW Forever), the glow, the placement.
 - [x] The addon list shows the addon's icon.
