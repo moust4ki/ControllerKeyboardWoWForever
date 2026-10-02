@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0
+
+- **The game's own gamepad functions on any free button.** The Gamepad tab's Game list starts with
+  them: jump, back, interact and inspect (the game's fixed A / B / X / Y buttons, pressed from the
+  other button: their exact behaviour, the smart interact included), the Start menu, interface
+  focus, ping, and ally / enemy targeting (held). Put jump on a back paddle, the Start menu on
+  LT + L3...
+
 ## 1.2.0
 
 - **Vibrations** (new tab). The controller vibrates on the events you choose: one switch and one

@@ -12,7 +12,7 @@ function built in; the Start menu, interface focus, ping, ally / enemy targeting
 right bars are the game's own key bindings, which it sets again whenever one of its gamepad windows
 closes.
 
-- [ ] **Move a game function to another button** (a back paddle, L3, a free combination...): the
+- [x] **Move a game function to another button** (a back paddle, L3, a free combination...): the
   Gamepad tab's Game list gets a "gamepad functions" section. The four fixed ones press the game's
   own button (its behaviour exactly: the smart interact, jump and sit...); the others are the
   game's own bindings.

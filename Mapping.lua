@@ -412,6 +412,19 @@ local NATIVE_COMMANDS = {
     TOGGLEUIFOCUS = { "NAT_SELECT", "Interface\\Icons\\INV_Misc_Spyglass_02" },
     TOGGLEPINGSYSTEM = { "NAT_PING", { atlas = "Ping_Marker_Icon_Assist", glyph = "RS" } },
     TOGGLEPINGLISTENER = { "NAT_PING", { atlas = "Ping_Marker_Icon_Assist", glyph = "RS" } },
+    -- Held: the game's targeting (LB / RB)
+    GAMEPADLEFTTARGETMODIFIER = { "NAT_TARGET_FRIEND", { atlas = "gamepad-targeting-friendly" }, hold = true },
+    GAMEPADRIGHTTARGETMODIFIER = { "NAT_TARGET_ENEMY", { atlas = "gamepad-targeting-hostile" }, hold = true },
+}
+
+-- The game's own gamepad functions, for any free input: its four fixed
+-- buttons (pressed: their own behaviour, the smart interact...) and its
+-- gamepad key bindings. Not its left / right bar modifiers: the game checks
+-- which key holds them.
+M.PAD_FUNCTIONS = {
+    "bar:top:a", "bar:top:b", "bar:top:x", "bar:top:y",
+    "cmd:OPENRADIAL", "cmd:TOGGLEUIFOCUS", "cmd:TOGGLEPINGSYSTEM",
+    "cmd:GAMEPADLEFTTARGETMODIFIER", "cmd:GAMEPADRIGHTTARGETMODIFIER",
 }
 
 -- Name and icon of a binding of the game's (a command, or a click on one
@@ -445,6 +458,12 @@ end
 function M:ActionName(action)
     if not action then return nil end
     local kind, value = action:match("^(%a+):(.+)$")
+    local fixed = FIXED_FACE[action:match("^bar:top:(%a)$") or ""]
+    if fixed then return L["NAT_" .. fixed] end
+    if kind == "cmd" and NATIVE_COMMANDS[value] then
+        local native = NATIVE_COMMANDS[value]
+        return L[native[1]] .. (native.hold and L.MAP_HOLD or "")
+    end
     if kind == "cmd" then
         return CK.Paddles:CommandName(value)
     elseif kind == "spell" then
@@ -464,6 +483,9 @@ end
 function M:ActionIcon(action)
     if not action then return nil end
     local kind, value = action:match("^(%a+):(.+)$")
+    local fixed = FIXED_FACE[action:match("^bar:top:(%a)$") or ""]
+    if fixed then return FIXED_ICON[fixed] end
+    if kind == "cmd" and NATIVE_COMMANDS[value] then return NATIVE_COMMANDS[value][2] end
     if kind == "cmd" then
         return COMMAND_ICONS[value] or COMMAND_ICON
     elseif kind == "spell" then
@@ -511,6 +533,13 @@ function M:Catalog(tab, forSlot)
                     cats[#cats + 1] = cat
                 end
                 table.insert(cat.commands, command)
+            end
+        end
+        -- The game's own gamepad functions first
+        list[#list + 1] = { header = L.CAT_GAMEPAD }
+        for _, action in ipairs(M.PAD_FUNCTIONS) do
+            if not action:find("^bar:") or CK.Paddles:NativeButton(action) then
+                list[#list + 1] = { action = action, name = M:ActionName(action), icon = M:ActionIcon(action) }
             end
         end
         list[#list + 1] = { header = L.CAT_COMMON }

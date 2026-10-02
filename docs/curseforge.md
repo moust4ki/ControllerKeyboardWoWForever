@@ -99,8 +99,9 @@ controller the game drives vibrates.
 The Gamepad tab shows your whole controller in its four trigger layers. The buttons WoW Forever uses stay
 exactly as they are and show what they do; the free ones get the missing functions: L3 / R3, unused
 trigger combinations (LT + Start...) and the back paddles can run a game function (run / walk,
-autorun, game menu, map, bags, any key binding of the game), a spell, an item, a macro, or press a
-button of the gamepad action bar.
+autorun, game menu, map, bags, any key binding of the game), one of the game's own gamepad functions
+(jump, back, interact, inspect, Start menu, ping, targeting...), a spell, an item, a macro, or press
+a button of the gamepad action bar.
 
 **Back paddles (L4 / R4 / L5 / R5)**
 Steam Deck and other controllers: set each paddle to a keyboard key in Steam Input (F13 to F16 for

@@ -163,8 +163,11 @@ LT + RT (hold the triggers, or click the layer tabs).
   in the game's own slot, like with its action bar editor (X empties it).
 - **The free inputs get the missing functions**: L3 / R3, trigger combinations nothing is bound to
   (LT + Start...) and the back paddles. Press A on one and pick, with LB / RB for the tabs:
-  - **Game**: run / walk, autorun, game menu, map, bags, character, spellbook, quest log, open the
-    keyboard... then every key binding of the game, by its own categories;
+  - **Game**: first **the game's own gamepad functions**: jump, back, interact and inspect (the
+    game's fixed A / B / X / Y buttons, pressed: their own behaviour, the smart interact
+    included), the Start menu, interface focus, ping, ally and enemy targeting (held); then run /
+    walk, autorun, game menu, map, bags, character, spellbook, quest log, open the keyboard... and
+    every key binding of the game, by its own categories;
   - **Spells**, **Items** (usable ones in your bags), **Macros**;
   - **Bar**: press a button of the gamepad action bar ("LT + RT A"...).
 - X removes, B goes back / closes. Everything is clickable with the mouse too.
