@@ -492,7 +492,9 @@ function W:Build()
         -- or the mouse
         local b = CK.NewFrame("Button", "ControllerKeyboardWheelSlot" .. i, wheel, "SecureActionButtonTemplate")
         b:SetSize(SLOT + 14, SLOT + 14)
-        b:SetPoint("CENTER", bg, "CENTER", ix, iy)
+        -- On the wheel frame (the background's center): a protected frame can't
+        -- be anchored to a texture
+        b:SetPoint("CENTER", wheel, "CENTER", ix, iy)
         b:RegisterForClicks("AnyUp")
         b:SetAttribute("useOnKeyDown", false)
         b:SetScript("OnEnter", function(self)
