@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.4.1
+
+- **Better items** (Alerts › Inventory, on): a green arrow at the bottom right of a bag item better
+  than what you wear in its slot. Items are compared by their stats, weighed for your class: a
+  weapon's damage per second first, then strength, agility, stamina, intellect, spirit, attack and
+  spell power, armor (a hybrid by the talent tree with the most points: a holy paladin weighs
+  intellect and healing, a protection one stamina and armor); the side panel shows your weights. Only
+  for what you can use, of your class's armor type (or the type you already wear there). Rings,
+  trinkets and one-hand weapons are compared with the weaker of the two, a two-hand weapon with both
+  hands.
+- **At merchants** (Home › Automation, off until you turn them on): **sell grey items**, one after the
+  other, with a line in the chat saying what they brought (quest items never sold); **repair**, once
+  the grey items are sold, with a line saying what it cost; **with the guild's money** first, as an
+  option, when the guild allows it.
+
 ## 1.4.0
 
 - **A new configuration panel** (Claude Design). Five tabs: Home, Gamepad, Wheels, Keyboard and

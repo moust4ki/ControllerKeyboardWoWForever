@@ -4,7 +4,7 @@ Everything planned for Easy Controller - Forever, so nothing gets lost. Each fea
 in game, then released on GitHub and CurseForge. Done items move to the [CHANGELOG](CHANGELOG.md)
 (1.2.0: vibrations, supplies, consumables wheel; 1.2.1: the game's gamepad functions anywhere, its
 buttons replaceable; 1.3.0: your own wheels, every button remappable from the start; 1.4.0: the new
-configuration panel).
+configuration panel; 1.4.1: better items in the bags, selling and repairing at merchants).
 
 ## 1.2.1: the game's own gamepad functions, on any button
 
@@ -38,7 +38,7 @@ closes.
   - limit: what a wheel holds can only change out of combat (the game locks secure buttons in
     combat).
 
-## Next version: automation at merchants
+## 1.4.1: automation at merchants
 
 Both turned on or off in a new Home › Automation section (under Look).
 
@@ -47,7 +47,7 @@ Both turned on or off in a new Home › Automation section (under Look).
 - [x] **Auto-repair**: at a merchant who repairs, the equipment is repaired by itself; a line in the
   chat says what it cost (or that the money was short). With the guild's money first, as an option.
 
-## Next version: inventory, better items
+## 1.4.1: inventory, better items
 
 A new Alerts › Inventory section.
 
