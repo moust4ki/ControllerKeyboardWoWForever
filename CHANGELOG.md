@@ -2,34 +2,39 @@
 
 ## 1.2.0
 
-- **Vibrations.** The controller vibrates on the game events you choose, in a new Vibrations tab:
-  one switch and one intensity, then each event with its own box and pattern (micro tick, tick,
-  double tick, pulse, long, heartbeat, crescendo) or Off, all with the D-pad; A tests it, X turns it
-  on or off. Combat (low health heartbeat, big
-  hit, death, interrupted, loss of control, aggro, entering combat, proc, action impossible), social
-  (whisper, invite, ready check, resurrection or summon, trade or duel), progress (level up, quest
-  objective, rare loot, bags full, gear almost broken) and the chat keyboard's keys. `/ec vibe` tests
-  it.
-- **Supplies.** A round button per resource, in a new Supplies tab: free bag slots, the equipped
-  ammunition, the class reagents once carried (soul shards, powders, candles, symbols, seeds,
-  poisons...) and any item added from the bags. Each shows its count and glows under its low
-  threshold, stronger and redder down to the critical one; thresholds set with the D-pad. The bar
-  is placed freely (mouse drag while unlocked, or the D-pad), growing right, left, down or up, in 3 sizes; a
-  click opens the bags. Low supplies and little room can vibrate.
-- **Consumables wheel.** A key of its own (Gamepad tab, Items list: any free button or a back paddle
-  in any layer; or the game's key bindings) opens a wheel drawn with the game's own radial menu art (the aimed item and the help in its middle),
-  8 consumables a page (LB / RB turn the pages, up to 3), from the bags:
-  food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
-  elixirs and flasks, scrolls, the best of each kind first and the other variants after. The right
-  point at an item with the left stick and press A to use it (the stick in the middle: nothing), B
-  cancels; the right stick stays the game's; the mouse works too. Bandages are found by their First
-  Aid spell. No game setting is changed. `/ec wheel` lists what it holds and why an item is not in
-  it. While open it takes the sticks,
-  like the game's wheels: the camera and the character stay still. In the middle of the screen
-  (or placed with the mouse or the D-pad). It works in combat (secure
-  frames and snippets; food and drink greyed there). Wheel tab: each kind on or off, the variants.
-- The configuration panel's tabs share the room, for the new ones; it can be dragged with the mouse.
-- The addon list shows Easy Controller's icon (also on GitHub and CurseForge).
+- **Vibrations** (new tab). The controller vibrates on the events you choose: one switch and one
+  intensity, then each event with its own pattern (micro tick, tick, double tick, pulse, long,
+  heartbeat, crescendo) or Off, picked with the D-pad; A tests it, X turns it on or off.
+  - Combat: death, your spell interrupted (by someone, not by moving), loss of control, aggro,
+    entering combat, spell proc, action impossible. Low health and big hit are listed as
+    unavailable when WoW Forever hides your health from addons in combat.
+  - Social: whisper, group or raid invite, ready check, resurrection or summon, trade or duel.
+  - Progress: level up, quest objective or quest complete, rare loot, bags full, gear almost broken.
+  - Easy Controller: low supplies, little room in the bags, the wheel's slots, chat keyboard keys.
+  - `/ec vibe` shows what the client allows and plays a pattern.
+- **Supplies** (new tab). A round button per resource, in the gamepad bar's style: free bag slots
+  (special bags apart), the equipped ammunition, the class reagents once carried (soul shards,
+  powders, candles, symbols, seeds, poisons...) and any item added from your bags. Each shows its
+  count and glows under its low threshold, bigger and redder down to the critical one; thresholds
+  are set with the D-pad, each resource can be turned off. The bar is placed freely (dragged with
+  the mouse while unlocked, or moved with the D-pad), grows right, left, down or up, in 3 sizes. A
+  click opens the bags, through the game's own backpack button.
+- **Consumables wheel** (new tab). A key of its own (Gamepad tab, Items list: any free button, or a
+  back paddle in any layer; or the game's key bindings) opens a wheel drawn with the game's own
+  radial menu art: food, drink, healing and mana potions, healthstone, mana gem, bandages (used on
+  yourself), buff food, elixirs and flasks, scrolls from your bags, the best of each kind first,
+  8 a page (LB / RB turn the pages, up to 3).
+  - Point at an item with the left stick and press A to use it; the stick back in the middle points
+    at nothing; B cancels. The right stick stays the game's, for its own spell wheels. The mouse
+    works too.
+  - While it is open, and after it closes until you let the stick go, the sticks don't move the
+    character or the camera: eating isn't cut short.
+  - It works in combat (food and drink greyed there); its content is updated out of combat. Items
+    above your level are left out. No game setting is changed.
+  - `/ec wheel` lists what it holds, and why an item of your bags is not in it.
+- The configuration panel's tabs share the room for the new ones, and the panel can be dragged
+  anywhere with the mouse.
+- New icon, in the game's addon list too.
 
 ## 1.1.1
 
