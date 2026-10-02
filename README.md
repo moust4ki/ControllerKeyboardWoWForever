@@ -1,3 +1,5 @@
+<img src="docs/icon.png" alt="Easy Controller - Forever" width="128" align="right">
+
 # Easy Controller - Forever
 
 *Formerly Controller Keyboard.*

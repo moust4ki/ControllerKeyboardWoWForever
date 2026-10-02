@@ -26,7 +26,7 @@
   (or placed with the mouse or the D-pad). It works in combat (secure
   frames and snippets; food and drink greyed there). Wheel tab: each kind on or off, the variants.
 - The configuration panel's tabs share the room, for the new ones; it can be dragged with the mouse.
-- The addon list shows Easy Controller's icon.
+- The addon list shows Easy Controller's icon (also on GitHub and CurseForge).
 
 ## 1.1.1
 
