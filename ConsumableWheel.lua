@@ -264,7 +264,6 @@ local SHOW = [[
     owner:SetAttribute("page", 1)
     ]] .. APPLY_PAGE .. [[
     owner:Show()
-    owner:EnableGamePadStick(true)
     for prefix in gmatch(owner:GetAttribute("ck-prefixes"), "([^,]*),") do
         owner:SetBindingClick(true, prefix .. "PAD1", "ControllerKeyboardWheelUse")
         owner:SetBindingClick(true, prefix .. "PAD2", "ControllerKeyboardWheelClose")
@@ -275,7 +274,6 @@ local SHOW = [[
 ]]
 
 local HIDE = [[
-    owner:EnableGamePadStick(false)
     owner:Hide()
     owner:ClearBindings()
 ]]
@@ -349,10 +347,6 @@ function W:Build()
         self:StopMovingOrSizing()
         W:SavePosition()
     end)
-    -- Taking the sticks (EnableGamePadStick, from the snippets) needs a
-    -- stick script on the frame, like the game's wheels: without one the
-    -- camera and the character still get them
-    wheel:SetScript("OnGamePadStick", function() W:Track() end)
     wheel:SetAttribute("ck-prefixes", PREFIXES)
     -- Each slot's direction, from the middle
     for i = 1, SEGMENTS do
@@ -377,6 +371,14 @@ function W:Build()
     local view = CK.NewFrame("Frame", nil, wheel)
     view:SetAllPoints()
     self.view = view
+    -- The sticks: taken by this plain frame of ours while it shows (with the
+    -- wheel), like the game's own wheels, so the character and the camera
+    -- don't move (and food can be eaten: not while moving). Set once, out
+    -- of combat; its stick script is needed for the game to give it them.
+    if view.EnableGamePadStick then
+        pcall(view.EnableGamePadStick, view, true)
+        view:SetScript("OnGamePadStick", function() W:Track() end)
+    end
     local bg = view:CreateTexture(nil, "BACKGROUND")
     bg:SetPoint("CENTER")
     atlas(bg, "gamepad-radial-menu-wheelbg", function(t)
@@ -492,7 +494,6 @@ function W:Fill()
     local items = s.enabled and self:Scan() or {}
     local wheel = self.frame
     if wheel:IsShown() and #items == 0 then
-        wheel:EnableGamePadStick(false)
         wheel:Hide()
         ClearOverrideBindings(wheel)
     end
@@ -686,7 +687,6 @@ function W:StopPlacement()
     self.moving = false
     if self.banner then self.banner:Hide() end
     if not InCombatLockdown() then
-        self.frame:EnableGamePadStick(false)
         self.frame:Hide()
         ClearOverrideBindings(self.frame)
     end
