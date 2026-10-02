@@ -5,9 +5,8 @@ local _, CK = ...
 -- one intensity for all. Only the two standard motors are used (no trigger
 -- motors): every controller the game drives feels them.
 --
--- WoW Forever hides some combat values from addons (secret values): the
--- player's exact health may be one of them in combat. The events that need
--- it then do nothing, and the Vibrations tab says so.
+-- No event on the player's health: WoW Forever hides it from addons in
+-- combat (a secret value), so low health and big hit could not work.
 local V = {}
 CK.Vibration = V
 
@@ -27,12 +26,10 @@ for i, p in ipairs(V.PATTERNS) do
     PATTERN[p.key] = p
 end
 
--- The events, by group, with their default state and pattern. "health": needs
--- the player's health; "needs": shown once that module of ours exists.
+-- The events, by group, with their default state and pattern. "needs": shown
+-- once that module of ours exists.
 V.GROUPS = { "combat", "social", "progress", "addon" }
 V.EVENTS = {
-    { key = "lowHealth", group = "combat", on = true, pattern = "heart", health = true },
-    { key = "bigHit", group = "combat", on = true, pattern = "pulse", health = true },
     { key = "death", group = "combat", on = true, pattern = "long" },
     { key = "interrupted", group = "combat", on = true, pattern = "double" },
     { key = "lossOfControl", group = "combat", on = true, pattern = "pulse" },
@@ -61,6 +58,10 @@ for _, e in ipairs(V.EVENTS) do EVENT[e.key] = e end
 -- settings.vibration = { enabled, intensity, events = { key = { on, pattern } } }
 function V:Settings()
     local s = CK.db.settings.vibration
+    -- Events no longer offered (low health, big hit before 1.2.2)
+    for key in pairs(s.events) do
+        if not EVENT[key] then s.events[key] = nil end
+    end
     for _, e in ipairs(V.EVENTS) do
         local cfg = s.events[e.key]
         if type(cfg) ~= "table" then
@@ -79,10 +80,6 @@ function V:GroupEvents(group)
         if e.group == group and (not e.needs or CK[e.needs]) then list[#list + 1] = e end
     end
     return list
-end
-
-function V:IsUnavailable(key)
-    return EVENT[key] and EVENT[key].health and self.healthHidden or false
 end
 
 function V:NextPattern(key, delta)
@@ -160,46 +157,9 @@ function V:Fire(key, strength)
     self:Play(cfg.pattern, strength)
 end
 
----------------------------------------------------------------------------
--- Health: a heartbeat while low in combat, a pulse on a big hit
----------------------------------------------------------------------------
+-- Combat values WoW Forever hides from addons
 local function secret(v)
     return issecretvalue ~= nil and issecretvalue(v) or false
-end
-
-function V:ReadHealth()
-    local health, max = UnitHealth("player"), UnitHealthMax("player")
-    if secret(health) or secret(max) then
-        self.healthHidden = true
-        self.healthPct = nil
-    else
-        self.healthPct = max and max > 0 and health / max or nil
-    end
-end
-
-function V:UpdateHeart()
-    local s = self:Settings()
-    local pct = self.healthPct
-    local beating = s.enabled and s.events.lowHealth.on and pct and pct > 0 and pct < 0.35
-        and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")
-    local interval = beating and (pct < 0.2 and 0.7 or 1.2) or nil
-    if interval == self.heartInterval then return end
-    if self.heart then self.heart:Cancel() end
-    self.heart, self.heartInterval = nil, interval
-    if interval then
-        self:Play(s.events.lowHealth.pattern)
-        self.heart = C_Timer.NewTicker(interval, function() V:Play(V:Settings().events.lowHealth.pattern) end)
-    end
-end
-
-function V:OnHit(amount)
-    local max = UnitHealthMax("player")
-    if secret(amount) or secret(max) then
-        self.healthHidden = true
-        return
-    end
-    local share = type(amount) == "number" and max and max > 0 and amount / max or 0
-    if share >= 0.10 then self:Fire("bigHit", math.min(1, 0.5 + share * 2.5)) end
 end
 
 ---------------------------------------------------------------------------
@@ -264,15 +224,7 @@ end
 -- Events
 ---------------------------------------------------------------------------
 local HANDLERS = {
-    PLAYER_DEAD = function() V:Fire("death") V:UpdateHeart() end,
-    UNIT_HEALTH = function(unit)
-        if unit ~= "player" then return end
-        V:ReadHealth()
-        V:UpdateHeart()
-    end,
-    UNIT_COMBAT = function(unit, action, _, amount)
-        if unit == "player" and action == "WOUND" then V:OnHit(amount) end
-    end,
+    PLAYER_DEAD = function() V:Fire("death") end,
     UNIT_SPELLCAST_INTERRUPTED = function(unit, _, _, interruptedBy)
         -- Interrupted by someone (moving also cancels a cast: no interrupter)
         if unit == "player" and interruptedBy ~= nil then V:Fire("interrupted") end
@@ -287,12 +239,7 @@ local HANDLERS = {
         if status and status >= 2 and (V.threat or 0) < 2 then V:Fire("aggro") end
         V.threat = status
     end,
-    PLAYER_REGEN_DISABLED = function()
-        V:Fire("combat")
-        V:ReadHealth()
-        V:UpdateHeart()
-    end,
-    PLAYER_REGEN_ENABLED = function() V:UpdateHeart() end,
+    PLAYER_REGEN_DISABLED = function() V:Fire("combat") end,
     SPELL_ACTIVATION_OVERLAY_SHOW = function() V:Fire("proc") end,
     UI_ERROR_MESSAGE = function(_, message)
         if message == ERR_INV_FULL or message == ERR_BAG_FULL then
@@ -331,10 +278,7 @@ function V:Diagnose(key)
     local L = CK.L
     local api = C_GamePad and C_GamePad.SetVibration ~= nil
     local device = C_GamePad and C_GamePad.GetActiveDeviceID and C_GamePad.GetActiveDeviceID()
-    self:ReadHealth()
-    local health = self.healthHidden and L.VIB_DIAG_HIDDEN
-        or (self.healthPct and format("%d %%", self.healthPct * 100 + 0.5) or "?")
-    CK:Print(L.VIB_DIAG, tostring(api), tostring(device), health, tostring(self:Settings().enabled))
+    CK:Print(L.VIB_DIAG, tostring(api), tostring(device), tostring(self:Settings().enabled))
     local names = {}
     for _, p in ipairs(V.PATTERNS) do names[#names + 1] = p.key end
     key = key and key ~= "" and key or "pulse"
@@ -355,5 +299,4 @@ function V:Init()
         hooksecurefunc(CK, name, function() V:Fire("keyPress") end)
     end
     self.durabilityWasLow = durabilityLow()
-    self:ReadHealth()
 end

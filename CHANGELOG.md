@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2
+
+- **Vibrations**: low health and big hit removed. WoW Forever hides your health from addons in combat,
+  so they could never work there.
+
 ## 1.2.1
 
 - **The game's own gamepad functions on any free button.** The Gamepad tab's Game list starts with

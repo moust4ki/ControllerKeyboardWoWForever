@@ -89,8 +89,7 @@ threshold it glows, stronger and redder down to the critical one; thresholds are
 Place the bar anywhere (mouse or D-pad), lock it; a click opens your bags.
 
 **Vibrations**
-The controller vibrates on the game events you choose: combat (low health heartbeat, big hit, death,
-interrupted, loss of control, aggro...), social (whisper, invite, ready check, resurrection...) and
+The controller vibrates on the game events you choose: combat (death, interrupted, loss of control, aggro...), social (whisper, invite, ready check, resurrection...) and
 progress (level up, quest objective, rare loot, bags full...). Each event has its own switch and its
 own pattern (tick, double tick, pulse, heartbeat, crescendo...), with one intensity for all. Any
 controller the game drives vibrates.

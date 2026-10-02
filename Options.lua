@@ -274,7 +274,6 @@ local function vibrationRows()
     b.check(L.VIB_ENABLE, function() return s.enabled end, function(v)
         s.enabled = v
         if v then V:Play("pulse") else V:Stop() end
-        V:UpdateHeart()
     end)
     if not s.enabled then
         b.info(L.VIB_OFF_INFO)
@@ -291,23 +290,15 @@ local function vibrationRows()
             b.header(L["VIB_H_" .. group:upper()])
             for _, e in ipairs(events) do
                 local cfg = s.events[e.key]
-                local text = L["VIB_E_" .. e.key:upper()]
-                local tip
-                if V:IsUnavailable(e.key) then
-                    text = text .. " |cff9d9a8c(" .. L.VIB_UNAVAILABLE .. ")|r"
-                    tip = L.VIB_UNAVAILABLE_TIP
-                end
-                b.toggle(text, function() return cfg.on end, function(v)
+                b.toggle(L["VIB_E_" .. e.key:upper()], function() return cfg.on end, function(v)
                     cfg.on = v
                     if v then V:Play(cfg.pattern) end
-                    if e.key == "lowHealth" then V:UpdateHeart() end
                 end, function()
                     return cfg.on and L["VIB_P_" .. cfg.pattern:upper()] or L.VIB_OFF
                 end, function(d)
                     -- "Off" is one of the values: the D-pad does it all
                     if V:StepEvent(cfg, d) then V:Play(cfg.pattern) end
-                    if e.key == "lowHealth" then V:UpdateHeart() end
-                end, function() V:Play(cfg.pattern) end, tip)
+                end, function() V:Play(cfg.pattern) end)
             end
         end
     end

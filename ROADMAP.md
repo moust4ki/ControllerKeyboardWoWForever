@@ -39,8 +39,6 @@ closes.
 
 ## To decide
 
-- **Vibrations, low health and big hit**: WoW Forever hides the player's health from addons in
-  combat. Look for another signal (the game's own low health warning), or remove them.
 - **Chat keyboard, writing in the chat box**: let the game send the message natively when the text
   is unchanged; never bring back text already sent or erased.
 
