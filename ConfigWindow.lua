@@ -338,6 +338,10 @@ function RailPage:Build(parent)
     self.moreDown:SetSize(11, 11)
     self.moreDown:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, -8)
     for _, t in ipairs({ self.moreUp, self.moreDown }) do t:SetVertexColor(KC.dimGold[1], KC.dimGold[2], KC.dimGold[3]) end
+    -- Sections drawn their own way (the wheels' cards) in the list's place
+    for _, sec in ipairs(self.def.sections) do
+        if sec.view then sec.view:Build(list, self) end
+    end
 
     -- The detail panel, the picker in its place
     self.detail = K.Detail(f, DETAIL_W)
@@ -512,6 +516,19 @@ function RailPage:Render()
         e.diamond:SetShown(active)
         e.sel:SetShown(active and self.zone == "rail")
     end
+    -- A section drawn its own way
+    for _, other in ipairs(self.def.sections) do
+        if other.view then other.view.frame:SetShown(other == sec) end
+    end
+    if sec.view then
+        self.rows = {}
+        for _, r in ipairs(self.rowsUI) do r:Hide() end
+        self.moreUp:Hide()
+        self.moreDown:Hide()
+        sec.view:Render(self, self.zone == "list")
+        self:RenderSide()
+        return
+    end
     -- The list, windowed on the focus (the section title above it kept)
     self:Rebuild()
     local rows = self.rows
@@ -555,7 +572,11 @@ function RailPage:Render()
     for j = n + 1, #self.rowsUI do self.rowsUI[j]:Hide() end
     self.moreUp:SetShown(start > 1)
     self.moreDown:SetShown(moreBelow)
-    -- The detail panel, or the picker
+    self:RenderSide()
+end
+
+-- The detail panel, or the picker
+function RailPage:RenderSide()
     if self.picker:IsOpen() then
         self.detail:Hide()
         self.picker:Render()
@@ -568,6 +589,7 @@ end
 function RailPage:Detail()
     local sec = self:Section()
     if self.zone == "rail" then return { title = sec.label, body = resolve(sec.tip) } end
+    if sec.view then return sec.view:Detail(self) end
     local row = self.rows[self:FocusIndex() or 0]
     if not row then return { title = sec.label, body = resolve(sec.tip) } end
     return { title = resolve(row.title) or resolve(row.label), body = resolve(row.tip), tag = resolve(row.tag),
@@ -698,6 +720,17 @@ function RailPage:Press(name)
         end
         return true
     end
+    -- A section drawn its own way: its presses; B or an edge back to the rail
+    local view = self:Section().view
+    if view then
+        if view:Press(self, name) then return true end
+        if name == "B" or name == "LEFT" then
+            self.zone = "rail"
+            C:Render()
+            return true
+        end
+        return name ~= "LB" and name ~= "RB"
+    end
     local rows = self.rows or {}
     local row = rows[self:FocusIndex() or 0]
     if name == "UP" or name == "DOWN" then
@@ -740,6 +773,8 @@ function RailPage:Help()
         return { H({ "DPAD" }, L.V_MOVE), H({ "A" }, L.V_OPEN, "A"), tab,
             H({ "B" }, self.def.onBack and L.V_BACK or L.V_CLOSE, "B") }
     end
+    local view = self:Section().view
+    if view then return view:Help(self) end
     local row = self.rows and self.rows[self:FocusIndex() or 0]
     if not row then return { tab, H({ "B" }, L.V_BACK, "B") } end
     local hints = {}
@@ -761,259 +796,6 @@ function RailPage:Help()
     hints[#hints + 1] = tab
     hints[#hints + 1] = H({ "B" }, L.V_BACK, "B")
     return hints
-end
-
----------------------------------------------------------------------------
--- The pages of 1.x still drawn their old way (the Gamepad tab and the wheels
--- until they get their 2.0 screens): a list of rows. Kinds: header, info,
--- check, choice (< value >), button, toggle (a box and a choice; an
--- optional test: A or its button; X switches the box)
----------------------------------------------------------------------------
-local ListPage = {}
-ListPage.__index = ListPage
-local ROW_H, ROWS = 28, 15
-local kit
-
-function C.NewListPage(rows)
-    return setmetatable({ rows = rows, offset = 0 }, ListPage)
-end
-
-local function selectable(row)
-    return row and row.kind ~= "header" and row.kind ~= "info"
-end
-
-function ListPage:Build(parent)
-    kit = CK.UIKit
-    local f = CK.NewFrame("Frame", nil, parent)
-    f:SetAllPoints()
-    self.frame = f
-    self.widgets = {}
-    local page = self
-    for i = 1, ROWS do
-        local r = CK.NewFrame("Button", nil, f)
-        r:SetSize(770, ROW_H - 2)
-        r:SetPoint("TOPLEFT", 10, -(i - 1) * ROW_H)
-        r:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        r.select = kit.nineSlice(r, "ck_select", 128, 32, 10, 10, "ARTWORK")
-        r.box = r:CreateTexture(nil, "OVERLAY")
-        r.box:SetSize(22, 22)
-        r.box:SetTexture("Interface\\Buttons\\UI-CheckBox-Up")
-        r.tick = r:CreateTexture(nil, "OVERLAY", nil, 1)
-        r.tick:SetAllPoints(r.box)
-        r.tick:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
-        r.label = kit.text(r, 13)
-        r.label:SetJustifyH("LEFT")
-        r.label:SetWordWrap(false)
-        r.value = kit.text(r, 13)
-        r.value:SetJustifyH("CENTER")
-        r.value:SetWidth(220)
-        r.value:SetPoint("RIGHT", -40, 0)
-        r.value:SetWordWrap(false)
-        r.prev = kit.buildButton(r, "<", function() page:Step(r.index, -1) end)
-        r.prev:SetSize(24, 20)
-        r.prev:SetPoint("RIGHT", r.value, "LEFT", -6, 0)
-        r.next = kit.buildButton(r, ">", function() page:Step(r.index, 1) end)
-        r.next:SetSize(24, 20)
-        r.next:SetPoint("LEFT", r.value, "RIGHT", 6, 0)
-        r.test = kit.buildButton(r, L.CFG_TEST, function()
-            local row = r.index and page.list[r.index]
-            if row and row.test then row.test() end
-        end)
-        r.test:SetSize(78, 20)
-        r.test:SetPoint("RIGHT", r.prev, "LEFT", -14, 0)
-        r:SetScript("OnClick", function(self, button)
-            if self.index then
-                page.index = self.index
-                if page.list[self.index].kind == "choice" then
-                    page:Step(self.index, button == "RightButton" and -1 or 1)
-                else
-                    page:Activate()
-                end
-            end
-        end)
-        r:SetScript("OnEnter", function(self)
-            if self.index and page.index ~= self.index then
-                page.index = self.index
-                C:Render()
-            end
-            local row = self.index and page.list[self.index]
-            if row and row.tip then
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetText(row.text, 1, 1, 1)
-                GameTooltip:AddLine(row.tip, 1, 0.82, 0, true)
-                GameTooltip:Show()
-            end
-        end)
-        r:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        self.widgets[i] = r
-    end
-    f:EnableMouseWheel(true)
-    f:SetScript("OnMouseWheel", function(_, delta) page:Scroll(-delta * 3) end)
-    f:Hide()
-end
-
-function ListPage:Show()
-    self.list = self.rows()
-    if not selectable(self.list[self.index or 0]) then
-        self.index = nil
-        for i, row in ipairs(self.list) do
-            if selectable(row) then self.index = i break end
-        end
-    end
-    self.frame:Show()
-end
-
-function ListPage:Hide() self.frame:Hide() end
-
-function ListPage:Scroll(delta)
-    self.offset = math.max(0, math.min(#self.list - ROWS, self.offset + delta))
-    C:Render()
-end
-
-function ListPage:Move(delta)
-    local i = self.index or 0
-    repeat i = i + delta until not self.list[i] or selectable(self.list[i])
-    if self.list[i] then self.index = i end
-    self:Reveal()
-    C:Render()
-end
-
-function ListPage:Reveal()
-    if not self.index then return end
-    local top = self.index
-    while self.list[top - 1] and not selectable(self.list[top - 1]) do top = top - 1 end
-    if top <= self.offset then self.offset = math.max(0, top - 1) end
-    if self.index > self.offset + ROWS then self.offset = self.index - ROWS end
-end
-
-function ListPage:Rebuild()
-    self.list = self.rows()
-    local key = self.selectKey
-    self.selectKey = nil
-    if key then
-        for i, row in ipairs(self.list) do
-            if row.key == key then
-                self.index = i
-                break
-            end
-        end
-    end
-    if not selectable(self.list[self.index or 0]) then
-        self.index = nil
-        for i, row in ipairs(self.list) do
-            if selectable(row) then self.index = i break end
-        end
-    end
-    self.offset = math.max(0, math.min(self.offset, #self.list - ROWS))
-    self:Reveal()
-end
-
-function ListPage:Refresh()
-    self:Rebuild()
-    C:Render()
-end
-
-function ListPage:Step(index, delta)
-    local row = self.list[index]
-    if row and (row.kind == "choice" or row.kind == "toggle") then
-        row.step(delta)
-        self:Rebuild()
-        C:Render()
-    end
-end
-
-function ListPage:Activate()
-    local row = self.list[self.index or 0]
-    if not row then return end
-    if row.kind == "check" or row.kind == "toggle" then
-        row.set(not row.get())
-    elseif row.kind == "choice" then
-        row.step(1)
-    elseif row.kind == "button" then
-        row.func()
-    end
-    self:Rebuild()
-    if self.selectNext then
-        self.selectNext = nil
-        return self:Move(1)
-    end
-    C:Render()
-end
-
-function ListPage:Render()
-    self.list = self.list or self.rows()
-    for i, r in ipairs(self.widgets) do
-        local index = self.offset + i
-        local row = self.list[index]
-        r.index = selectable(row) and index or nil
-        r:SetShown(row ~= nil)
-        if row then
-            local indent = row.indent and 30 or 0
-            local enabled = not row.disabled or not row.disabled()
-            local boxed = row.kind == "check" or row.kind == "toggle"
-            r.select:SetShown(index == self.index)
-            r.box:SetShown(boxed)
-            r.tick:SetShown(boxed and row.get() and true or false)
-            r.box:ClearAllPoints()
-            r.box:SetPoint("LEFT", 8 + indent, 0)
-            r.label:ClearAllPoints()
-            r.label:SetPoint("LEFT", (boxed and 36 or 10) + indent, 0)
-            r.label:SetPoint("RIGHT", (row.kind == "toggle" and -400) or (row.kind == "choice" and -300) or -10, 0)
-            r.label:SetText(row.kind == "button" and ("|cffffd100" .. row.text .. "|r") or row.text)
-            if row.kind == "header" then
-                r.label:SetTextColor(unpack(kit.C.gold))
-                r.label:SetPoint("LEFT", 4, -4)
-            elseif row.kind == "info" then
-                r.label:SetTextColor(0.62, 0.6, 0.55)
-            else
-                r.label:SetTextColor(unpack(enabled and kit.C.btn or { 0.5, 0.48, 0.42 }))
-            end
-            local choice = row.kind == "choice" or row.kind == "toggle"
-            r.value:SetShown(choice)
-            r.prev:SetShown(choice)
-            r.next:SetShown(choice)
-            r.test:SetShown(row.test ~= nil)
-            if row.kind == "toggle" then
-                r.value:SetText(row.value())
-                r.value:SetTextColor(unpack(row.get() and kit.C.btn or { 0.5, 0.48, 0.42 }))
-            elseif choice then
-                r.value:SetText(row.get())
-                r.value:SetTextColor(unpack(kit.C.btn))
-            end
-        end
-    end
-end
-
-function ListPage:Press(name)
-    if name == "UP" or name == "DOWN" then
-        self:Move(name == "UP" and -1 or 1)
-    elseif name == "LEFT" or name == "RIGHT" then
-        self:Step(self.index, name == "LEFT" and -1 or 1)
-    elseif name == "A" then
-        local row = self.list[self.index or 0]
-        if row and row.test then row.test() else self:Activate() end
-    elseif name == "X" and self.list[self.index or 0] and self.list[self.index].test then
-        self:Activate()
-    else
-        return false
-    end
-    return true
-end
-
-function ListPage:Help(g)
-    local row = self.list and self.list[self.index or 0]
-    local help = { g("DPAD_UP") .. " " .. L.MAP_P_MOVE }
-    if row and row.test then
-        help[#help + 1] = g("DPAD_LEFT") .. " " .. L.CFG_P_PATTERN
-        help[#help + 1] = g("A") .. " " .. L.CFG_TEST
-        help[#help + 1] = g("X") .. " " .. L.CFG_P_TOGGLE
-    else
-        help[#help + 1] = g("DPAD_LEFT") .. " " .. L.CFG_P_CHANGE
-        help[#help + 1] = g("A") .. " " .. L.MAP_P_CHOOSE
-    end
-    help[#help + 1] = g("LB") .. g("RB") .. " " .. L.MAP_P_TAB
-    help[#help + 1] = g("B") .. " " .. L.MAP_P_CLOSE
-    return help
 end
 
 ---------------------------------------------------------------------------
@@ -1075,21 +857,14 @@ function C:Build()
     f.rbGlyph = K.Glyph(f, 34)
     f.rbGlyph:SetPoint("TOPLEFT", x + 40 + #C.TABS * 132, -47)
 
-    -- Body: 784 x 424 inside its margins. The old pages keep their old room
-    -- (792 x 496), scaled down to fit between the tabs and the help bar
+    -- Body: 784 x 424 inside its margins
     f.body = CK.NewFrame("Frame", nil, f)
     f.body:SetPoint("TOPLEFT", 18, -98)
     f.body:SetSize(784, 424)
-    local scale = 0.89
-    f.legacy = CK.NewFrame("Frame", nil, f)
-    f.legacy:SetScale(scale)
-    f.legacy:SetSize(792, 496)
-    f.legacy:SetPoint("TOP", f, "TOP", 0, -88 / scale)
     for _, key in ipairs(C.TABS) do
         local page = self.pages[key]
-        if page then page:Build(page.isRail and f.body or f.legacy) end
+        if page then page:Build(f.body) end
     end
-    for _, page in pairs(self.subPages or {}) do page:Build(f.body) end
 
     -- Help bar: the crumb on the left, the hints on the right
     local bar = CK.NewFrame("Frame", nil, f)
@@ -1104,9 +879,6 @@ function C:Build()
     f.crumb:SetPoint("LEFT", 18, 0)
     f.crumb:SetWordWrap(false)
     f.hints = {}
-    f.legacyHelp = CK.UIKit.text(bar, 11)
-    f.legacyHelp:SetPoint("RIGHT", -18, 0)
-    f.legacyHelp:SetTextColor(unpack(KC.cream))
 
     f:SetScript("OnUpdate", function(_, elapsed) C:OnUpdate(elapsed) end)
     self:CreateInput()
@@ -1123,10 +895,7 @@ function C:SetTab(key, section)
     settings().configTab = key
     local page = self:Page()
     page:Show()
-    if section and page.SetSection then
-        page.zone = "list"
-        page:SetSection(section)
-    end
+    if section and page.SetSection then page:SetSection(section, "list") end
     self:Render()
 end
 
@@ -1154,8 +923,7 @@ end
 
 function C:RenderHelp(page)
     local f = self.frame
-    local g = function(key) return CK:GlyphMarkup(key, 16) end
-    local hints = page:Help(g) or {}
+    local hints = page:Help() or {}
     local capturing = self:IsCapturingChord()
     if capturing then hints = { K.H({ "B" }, L.V_CANCEL, "B") } end
     if self.armed then hints = { K.H({ "A" }, L.V_CONFIRM, "A"), K.H({ "B" }, L.V_CANCEL, "B") } end
@@ -1164,15 +932,6 @@ function C:RenderHelp(page)
     if self.toast then crumb, color = self.toast.text, self.toast.color end
     f.crumb:SetText(crumb)
     f.crumb:SetTextColor(unpack(color))
-    -- A page of 1.x: its help is text
-    local legacy = type(hints[1]) == "string"
-    f.legacyHelp:SetShown(legacy)
-    if legacy then
-        f.legacyHelp:SetText(table.concat(hints, "    "))
-        for _, h in ipairs(f.hints) do h:Hide() end
-        f.crumb:SetWidth(math.max(10, W - 4 - 36 - f.legacyHelp:GetStringWidth() - 18))
-        return
-    end
     local x = W - 4 - 18
     for i = #hints, 1, -1 do
         local h = f.hints[i]
@@ -1340,10 +1099,7 @@ function C:Open(tab, section)
     self.frame:Show()
     local page = self:Page()
     page:Show()
-    if section and page.SetSection then
-        page.zone = "list"
-        page.section = section
-    end
+    if section and page.SetSection then page:SetSection(section, "list") end
     self:BindPad()
     self:Render()
 end
@@ -1379,7 +1135,7 @@ end
 function C:EndPlacement()
     self.placing = false
     self.frame:Show()
-    self:Page():Show()
+    self:Page():Show(true)
     self:Render()
 end
 

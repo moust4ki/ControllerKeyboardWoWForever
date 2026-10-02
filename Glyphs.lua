@@ -63,7 +63,7 @@ function CK:SetGlyph(tex, key)
             end
         end
     end
-    tex:SetTexture(TEX .. FALLBACK[key])
+    tex:SetTexture(TEX .. (FALLBACK[key] or "ck_g_a"))
     tex:SetTexCoord(0, 1, 0, 1)
 end
 

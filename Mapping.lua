@@ -672,7 +672,7 @@ function M:Catalog(tab, forSlot)
     elseif tab == "items" and C_Container then
         -- Ours first: the consumables wheel (not for the game's bar slots)
         if not forSlot and CK.ConsumableWheel then
-            list[#list + 1] = { header = "Easy Controller" }
+            list[#list + 1] = { header = L.HDR_WHEELS }
             list[#list + 1] = { action = "wheel:consumables", name = L.WHEEL_NAME, icon = M.WHEEL_ICON }
             -- The player's own wheels
             for _, w in ipairs(CK.MyWheels and CK.MyWheels:List() or {}) do

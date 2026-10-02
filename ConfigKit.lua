@@ -26,6 +26,12 @@ K.C = {
     slot = hex("D9A93A"), yours = hex("5FC0D0"), info = hex("9FD8E2"), fill = hex("8A6A2A"),
     danger = hex("FF7A5C"), dangerBg = hex("4A140E"), dangerText = hex("FFE0D6"), warn = hex("F0A090"),
     eventOff = hex("7A6E5A"), inner = hex("2A1F14"), white = { 1, 1, 1 }, black = { 0, 0, 0 },
+    -- The Gamepad screen's states, the wizard's steps, the wheels' dots
+    gameFn = hex("8A8070"), off = hex("5A4C3A"), iconBg = hex("3E3A33"), iconFg = hex("CFC6B2"),
+    doneBg = hex("2A3A1C"), done = hex("7AA04A"), nowBg = hex("3A2C12"), legendRing = hex("7A7060"),
+    legendFree = hex("7A6A52"), legendGame = hex("4A463E"), legendSlot = hex("3A3020"), legendYours = hex("1C3236"),
+    spell = hex("2F4A73"), item = hex("6B4A1C"), macro = hex("4F3466"), game = hex("4A463E"), bar = hex("5A4422"),
+    emptyDot = hex("6B5A44"), panel = hex("120D08"),
 }
 local C = K.C
 
@@ -120,17 +126,20 @@ function K.Box(parent, radius, edge, layer, sub)
         self.fill:SetPoints(region, inset)
         if self.line then self.line:SetPoints(region, inset) end
     end
+    -- No colour: that part stays hidden (an edge alone, a fill alone)
     function box:SetColors(fill, fillAlpha, line, lineAlpha)
-        self.fill:SetShown(fill ~= nil)
+        self.noFill, self.noLine = fill == nil, line == nil
+        self.fill:SetShown(fill ~= nil and not self.hidden)
         if fill then self.fill:SetColor(fill, fillAlpha) end
         if self.line then
-            self.line:SetShown(line ~= nil)
+            self.line:SetShown(line ~= nil and not self.hidden)
             if line then self.line:SetColor(line, lineAlpha) end
         end
     end
     function box:SetShown(shown)
-        self.fill:SetShown(shown)
-        if self.line then self.line:SetShown(shown) end
+        self.hidden = not shown
+        self.fill:SetShown(shown and not self.noFill)
+        if self.line then self.line:SetShown(shown and not self.noLine) end
     end
     return box
 end
@@ -169,6 +178,7 @@ local IMAGE = {
     A = true, B = true, X = true, Y = true, LB = true, RB = true, LT = true, RT = true, LS = true, RS = true,
     DPAD = true, DPAD_LR = true, DPAD_UP = true, DPAD_LEFT = true, DPAD_RIGHT = true, DPAD_DOWN = true,
 }
+K.IMAGE = IMAGE
 -- The mapping's inputs, as glyph keys
 K.INPUT_GLYPH = {
     L3 = "LS", R3 = "RS", UP = "DPAD_UP", DOWN = "DPAD_DOWN", LEFT = "DPAD_LEFT", RIGHT = "DPAD_RIGHT",
@@ -303,14 +313,14 @@ end
 -- the glyphs of a combination (Gamepad), a title, a state tag (a dot and a
 -- word), the help text, a cyan info line; a legend at the bottom (Gamepad)
 ---------------------------------------------------------------------------
-function K.Detail(parent, width)
+function K.Detail(parent, width, comboSize)
     local d = CK.NewFrame("Frame", nil, parent)
     d:SetWidth(width)
     d.box = K.Box(d, 4, 1, "BACKGROUND", 1)
     d.box:SetPoints(d)
     d.box:SetColors(C.black, 0.72, C.line1, 1)
     local inner = width - 28
-    d.combo = K.GlyphRow(d, 34)
+    d.combo = K.GlyphRow(d, comboSize or 34)
     d.title = K.Text(d, 19, C.title)
     d.title:SetWidth(inner)
     d.title:SetWordWrap(true)
@@ -367,6 +377,8 @@ function K.Detail(parent, width)
             self.extra:SetText(content.extra)
             place(self.extra)
         end
+        -- A legend at the bottom (the Gamepad screen's states), set by its page
+        if self.legend then self.legend:SetShown(content.legend and true or false) end
     end
     return d
 end
@@ -434,6 +446,7 @@ function K.Picker(parent, width)
             if self.index then
                 p.index = self.index
                 p:Choose()
+                CK.Config:Render()
             end
         end)
         r:SetScript("OnEnter", function(self)
@@ -520,7 +533,7 @@ function K.Picker(parent, width)
     end
 
     function p:Choose()
-        local e = self.index and self.entries[self.index]
+        local e = self.def and self.index and self.entries[self.index]
         if e and not e.header and self.def.onChoose then self.def.onChoose(e) end
     end
 
@@ -549,8 +562,11 @@ function K.Picker(parent, width)
     function p:Render()
         local def = self.def
         if not def then return end
-        self.kicker:SetText(K.Upper(def.kicker or ""))
-        self.title:SetText(def.title or "")
+        local kicker, title = def.kicker, def.title
+        if type(kicker) == "function" then kicker = kicker() end
+        if type(title) == "function" then title = title() end
+        self.kicker:SetText(K.Upper(kicker or ""))
+        self.title:SetText(title or "")
         -- The lists' tabs share the width
         local n = #def.lists
         local tw = (width - 24 - (n - 1) * 4) / n
@@ -663,4 +679,126 @@ function K.Button(parent, size)
     end)
     b:Render()
     return b
+end
+
+-- Buttons side by side in a row frame, each sized by its share ("flex") of
+-- the row's width, with a gap between them
+function K.LayoutRow(row, buttons, flexes, gap)
+    local total = 0
+    for i = 1, #buttons do total = total + (flexes[i] or 1) end
+    local room, x = row:GetWidth() - gap * (#buttons - 1), 0
+    for i, b in ipairs(buttons) do
+        local w = room * (flexes[i] or 1) / total
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT", row, "TOPLEFT", x, 0)
+        b:SetSize(w, row:GetHeight())
+        x = x + w + gap
+    end
+end
+
+---------------------------------------------------------------------------
+-- A round slot (ck_slot): the Gamepad screen's buttons (44, icon 32), the
+-- wheel editor's slots (52, icon 38). An icon cut round on its dark disc,
+-- a "+", stripes (unavailable), a coloured ring (a slot of the game's bar,
+-- yours), a cyan diamond (yours), the focus glow, the target's dashed ring.
+---------------------------------------------------------------------------
+function K.Slot(parent, size, iconSize)
+    local s = CK.NewFrame("Button", nil, parent)
+    s:SetSize(size, size)
+    s:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    s.bg = s:CreateTexture(nil, "BACKGROUND")
+    s.bg:SetTexture(TEX .. "ck_slot")
+    s.bg:SetAllPoints()
+    s.disc = s:CreateTexture(nil, "ARTWORK", nil, 0)
+    s.disc:SetTexture(TEX .. "ck_dot")
+    s.disc:SetSize(iconSize, iconSize)
+    s.disc:SetPoint("CENTER")
+    s.icon = K.RoundIcon(s, iconSize, "ARTWORK")
+    s.icon:SetDrawLayer("ARTWORK", 1)
+    s.icon:SetPoint("CENTER")
+    s.hatch = s:CreateTexture(nil, "ARTWORK", nil, 2)
+    s.hatch:SetTexture(TEX .. "ck_hatch")
+    s.hatch:SetSize(iconSize, iconSize)
+    s.hatch:SetPoint("CENTER")
+    s.plus = K.Text(s, size >= 52 and 20 or 18, C.dimGold, "OVERLAY")
+    s.plus:SetPoint("CENTER", 0, 1)
+    s.plus:SetJustifyH("CENTER")
+    s.plus:SetText("+")
+    -- The ring: its outer edge on the slot's (a slot of the game's bar), or
+    -- 1 px out (yours)
+    s.ring = s:CreateTexture(nil, "OVERLAY", nil, 0)
+    s.ring:SetTexture(TEX .. "ck_ring")
+    s.ring:SetPoint("CENTER")
+    s.ring:SetSize(size, size)
+    -- Yours: a cyan diamond with a dark edge, bottom left
+    s.markEdge = s:CreateTexture(nil, "OVERLAY", nil, 1)
+    s.markEdge:SetTexture(TEX .. "ck_diamond")
+    s.markEdge:SetVertexColor(C.boxBg[1], C.boxBg[2], C.boxBg[3])
+    s.markEdge:SetSize(16, 16)
+    s.markEdge:SetPoint("CENTER", s, "BOTTOMLEFT", 2.5, 5.5)
+    s.mark = s:CreateTexture(nil, "OVERLAY", nil, 2)
+    s.mark:SetTexture(TEX .. "ck_diamond")
+    s.mark:SetVertexColor(C.yours[1], C.yours[2], C.yours[3])
+    s.mark:SetSize(13, 13)
+    s.mark:SetPoint("CENTER", s.markEdge, "CENTER")
+    s.glow = s:CreateTexture(nil, "OVERLAY", nil, 3)
+    s.glow:SetTexture(TEX .. "ck_slot_glow")
+    s.glow:SetBlendMode("ADD")
+    s.glow:SetSize(math.floor(size * 1.46 + 0.5), math.floor(size * 1.46 + 0.5))
+    s.glow:SetPoint("CENTER")
+    s.dash = s:CreateTexture(nil, "OVERLAY", nil, 4)
+    s.dash:SetTexture(TEX .. "ck_ring_dash")
+    s.dash:SetVertexColor(C.focus[1], C.focus[2], C.focus[3])
+    s.dash:SetSize(size + 10, size + 10)
+    s.dash:SetPoint("CENTER")
+    s.dash:Hide()
+    s.size = size
+    -- look = { icon, desaturate, discColor, plus, hatch, ring = color, ringOut, mark, glow, dash }
+    function s:SetLook(look)
+        local icon = look.icon
+        CK.Paddles.SetIcon(self.icon, icon)
+        self.icon:SetShown(icon ~= nil)
+        self.icon:SetDesaturated(look.desaturate and true or false)
+        local dc = look.discColor
+        self.disc:SetShown(dc ~= nil)
+        if dc then self.disc:SetVertexColor(dc[1], dc[2], dc[3]) end
+        self.plus:SetShown(look.plus and true or false)
+        self.hatch:SetShown(look.hatch and true or false)
+        self.ring:SetShown(look.ring ~= nil)
+        if look.ring then
+            self.ring:SetVertexColor(look.ring[1], look.ring[2], look.ring[3])
+            local r = look.ringOut and self.size + 2 or self.size
+            self.ring:SetSize(r, r)
+        end
+        self.mark:SetShown(look.mark and true or false)
+        self.markEdge:SetShown(look.mark and true or false)
+        self.glow:SetShown(look.glow and true or false)
+        self.dash:SetShown(look.dash and true or false)
+    end
+    return s
+end
+
+-- A layer and an input: glyph keys for a GlyphRow ("RT", "+", "A"), or a
+-- text with the glyphs in it
+function K.ComboKeys(inputId, layer)
+    local keys = {}
+    for _, trigger in ipairs({ "LT", "RT" }) do
+        if layer:find(trigger, 1, true) then
+            keys[#keys + 1] = trigger
+            keys[#keys + 1] = "+"
+        end
+    end
+    keys[#keys + 1] = inputId
+    return keys
+end
+
+function K.ComboMarkup(inputId, layer, size)
+    local parts = {}
+    for _, key in ipairs(K.ComboKeys(inputId, layer)) do
+        if key ~= "+" then
+            local glyph = K.INPUT_GLYPH[key] or key
+            parts[#parts + 1] = IMAGE[glyph] and CK:GlyphMarkup(glyph, size) or K.ChipText(key)
+        end
+    end
+    return table.concat(parts, " + ")
 end

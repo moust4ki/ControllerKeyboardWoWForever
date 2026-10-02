@@ -31,9 +31,9 @@ Mapping.lua
 Vibration.lua
 Supplies.lua
 ConsumableWheel.lua
-MyWheels.lua
 ConfigKit.lua
 ConfigWindow.lua
+MyWheels.lua
 MapWindow.lua
 Options.lua
 Chat.lua

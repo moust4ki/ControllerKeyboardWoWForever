@@ -525,68 +525,62 @@ Config.pages.alerts = Config.NewRailPage({
 })
 
 ---------------------------------------------------------------------------
--- The wheels tab, still drawn its 1.x way until its 2.0 screens: the
--- player's own wheels (MyWheels.lua), the consumables wheel and its place
+-- Wheels: the player's own (a grid of cards, MyWheels.lua, each opening its
+-- editor), the consumables wheel, where every wheel opens
 ---------------------------------------------------------------------------
-local function list()
-    local rows = {}
-    local b = {}
-    function b.header(text) rows[#rows + 1] = { kind = "header", text = text } end
-    function b.info(text) rows[#rows + 1] = { kind = "info", text = text } end
-    function b.check(text, get, set, indent, tip)
-        rows[#rows + 1] = { kind = "check", text = text, get = get, set = set, indent = indent, tip = tip }
-    end
-    -- key: a name to find the row by (ListPage selectKey)
-    function b.choice(text, get, step, indent, key)
-        rows[#rows + 1] = { kind = "choice", text = text, get = get, step = step, indent = indent, key = key }
-    end
-    function b.button(text, func, indent, key)
-        rows[#rows + 1] = { kind = "button", text = text, func = func, indent = indent, key = key }
-    end
-    return rows, b
-end
-
-local function wheelRows()
+local function consumableRows(b)
     local W = CK.ConsumableWheel
-    local s = CK.db.settings.wheel
-    local rows, b = list()
-
-    -- The player's own first: one can be made right away
-    CK.MyWheels:AddRows(b)
+    local s = settings().wheel
     b.header(L.WHEEL_NAME)
-    b.check(L.WHEEL_ENABLE, function() return s.enabled end, function(v)
-        s.enabled = v
-        W:Fill()
-    end)
-    b.info(L.WHEEL_INFO)
-    b.info(L.WHEEL_INFO2)
-    if s.enabled then
-        b.check(L.WHEEL_VARIANTS, function() return s.variants end, function(v)
+    b.check({ id = "cw_on", label = L.LBL_USE_WHEEL, tip = L.WHEEL_INFO,
+        get = function() return s.enabled end,
+        set = function(v)
+            s.enabled = v
+            W:Fill()
+        end })
+    b.check({ id = "cw_var", label = L.LBL_ALL_VARIANTS, indent = true, disabled = not s.enabled, tip = L.WHEEL_VARIANTS,
+        get = function() return s.variants end,
+        set = function(v)
             s.variants = v
             W:Fill()
-        end)
-    end
-    -- Where every wheel shows
-    b.check(L.WHEEL_LOCK, function() return s.locked end, function(v) s.locked = v end)
-    b.button(L.WHEEL_MOVE, function()
-        Config:BeginPlacement(W)
-        W:StartPlacement()
-    end, true)
-    b.button(L.WHEEL_RESET, function() W:ResetPosition() end, true)
-    if s.enabled then
-        b.header(L.WHEEL_H_CATEGORIES)
-        for _, cat in ipairs(W.CATEGORIES) do
-            b.check(L["WHEEL_CAT_" .. cat:upper()], function() return s.categories[cat] end, function(v)
+        end })
+    b.header(L.WHEEL_H_CATEGORIES)
+    for _, cat in ipairs(W.CATEGORIES) do
+        b.check({ id = "cat_" .. cat, label = L["WHEEL_CAT_" .. cat:upper()], disabled = not s.enabled,
+            get = function() return s.categories[cat] end,
+            set = function(v)
                 s.categories[cat] = v
                 W:Fill()
-            end, true)
-        end
+            end })
     end
-    return rows
 end
 
--- The list, or a wheel's editor in its place (MyWheels.lua)
-Config.pages.wheels, CK.MyWheels.list = CK.MyWheels:TabPage(Config.NewListPage(wheelRows))
+local function wheelPositionRows(b)
+    local W = CK.ConsumableWheel
+    local s = settings().wheel
+    b.header(L.SEC_POSITION)
+    b.check({ id = "w_lock", label = L.OPT_LOCK, tip = L.TIP_WHEEL_LOCK,
+        get = function() return s.locked end, set = function(v) s.locked = v end })
+    b.button({ id = "w_move", label = L.SUP_MOVE, tip = L.WHEEL_MOVE,
+        func = function()
+            Config:BeginPlacement(W)
+            W:StartPlacement()
+        end })
+    b.button({ id = "w_reset", label = L.LBL_BACK_TO_CENTER, tip = L.WHEEL_RESET,
+        func = function()
+            W:ResetPosition()
+            Config:Toast(L.TOAST_WHEEL_RESET)
+        end })
+end
+
+Config.pages.wheels = CK.MyWheels:TabPage(Config.NewRailPage({
+    key = "wheels",
+    sections = {
+        { key = "mine", label = L.MYWHEEL_H, tip = L.MYWHEEL_INFO, view = CK.MyWheels.Grid },
+        { key = "consumables", label = L.SEC_CONSUMABLES, tip = L.WHEEL_INFO2, rows = consumableRows },
+        { key = "position", label = L.SEC_POSITION, tip = L.TIP_SEC_WHEELPOS, rows = wheelPositionRows },
+    },
+}))
 
 ---------------------------------------------------------------------------
 -- The game's settings panel (Escape > Options > AddOns > Controller
