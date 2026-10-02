@@ -34,10 +34,14 @@ local MAX = SEGMENTS * PAGES
 local AIM = 0.5     -- the stick aims past half its course
 -- The game's radial menu: its segments' centers (150 from the middle), the
 -- icons drawn a little closer in, the names further out
-local DISTANCE, ICON_IN, SLOT = 150, 22, 46
-local LABEL_OFFSET = {
-    { 62, 0 }, { 32, 46 }, { 0, 58 }, { -32, 46 }, { -62, 0 }, { -32, -46 }, { 0, -58 }, { 32, -46 },
+local DISTANCE, ICON_RADIUS, SLOT = 150, 110, 46
+-- The names, further out than the icons ({ distance from the middle, width }):
+-- beside the icon for the left and right segments, above / below otherwise
+local LABEL = {
+    { 180, 70 }, { 178, 92 }, { 180, 112 }, { 178, 92 }, { 180, 70 }, { 178, 92 }, { 180, 112 }, { 178, 92 },
 }
+-- The banner under the wheel, sized for its two lines
+local BANNER_W, BANNER_H = 360, 64
 -- Our slots go clockwise from the top; the game numbers its segments
 -- anticlockwise from the right (1 east, 3 north)
 local function segmentOf(slot) return (3 - slot) % SEGMENTS + 1 end
@@ -394,16 +398,16 @@ function W:Build()
     view.bottom = view:CreateTexture(nil, "BACKGROUND")
     view.bottom:SetPoint("TOP", bg, "BOTTOM", 0, 8)
     atlas(view.bottom, "gamepad-radial-menu-bottomtext", function(t)
-        t:SetSize(320, 70)
         t:SetColorTexture(0, 0, 0, 0.5)
     end)
+    view.bottom:SetSize(BANNER_W, BANNER_H)
     view.name = view:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    view.name:SetPoint("TOP", view.bottom, "TOP", 0, -14)
-    view.name:SetWidth(300)
+    view.name:SetPoint("TOP", view.bottom, "TOP", 0, -12)
+    view.name:SetWidth(BANNER_W - 30)
     view.name:SetWordWrap(false)
     view.count = view:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     view.count:SetPoint("TOP", view.name, "BOTTOM", 0, -4)
-    view.count:SetWidth(300)
+    view.count:SetWidth(BANNER_W - 30)
     view.count:SetWordWrap(false)
     view.help = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     view.help:SetPoint("TOP", view.bottom, "BOTTOM", 0, -4)
@@ -425,15 +429,15 @@ function W:Build()
         seg.disabled:Hide()
         seg.highlightPoint = { cx, cy, angle - math.rad(270) }
         -- The item: a round slot of the gamepad bar's, its name further out
-        local ix, iy = (DISTANCE - ICON_IN) * math.cos(angle), (DISTANCE - ICON_IN) * math.sin(angle)
+        local ix, iy = ICON_RADIUS * math.cos(angle), ICON_RADIUS * math.sin(angle)
         seg.slot = CK.Paddles:CreateSlot(view, SLOT)
         seg.slot:SetPoint("CENTER", bg, "CENTER", ix, iy)
         seg.slot:Hide()
-        local offset = LABEL_OFFSET[segmentOf(i)]
+        local label = LABEL[segmentOf(i)]
         seg.label = view:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        seg.label:SetSize(92, 36)
+        seg.label:SetSize(label[2], 36)
         seg.label:SetWordWrap(true)
-        seg.label:SetPoint("CENTER", bg, "CENTER", cx + offset[1] * 0.55, cy + offset[2] * 0.55)
+        seg.label:SetPoint("CENTER", bg, "CENTER", label[1] * math.cos(angle), label[1] * math.sin(angle))
         self.segments[i] = seg
         -- The slot's own secure button: clicked by a stick, A, the key ("s3"),
         -- or the mouse
