@@ -74,8 +74,8 @@ General (every function can be turned on or off), Keyboard, Gamepad, Vibrations,
 tabs.
 
 **Consumables wheel**
-A key of its own (any free button, or a back paddle in any trigger layer) opens a wheel of up to 12
-consumables from your bags: food, drink, healing and mana potions, healthstone, mana gem, bandages,
+A key of its own (any free button, or a back paddle in any trigger layer) opens a wheel drawn like
+the game's own radial menu, 8 consumables a page (LB / RB for more), from your bags: food, drink, healing and mana potions, healthstone, mana gem, bandages,
 buff food, elixirs and flasks, scrolls, the best first. The right stick aims (or the D-pad), A uses,
 B closes, the mouse works too. It works in combat (food and drink greyed there).
 

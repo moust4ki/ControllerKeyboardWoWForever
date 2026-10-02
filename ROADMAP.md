@@ -20,7 +20,8 @@ in game, then released on GitHub and CurseForge. Done items move to the [CHANGEL
   a click opens the bags. Low supplies and little room vibrate.
   - [ ] In-game check: detection (reagent item IDs of WoW Forever), the glow, the placement.
 - [x] **Consumables wheel** (Wheel tab): a key of its own (Gamepad tab, Items list, any free button
-  or back paddle in any layer; or the game's key bindings) opens a wheel of up to 12 consumables:
+  or back paddle in any layer; or the game's key bindings) opens a wheel drawn with the game's radial
+  menu art, 8 consumables a page (LB / RB, up to 3 pages):
   food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
   elixirs and flasks, scrolls; the best of each kind first, the variants after (an option). The
   push a stick towards an item and let it go to use it (the game's stick direction keys); B

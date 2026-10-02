@@ -2,7 +2,9 @@ local _, CK = ...
 local L = CK.L
 
 -- Module "consumables wheel": a key of its own (Gamepad tab, or the game's key
--- bindings) opens a wheel of up to 12 consumables from the bags: food, drink,
+-- bindings) opens a wheel of consumables from the bags, drawn like the game's
+-- own radial menu (its wheel, its highlight, its banners): 8 per page, LB / RB
+-- turn the pages (up to 3). Food, drink,
 -- health and mana potions, healthstone, mana gem, bandages, buff food,
 -- elixirs and flasks, scrolls. Like the game's own radial menu: push a
 -- stick towards an item and let it go to use it; B cancels. The wheel's key
@@ -27,9 +29,19 @@ local L = CK.L
 local W = {}
 CK.ConsumableWheel = W
 
-local MAX = 12
-local RADIUS, SLOT = 132, 52
+local SEGMENTS, PAGES = 8, 3
+local MAX = SEGMENTS * PAGES
 local AIM = 0.5     -- the stick aims past half its course
+-- The game's radial menu: its segments' centers (150 from the middle), the
+-- icons drawn a little closer in, the names further out
+local DISTANCE, ICON_IN, SLOT = 150, 22, 46
+local LABEL_OFFSET = {
+    { 62, 0 }, { 32, 46 }, { 0, 58 }, { -32, 46 }, { -62, 0 }, { -32, -46 }, { 0, -58 }, { 32, -46 },
+}
+-- Our slots go clockwise from the top; the game numbers its segments
+-- anticlockwise from the right (1 east, 3 north)
+local function segmentOf(slot) return (3 - slot) % SEGMENTS + 1 end
+local function angleOf(slot) return math.rad((segmentOf(slot) - 1) * 45) end
 
 -- The wheel's kinds, in its order
 W.CATEGORIES = { "food", "drink", "healthPotion", "manaPotion", "healthstone", "manaGem", "bandage",
@@ -158,6 +170,32 @@ local PREFIXES = ",SHIFT-,CTRL-,ALT-,CTRL-SHIFT-,ALT-SHIFT-,ALT-CTRL-,ALT-CTRL-S
 local STICK_KEYS = "PADLSTICKUP,PADLSTICKDOWN,PADLSTICKLEFT,PADLSTICKRIGHT,"
     .. "PADRSTICKUP,PADRSTICKDOWN,PADRSTICKLEFT,PADRSTICKRIGHT,"
 
+-- A page's items into the 8 slots' buttons (from the wheel's attributes:
+-- "ck-p2-5" is page 2, slot 5)
+local APPLY_PAGE = [[
+    local page = owner:GetAttribute("page") or 1
+    owner:SetAttribute("count", owner:GetAttribute("ck-count-p" .. page) or 0)
+    owner:SetAttribute("selected", 0)
+    for i = 1, 8 do
+        local b = owner:GetFrameRef("slot" .. i)
+        local item = owner:GetAttribute("ck-p" .. page .. "-" .. i)
+        b:SetAttribute("type", item and "item" or nil)
+        b:SetAttribute("item", item)
+        b:SetAttribute("unit", owner:GetAttribute("ck-u" .. page .. "-" .. i))
+        if item then b:Show() else b:Hide() end
+    end
+]]
+
+-- LB / RB: the previous or next page
+local PAGE = [[
+    if not down then return false end
+    local pages = owner:GetAttribute("ck-pages") or 1
+    if pages < 2 then return false end
+    owner:SetAttribute("page", ((owner:GetAttribute("page") or 1) - 1 + (button == "LB" and -1 or 1)) % pages + 1)
+    ]] .. APPLY_PAGE .. [[
+    return false
+]]
+
 -- `slot`: the slot a stick points at (either one, the one pushed further,
 -- past half its course), else the one chosen with the D-pad, else 0
 local AIMED = [[
@@ -170,7 +208,7 @@ local AIMED = [[
     if other and other.len and (not (stick and stick.len) or other.len > stick.len) then stick = other end
     if stick and stick.len and stick.len > ]] .. AIM .. [[ then
         local bestDot = -2
-        for i = 1, count do
+        for i = 1, 8 do
             local dot = stick.x * (owner:GetAttribute("ck-x" .. i) or 0) + stick.y * (owner:GetAttribute("ck-y" .. i) or 0)
             if dot > bestDot then slot, bestDot = i, dot end
         end
@@ -181,7 +219,8 @@ local AIMED = [[
 -- Opening: shown, the sticks taken from the camera and the character (like
 -- the game's own wheels), the keys it uses taken while it is open
 local SHOW = [[
-    owner:SetAttribute("selected", 0)
+    owner:SetAttribute("page", 1)
+    ]] .. APPLY_PAGE .. [[
     owner:Show()
     owner:EnableGamePadStick(true)
     for prefix in gmatch(owner:GetAttribute("ck-prefixes"), "([^,]*),") do
@@ -192,6 +231,8 @@ local SHOW = [[
         owner:SetBindingClick(true, prefix .. "PADDRIGHT", "ControllerKeyboardWheelNext")
         owner:SetBindingClick(true, prefix .. "PADDDOWN", "ControllerKeyboardWheelNext")
         owner:SetBindingClick(true, prefix .. "PADRSTICK", "ControllerKeyboardWheelClose")
+        owner:SetBindingClick(true, prefix .. "PADLSHOULDER", "ControllerKeyboardWheelPage", "LB")
+        owner:SetBindingClick(true, prefix .. "PADRSHOULDER", "ControllerKeyboardWheelPage", "RB")
         for key in gmatch(owner:GetAttribute("ck-stickkeys"), "([^,]+),") do
             owner:SetAttribute("ck-held-" .. key, 0)
             owner:SetBindingClick(true, prefix .. key, "ControllerKeyboardWheelLetGo", key)
@@ -215,12 +256,12 @@ local LET_GO = [[
     if other and other.len and (not (stick and stick.len) or other.len > stick.len) then stick = other end
     local len = stick and stick.len or 0
     if len > (down and 0.35 or 0.4) then
-        local best, bestDot = nil, -2
-        for i = 1, count do
+        local best, bestDot = 0, -2
+        for i = 1, 8 do
             local dot = stick.x * (owner:GetAttribute("ck-x" .. i) or 0) + stick.y * (owner:GetAttribute("ck-y" .. i) or 0)
             if dot > bestDot then best, bestDot = i, dot end
         end
-        if best then owner:SetAttribute("selected", best) end
+        owner:SetAttribute("selected", best <= count and best or 0)
     end
     if down then
         owner:SetAttribute("ck-held-" .. button, 1)
@@ -250,7 +291,7 @@ local HIDE = [[
 -- aimed: it closes. A shared paddle key sends one click, no press: it opens,
 -- or uses / closes.
 local TOGGLE = [[
-    local count = owner:GetAttribute("count") or 0
+    local count = owner:GetAttribute("ck-total") or 0
     if down then
         if owner:IsShown() then
             owner:SetAttribute("ck-fresh", false)
@@ -320,14 +361,24 @@ local function keyButton(name, wheel, pre, post, ...)
     return b
 end
 
+local function atlas(texture, name, fallback)
+    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) then
+        texture:SetAtlas(name, true)
+        return true
+    end
+    if fallback then fallback(texture) end
+end
+
 function W:Build()
     if self.frame then return end
     local wheel = CK.NewFrame("Frame", "ControllerKeyboardWheel", UIParent, "SecureHandlerBaseTemplate")
-    wheel:SetSize((RADIUS + SLOT) * 2, (RADIUS + SLOT) * 2)
+    wheel:SetSize(480, 600)
     wheel:SetFrameStrata("DIALOG")
     wheel:Hide()
     wheel:SetAttribute("count", 0)
+    wheel:SetAttribute("ck-total", 0)
     wheel:SetAttribute("selected", 0)
+    wheel:SetAttribute("page", 1)
     wheel:SetMovable(true)
     wheel:SetClampedToScreen(true)
     wheel:EnableMouse(true)
@@ -345,6 +396,11 @@ function W:Build()
     wheel:SetScript("OnGamePadStick", function() W:Track() end)
     wheel:SetAttribute("ck-prefixes", PREFIXES)
     wheel:SetAttribute("ck-stickkeys", STICK_KEYS)
+    -- Each slot's direction, from the middle
+    for i = 1, SEGMENTS do
+        wheel:SetAttribute("ck-x" .. i, math.cos(angleOf(i)))
+        wheel:SetAttribute("ck-y" .. i, math.sin(angleOf(i)))
+    end
     self.frame = wheel
     self:Place()
 
@@ -364,45 +420,83 @@ function W:Build()
     self.letGo = letGo
     keyButton("ControllerKeyboardWheelPrev", wheel, turn(-1))
     keyButton("ControllerKeyboardWheelNext", wheel, turn(1))
+    keyButton("ControllerKeyboardWheelPage", wheel, PAGE)
 
-    -- What is drawn: ours, under the slots' secure buttons
+    -- What is drawn: the game's radial menu art, under the slots' buttons
     local view = CK.NewFrame("Frame", nil, wheel)
     view:SetAllPoints()
-    local bg = view:CreateTexture(nil, "BACKGROUND", nil, -6)
+    self.view = view
+    local bg = view:CreateTexture(nil, "BACKGROUND")
     bg:SetPoint("CENTER")
-    bg:SetSize((RADIUS + SLOT * 0.75) * 2, (RADIUS + SLOT * 0.75) * 2)
-    bg:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
-    bg:SetVertexColor(0, 0, 0, 0.55)
-    view.ring = view:CreateTexture(nil, "OVERLAY", nil, 2)
-    view.ring:SetSize(SLOT * 1.35, SLOT * 1.35)
-    view.ring:SetTexture(CK.UIKit.TEX .. "ck_slot_glow")
-    view.ring:SetBlendMode("ADD")
-    view.ring:SetVertexColor(1, 0.82, 0.2)
-    view.name = CK.UIKit.text(view, 15)
-    view.name:SetPoint("CENTER", 0, 12)
-    view.name:SetWidth(RADIUS * 1.5)
-    view.name:SetTextColor(unpack(CK.UIKit.C.gold))
-    view.count = CK.UIKit.text(view, 12)
-    view.count:SetPoint("TOP", view.name, "BOTTOM", 0, -4)
-    view.help = CK.UIKit.text(view, 11)
-    view.help:SetPoint("TOP", view.count, "BOTTOM", 0, -10)
-    view.help:SetTextColor(unpack(CK.UIKit.C.btn))
+    atlas(bg, "gamepad-radial-menu-wheelbg", function(t)
+        t:SetSize(440, 440)
+        t:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+        t:SetVertexColor(0, 0, 0, 0.7)
+    end)
+    view.bg = bg
+    -- The aimed segment
+    view.highlight = view:CreateTexture(nil, "BORDER")
+    atlas(view.highlight, "gamepad-radial-menu-selected", function(t)
+        t:SetSize(SLOT * 1.6, SLOT * 1.6)
+        t:SetTexture(CK.UIKit.TEX .. "ck_slot_glow")
+        t:SetBlendMode("ADD")
+    end)
+    view.highlight:Hide()
+    -- Title, and the pages' banner (LB, dots, RB)
+    view.top = view:CreateTexture(nil, "BACKGROUND")
+    view.top:SetPoint("BOTTOM", bg, "TOP", 0, -6)
+    atlas(view.top, "gamepad-radial-menu-toptext")
+    view.title = view:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    view.title:SetPoint("BOTTOM", view.top, "TOP", 0, 6)
+    view.title:SetTextColor(1, 1, 1)
+    view.title:SetText(L.WHEEL_NAME)
+    view.pages = view:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    view.pages:SetPoint("CENTER", view.top, "CENTER", 0, 2)
+    -- The aimed item and the help, in the bottom banner
+    view.bottom = view:CreateTexture(nil, "BACKGROUND")
+    view.bottom:SetPoint("TOP", bg, "BOTTOM", 0, 8)
+    atlas(view.bottom, "gamepad-radial-menu-bottomtext")
+    view.name = view:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    view.name:SetPoint("TOP", view.bottom, "TOP", 0, -14)
+    view.count = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    view.count:SetPoint("TOP", view.name, "BOTTOM", 0, -3)
+    view.help = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    view.help:SetPoint("TOP", view.bottom, "BOTTOM", 0, -2)
     view:SetScript("OnUpdate", function() W:Track() end)
     view:SetScript("OnShow", function() W:Paint() end)
-    self.view = view
 
-    self.slots, self.buttons = {}, {}
-    for i = 1, MAX do
-        local slot = CK.Paddles:CreateSlot(view, SLOT)
-        slot:Hide()
-        self.slots[i] = slot
-        -- The slot's own secure button: clicked by A ("s3"), or by the mouse
+    self.segments, self.buttons = {}, {}
+    for i = 1, SEGMENTS do
+        local angle = angleOf(i)
+        local cx, cy = DISTANCE * math.cos(angle), DISTANCE * math.sin(angle)
+        local seg = {}
+        -- The game's grey veil over a segment that can't be used
+        seg.disabled = view:CreateTexture(nil, "ARTWORK", nil, 2)
+        seg.disabled:SetPoint("CENTER", bg, "CENTER", cx, cy)
+        atlas(seg.disabled, "gamepad-radial-menu-disabled")
+        seg.disabled:SetRotation(angle - math.rad(270))
+        seg.disabled:Hide()
+        seg.highlightPoint = { cx, cy, angle - math.rad(270) }
+        -- The item: a round slot of the gamepad bar's, its name further out
+        local ix, iy = (DISTANCE - ICON_IN) * math.cos(angle), (DISTANCE - ICON_IN) * math.sin(angle)
+        seg.slot = CK.Paddles:CreateSlot(view, SLOT)
+        seg.slot:SetPoint("CENTER", bg, "CENTER", ix, iy)
+        seg.slot:Hide()
+        local offset = LABEL_OFFSET[segmentOf(i)]
+        seg.label = view:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        seg.label:SetSize(92, 36)
+        seg.label:SetWordWrap(true)
+        seg.label:SetPoint("CENTER", bg, "CENTER", cx + offset[1] * 0.55, cy + offset[2] * 0.55)
+        self.segments[i] = seg
+        -- The slot's own secure button: clicked by a stick, A, the key ("s3"),
+        -- or the mouse
         local b = CK.NewFrame("Button", "ControllerKeyboardWheelSlot" .. i, wheel, "SecureActionButtonTemplate")
-        b:SetSize(SLOT, SLOT)
+        b:SetSize(SLOT + 14, SLOT + 14)
+        b:SetPoint("CENTER", bg, "CENTER", ix, iy)
         b:RegisterForClicks("AnyUp")
         b:SetAttribute("useOnKeyDown", false)
         b:SetScript("OnEnter", function(self)
-            local item = W.items and W.items[i]
+            local item = W:PageItems()[i]
             if not item then return end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:SetItemByID(item.id)
@@ -411,6 +505,7 @@ function W:Build()
         b:SetScript("OnLeave", function() GameTooltip:Hide() end)
         SecureHandlerWrapScript(b, "OnClick", wheel, "return nil, true", DONE)
         b:Hide()
+        SecureHandlerSetFrameRef(wheel, "slot" .. i, b)
         use:SetAttribute("*clickbutton-s" .. i, b)
         toggle:SetAttribute("*clickbutton-s" .. i, b)
         letGo:SetAttribute("*clickbutton-s" .. i, b)
@@ -419,9 +514,10 @@ function W:Build()
 end
 
 ---------------------------------------------------------------------------
--- Filling it (out of combat only)
+-- Filling it (out of combat only): the items by page, in the wheel's
+-- attributes, and page 1 in the slots' buttons
 ---------------------------------------------------------------------------
--- The right stick: the game names it "Camera"
+-- The game names its sticks: "Camera" (right), "Movement" (left)
 local function stickIndex(name, default)
     local state = C_GamePad and C_GamePad.GetDeviceMappedState and C_GamePad.GetDeviceMappedState()
     if state and C_GamePad.StickIndexToConfigName then
@@ -443,64 +539,100 @@ function W:Fill()
     local s = settings()
     local items = s.enabled and self:Scan() or {}
     local wheel = self.frame
-    local count = #items
-    if wheel:IsShown() and count == 0 then
+    if wheel:IsShown() and #items == 0 then
         wheel:EnableGamePadStick(false)
         wheel:Hide()
         ClearOverrideBindings(wheel)
     end
-    for i = 1, MAX do
-        local b, slot, item = self.buttons[i], self.slots[i], items[i]
-        if item then
-            local angle = (i - 1) * 2 * math.pi / count
-            local x, y = math.sin(angle), math.cos(angle)
-            b:ClearAllPoints()
-            b:SetPoint("CENTER", wheel, "CENTER", x * RADIUS, y * RADIUS)
-            slot:ClearAllPoints()
-            slot:SetPoint("CENTER", wheel, "CENTER", x * RADIUS, y * RADIUS)
-            wheel:SetAttribute("ck-x" .. i, x)
-            wheel:SetAttribute("ck-y" .. i, y)
-            b:SetAttribute("type", "item")
-            b:SetAttribute("item", "item:" .. item.id)
+    local pages = math.max(1, math.ceil(#items / SEGMENTS))
+    self.pages = {}
+    for page = 1, PAGES do
+        local list = {}
+        for i = 1, SEGMENTS do
+            local item = page <= pages and items[(page - 1) * SEGMENTS + i] or nil
+            list[i] = item
+            wheel:SetAttribute("ck-p" .. page .. "-" .. i, item and ("item:" .. item.id) or nil)
             -- Bandages on yourself
-            b:SetAttribute("unit", item.cat == "bandage" and "player" or nil)
-            b:Show()
-            slot:Show()
-        else
-            b:SetAttribute("type", nil)
-            b:Hide()
-            slot:Hide()
+            wheel:SetAttribute("ck-u" .. page .. "-" .. i, item and item.cat == "bandage" and "player" or nil)
         end
+        wheel:SetAttribute("ck-count-p" .. page, math.max(0, math.min(SEGMENTS, #items - (page - 1) * SEGMENTS)))
+        self.pages[page] = list
     end
-    wheel:SetAttribute("count", count)
-    -- The game names its sticks: "Camera" (right), "Movement" (left)
+    wheel:SetAttribute("ck-pages", pages)
+    wheel:SetAttribute("ck-total", #items)
     wheel:SetAttribute("ck-stick", stickIndex("Camera", 2))
     wheel:SetAttribute("ck-stick2", stickIndex("Movement", 1))
-    if (wheel:GetAttribute("selected") or 0) > count then wheel:SetAttribute("selected", 0) end
+    if not wheel:IsShown() then
+        -- Page 1 in the buttons, as the snippet does
+        wheel:SetAttribute("page", 1)
+        wheel:SetAttribute("count", wheel:GetAttribute("ck-count-p1"))
+        wheel:SetAttribute("selected", 0)
+        for i, b in ipairs(self.buttons) do
+            local item = wheel:GetAttribute("ck-p1-" .. i)
+            b:SetAttribute("type", item and "item" or nil)
+            b:SetAttribute("item", item)
+            b:SetAttribute("unit", wheel:GetAttribute("ck-u1-" .. i))
+            b:SetShown(item ~= nil)
+        end
+    end
     self.items = items
     self:Paint()
 end
 
+function W:PageItems()
+    local page = self.frame and self.frame:GetAttribute("page") or 1
+    return self.pages and self.pages[page] or {}
+end
+
 ---------------------------------------------------------------------------
--- Drawing: icons, counts, cooldowns, greyed in combat; the ring on the
--- aimed slot (the stick) or the selected one (the D-pad)
+-- Drawing: the page's items (icons, names, counts, cooldowns, the veil on
+-- what can't be used now), the pages' dots, the highlight on the aimed
+-- segment (a stick, or the D-pad's choice), the aimed item's name
 ---------------------------------------------------------------------------
 function W:Paint()
-    if not (self.frame and self.items) then return end
+    if not (self.frame and self.pages) then return end
     local combat = InCombatLockdown()
-    for i, item in ipairs(self.items) do
-        local slot = self.slots[i]
-        CK.Paddles.SetIcon(slot.icon, C_Item.GetItemIconByID(item.id))
-        local count = C_Item.GetItemCount and C_Item.GetItemCount(item.id) or 0
-        slot.count:SetText(count)
-        slot.icon:SetDesaturated((combat and OUT_OF_COMBAT[item.cat]) or count == 0)
-        pcall(function()
-            local start, duration = C_Container.GetItemCooldown(item.id)
-            if start and duration and duration > 0 then slot.cooldown:SetCooldown(start, duration) else slot.cooldown:Clear() end
-        end)
+    local page = self.frame:GetAttribute("page") or 1
+    self.painted = page
+    local list = self:PageItems()
+    for i, seg in ipairs(self.segments) do
+        local item = list[i]
+        seg.slot:SetShown(item ~= nil)
+        seg.label:SetShown(item ~= nil)
+        if item then
+            CK.Paddles.SetIcon(seg.slot.icon, C_Item.GetItemIconByID(item.id))
+            local count = C_Item.GetItemCount and C_Item.GetItemCount(item.id) or 0
+            seg.slot.count:SetText(count)
+            seg.label:SetText(C_Item.GetItemNameByID(item.id) or "")
+            local unusable = (combat and OUT_OF_COMBAT[item.cat]) or count == 0
+            seg.slot.icon:SetDesaturated(unusable)
+            seg.disabled:SetShown(unusable)
+            pcall(function()
+                local start, duration = C_Container.GetItemCooldown(item.id)
+                if start and duration and duration > 0 then
+                    seg.slot.cooldown:SetCooldown(start, duration)
+                else
+                    seg.slot.cooldown:Clear()
+                end
+            end)
+        else
+            seg.disabled:Hide()
+        end
     end
-    local g = function(key) return CK:GlyphMarkup(key, 14) end
-    self.view.help:SetText(format("%s%s %s   %s %s", g("LS"), g("RS"), L.WHEEL_AIM, g("B"), L.WHEEL_CLOSE))
+    -- LB  o * o  RB, with more than one page
+    local pages = self.frame:GetAttribute("ck-pages") or 1
+    local g = function(key) return CK:GlyphMarkup(key, 18) end
+    if pages > 1 then
+        local dots = {}
+        for p = 1, pages do
+            dots[#dots + 1] = format("|A:gamepad-radialgamemenu-cursorbg-%s:14:14|a", p == page and "neutral" or "inactive")
+        end
+        self.view.pages:SetText(g("LB") .. "  " .. table.concat(dots, " ") .. "  " .. g("RB"))
+    else
+        self.view.pages:SetText("")
+    end
+    local h = function(key) return CK:GlyphMarkup(key, 14) end
+    self.view.help:SetText(format("%s%s %s   %s %s", h("LS"), h("RS"), L.WHEEL_AIM, h("B"), L.WHEEL_CLOSE))
     -- Turned off by something else since: on again (out of combat)
     self:StickKeys(settings().enabled)
     self.aimed = nil
@@ -509,41 +641,46 @@ end
 
 function W:Aimed()
     local wheel = self.frame
-    local count = #(self.items or {})
+    local count = wheel:GetAttribute("count") or 0
     local state = C_GamePad and C_GamePad.GetDeviceMappedState and C_GamePad.GetDeviceMappedState()
     local sticks = state and state.sticks
     local stick = sticks and sticks[wheel:GetAttribute("ck-stick") or 2]
     local other = sticks and sticks[wheel:GetAttribute("ck-stick2") or 1]
     if other and other.len and (not (stick and stick.len) or other.len > stick.len) then stick = other end
-    if stick and stick.len and stick.len > AIM and count > 0 then
+    if stick and stick.len and stick.len > AIM then
         local best, bestDot = nil, -2
-        for i = 1, count do
+        for i = 1, SEGMENTS do
             local dot = stick.x * wheel:GetAttribute("ck-x" .. i) + stick.y * wheel:GetAttribute("ck-y" .. i)
             if dot > bestDot then best, bestDot = i, dot end
         end
-        return best
+        return best and best <= count and best or nil
     end
     local selected = wheel:GetAttribute("selected") or 0
-    return selected >= 1 and selected or nil
+    return selected >= 1 and selected <= count and selected or nil
 end
 
 function W:Track()
+    if not self.frame then return end
+    -- A page turned (LB / RB, secure): draw it
+    if (self.frame:GetAttribute("page") or 1) ~= self.painted then return self:Paint() end
     local i = self:Aimed()
     if i == self.aimed then return end
     self.aimed = i
-    local item = i and self.items and self.items[i]
+    local item = i and self:PageItems()[i]
     local view = self.view
-    view.ring:SetShown(item ~= nil)
+    view.highlight:SetShown(item ~= nil)
     if not item then
-        -- In the middle: A closes, nothing used
         view.name:SetText(L.WHEEL_NOTHING)
         view.count:SetText(L.WHEEL_NOTHING_HINT)
         return
     end
-    view.ring:ClearAllPoints()
-    view.ring:SetPoint("CENTER", self.slots[i], "CENTER")
+    local point = self.segments[i].highlightPoint
+    view.highlight:ClearAllPoints()
+    view.highlight:SetPoint("CENTER", view.bg, "CENTER", point[1], point[2])
+    view.highlight:SetRotation(point[3])
     view.name:SetText(C_Item.GetItemNameByID(item.id) or "")
-    view.count:SetText(L["WHEEL_CAT_" .. item.cat:upper()])
+    local count = C_Item.GetItemCount and C_Item.GetItemCount(item.id) or 0
+    view.count:SetText(format("%s  -  %d", L["WHEEL_CAT_" .. item.cat:upper()], count))
     if CK.Vibration then CK.Vibration:Fire("wheelTick") end
 end
 
