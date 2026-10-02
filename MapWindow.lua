@@ -373,8 +373,10 @@ function W:RenderSide(layer)
         elseif state == "slot" then
             -- The game keeps some actions on its bars (hunter aspects...)
             local kept = M:SlotKept(M:NativeSlot(input, layer))
-            local hint = kept and (kept .. (replaceHint and ("\n" .. replaceHint) or ""))
-                or (canReplace and M:CanOwnKeys() and L.MAP_SLOT_REPLACE_HINT) or replaceHint or L.MAP_SLOT_HINT
+            -- The switch off: what it would allow, said every time
+            local switch = not M:ReplaceOn() and ("\n" .. L.MAP_REPLACE_SWITCH_HINT) or ""
+            local hint = kept and (kept .. (replaceHint and ("\n" .. replaceHint) or switch))
+                or (canReplace and M:CanOwnKeys() and L.MAP_SLOT_REPLACE_HINT) or replaceHint or (L.MAP_SLOT_HINT .. switch)
             status = "|cffffd100" .. (M:NativeInfo(input, layer) or L.MAP_EMPTY_SLOT) .. "|r\n|cff9d9a8c" .. hint .. "|r"
         elseif state == "native" then
             local hint = replaceHint or L.MAP_NATIVE_HINT
@@ -588,7 +590,10 @@ function W:Choose()
         local slot = M:NativeSlot(input, layer)
         local kept = M:SlotKept(slot)
         if kept and not replace then
-            if UIErrorsFrame then UIErrorsFrame:AddMessage(kept, 1, 0.1, 0.1) end
+            if UIErrorsFrame then
+                UIErrorsFrame:AddMessage(kept, 1, 0.1, 0.1)
+                if not M:ReplaceOn() then UIErrorsFrame:AddMessage(L.MAP_REPLACE_SWITCH_HINT, 1, 0.82, 0) end
+            end
             return
         end
         self.picker = { layer = layer, tab = 1, tabs = replace and M.TABS or M.SLOT_TABS, slot = slot,
