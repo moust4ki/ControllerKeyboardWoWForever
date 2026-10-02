@@ -2,7 +2,7 @@ local _, CK = ...
 
 -- Gamepad button glyphs: the game's own atlases when this client has them,
 -- otherwise the Claude Design textures shipped with the addon.
-local TEX = "Interface\\AddOns\\ControllerKeyboard\\textures\\"
+local TEX = "Interface\\AddOns\\EasyController\\textures\\"
 
 local FALLBACK = {
     A = "ck_g_a", B = "ck_g_b", X = "ck_g_x", Y = "ck_g_y",
@@ -12,7 +12,7 @@ local FALLBACK = {
     DPAD_LEFT = "ck_g_dpad_lr", DPAD_RIGHT = "ck_g_dpad_lr", DPAD_DOWN = "ck_g_dpad",
 }
 
--- Atlas names tried first, per glyph style. /ck glyphs lists the gamepad
+-- Atlas names tried first, per glyph style. /ec glyphs lists the gamepad
 -- atlases this client really has, to complete these lists.
 local ATLAS = {
     xbox = {
@@ -79,7 +79,7 @@ function CK:GlyphMarkup(key, size)
     return format("|T%s%s:%d:%d|t", TEX, FALLBACK[key] or "ck_g_a", size, size)
 end
 
--- /ck glyphs: print the gamepad atlases found in this client
+-- /ec glyphs: print the gamepad atlases found in this client
 function CK:ListGlyphAtlases()
     local prefixes = { "Gamepad_Ltr_", "Gamepad_Shp_", "Gamepad_Gen_", "Gamepad_Rev_" }
     local names = {

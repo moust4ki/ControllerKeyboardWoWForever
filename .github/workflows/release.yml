@@ -42,7 +42,7 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           prerelease=""
           case "$version" in *-*) prerelease="--prerelease" ;; esac
-          gh release create "$GITHUB_REF_NAME" dist/ControllerKeyboard-*.zip \
+          gh release create "$GITHUB_REF_NAME" dist/EasyController-*.zip \
             --title "Easy Controller - Forever $version" --notes-file dist/notes.md $prerelease
 
       - name: CurseForge

@@ -18,7 +18,7 @@ local QUEST_CLASS = Enum and Enum.ItemClass and Enum.ItemClass.Questitem or 12
 local QUEST_BIND = Enum and Enum.ItemBind and Enum.ItemBind.Quest or 4
 
 local questItemIDs = {}     -- itemID -> true, from the bags' quest info
-local objectiveNames = {}   -- item name -> true, from the quest objectives
+local objectiveNames = {}   -- item name -> quest title, from the quest objectives
 local buyback = {}          -- links in the merchant's buyback list
 
 local function enabled()
@@ -50,7 +50,14 @@ function QI:IsQuestItem(item)
     if classOf(item) == QUEST_CLASS then return true end
     local name, _, _, _, _, _, _, _, _, _, _, _, _, bindType = itemInfo(item)
     if bindType == QUEST_BIND then return true end
-    return name ~= nil and objectiveNames[name] == true
+    return name ~= nil and objectiveNames[name] ~= nil
+end
+
+-- The quest that asks for an item (an objective "Linen Cloth: 2/6")
+function QI:ObjectiveQuest(item)
+    local name = item and itemInfo(item)
+    local quest = name and objectiveNames[name]
+    return type(quest) == "string" and quest or nil
 end
 
 ---------------------------------------------------------------------------
@@ -98,7 +105,7 @@ function QI:ScanQuests()
             for _, objective in ipairs(C_QuestLog.GetQuestObjectives(info.questID) or {}) do
                 if objective.type == "item" and objective.text then
                     local name = objectiveItemName(objective.text)
-                    if name then objectiveNames[name] = true end
+                    if name then objectiveNames[name] = info.title or true end
                 end
             end
         end
@@ -114,7 +121,8 @@ end
 
 local function addLine(tooltip, link)
     if not feature("questTooltip") or not QI:IsQuestItem(link) then return false end
-    tooltip:AddLine(L.QUEST_ITEM_TIP, ORANGE[1], ORANGE[2], ORANGE[3], true)
+    local quest = QI:ObjectiveQuest(link)
+    tooltip:AddLine(quest and format(L.QUEST_ITEM_FOR, quest) or L.QUEST_ITEM_TIP, ORANGE[1], ORANGE[2], ORANGE[3], true)
     return true
 end
 
@@ -149,57 +157,58 @@ function QI:HookBagButtons()
 end
 
 ---------------------------------------------------------------------------
--- Bags: an orange glow around quest items (the game's own bag glow), added
--- after the game draws its bags. Only a texture of ours on each item button
--- (kept in our own table, nothing written in the game's frames).
+-- Bags: the items a quest asks to collect (meat, cloth...) get the border
+-- the game puts on its own quest items, in orange. Only those: the game
+-- already marks the quest items it knows. A texture of ours on each item
+-- button, over the game's own (kept in our own table, nothing written in
+-- the game's frames).
 ---------------------------------------------------------------------------
-local glows = setmetatable({}, { __mode = "k" })
+local QUEST_BORDER = TEXTURE_ITEM_QUEST_BORDER or "Interface\\ContainerFrame\\UI-Icon-QuestBorder"
+local borders = setmetatable({}, { __mode = "k" })
 local bagFrames = {}
 
-local function glowFor(button)
-    local glow = glows[button]
-    if not glow then
-        glow = button:CreateTexture(nil, "OVERLAY", nil, 6)
-        glow:SetAllPoints(button)
-        if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo("bags-glow-orange") then
-            glow:SetAtlas("bags-glow-orange")
+local function borderFor(button)
+    local border = borders[button]
+    if not border then
+        border = button:CreateTexture(nil, "OVERLAY", nil, 2)
+        if button.IconQuestTexture then
+            border:SetAllPoints(button.IconQuestTexture)
         else
-            glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-            glow:SetBlendMode("ADD")
-            glow:SetVertexColor(ORANGE[1], ORANGE[2], ORANGE[3])
+            border:SetSize(37, 38)
+            border:SetPoint("TOP")
         end
-        -- A slow pulse, so it reads as a warning and not as a new item
-        local pulse = glow:CreateAnimationGroup()
-        pulse:SetLooping("BOUNCE")
-        local alpha = pulse:CreateAnimation("Alpha")
-        alpha:SetFromAlpha(1)
-        alpha:SetToAlpha(0.35)
-        alpha:SetDuration(0.9)
-        glow.pulse = pulse
-        glows[button] = glow
+        border:SetTexture(QUEST_BORDER)
+        -- The game's gold border, in our orange
+        border:SetDesaturated(true)
+        border:SetVertexColor(ORANGE[1], ORANGE[2], ORANGE[3])
+        borders[button] = border
     end
-    return glow
+    return border
 end
 
-function QI:UpdateGlows(frame)
+-- The game draws its own border (or "!") on this bag slot
+local function markedByGame(bag, slot)
+    local info = C_Container.GetContainerItemQuestInfo and C_Container.GetContainerItemQuestInfo(bag, slot)
+    return info and (info.isQuestItem or info.questID) and true or false
+end
+
+function QI:UpdateBorders(frame)
     if not (frame and frame.EnumerateValidItems and frame:IsShown()) then return end
     local on = feature("questGlow")
     for _, button in frame:EnumerateValidItems() do
-        local id = button.GetBagID and C_Container.GetContainerItemID(button:GetBagID(), button:GetID())
-        local quest = on and id ~= nil and self:IsQuestItem(id)
-        if quest then
-            local glow = glowFor(button)
-            glow:Show()
-            if not glow.pulse:IsPlaying() then glow.pulse:Play() end
-        elseif glows[button] then
-            glows[button].pulse:Stop()
-            glows[button]:Hide()
+        local bag, slot = button.GetBagID and button:GetBagID(), button:GetID()
+        local id = bag and C_Container.GetContainerItemID(bag, slot)
+        local mark = on and id ~= nil and not markedByGame(bag, slot) and self:IsQuestItem(id)
+        if mark then
+            borderFor(button):Show()
+        elseif borders[button] then
+            borders[button]:Hide()
         end
     end
 end
 
-function QI:RefreshGlows()
-    for _, frame in ipairs(bagFrames) do self:UpdateGlows(frame) end
+function QI:RefreshBorders()
+    for _, frame in ipairs(bagFrames) do self:UpdateBorders(frame) end
 end
 
 function QI:HookBags()
@@ -208,7 +217,7 @@ function QI:HookBags()
     for _, frame in ipairs(frames) do
         if frame and frame.UpdateItems then
             bagFrames[#bagFrames + 1] = frame
-            hooksecurefunc(frame, "UpdateItems", function(self) QI:UpdateGlows(self) end)
+            hooksecurefunc(frame, "UpdateItems", function(self) QI:UpdateBorders(self) end)
         end
     end
 end
@@ -268,8 +277,8 @@ function QI:Init()
             QI:CheckSales()
         elseif event == "QUEST_LOG_UPDATE" then
             QI:ScanQuests()
-            -- A quest taken or turned in: other items need the glow
-            QI:RefreshGlows()
+            -- A quest taken or turned in: other items need the border
+            QI:RefreshBorders()
         else
             -- Sales show up in the buyback list after the bag update
             QI:CheckSales()

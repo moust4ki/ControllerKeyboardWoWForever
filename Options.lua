@@ -93,7 +93,7 @@ local function generalRows()
         b.check(L.FEAT_QUEST_TOOLTIP, function() return f.questTooltip end, function(v) f.questTooltip = v end, true)
         b.check(L.FEAT_QUEST_GLOW, function() return f.questGlow end, function(v)
             f.questGlow = v
-            CK.QuestItems:RefreshGlows()
+            CK.QuestItems:RefreshBorders()
         end, true)
         b.check(L.FEAT_QUEST_SELL, function() return f.questSellAlert end, function(v) f.questSellAlert = v end, true)
         b.check(L.FEAT_QUEST_HOVER, function() return f.questHoverAlert end, function(v) f.questHoverAlert = v end, true)
@@ -170,7 +170,7 @@ local function keyboardRows()
     local rows, b = list()
 
     b.header(L.OPT_KEYBOARD)
-    -- 4 preset sizes (/ck scale still sets any value)
+    -- 4 preset sizes (/ec scale still sets any value)
     local function sizeIndex()
         local best, bestD = 2, math.huge
         for i, size in ipairs(SIZES) do

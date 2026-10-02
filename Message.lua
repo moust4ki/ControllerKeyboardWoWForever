@@ -64,7 +64,7 @@ function CK:IsClickingWheel()
         and (IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton"))
 end
 
--- Keyboard without the chat (after /ck lock, to place it): A sends with the
+-- Keyboard without the chat (after /ec lock, to place it): A sends with the
 -- secure macro button, B closes
 function CK:OpenStandalone()
     if not self.db.settings.modules.keyboard then return end
@@ -156,7 +156,7 @@ function CK:Refresh()
     self.previewBody = self:GetChannelLabel() .. previewTail(text)
     self:UpdatePreview()
 
-    -- "/re" -> /reload, "/ck l" -> /ck lock: command and at most one argument
+    -- "/re" -> /reload, "/ec l" -> /ec lock: command and at most one argument
     local n = self.db.settings.numSuggestions
     local _, spaces = text:gsub(" ", "")
     self.state.commandMode = text:sub(1, 1) == "/" and spaces <= 1

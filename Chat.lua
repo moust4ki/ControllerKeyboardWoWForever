@@ -229,9 +229,11 @@ local function slash(msg)
     end
 end
 
-SLASH_CONTROLLERKEYBOARD1 = "/ck"
-SLASH_CONTROLLERKEYBOARD2 = "/controllerkeyboard"
-SLASH_CONTROLLERKEYBOARD3 = "/ec"
+SLASH_CONTROLLERKEYBOARD1 = "/ec"
+SLASH_CONTROLLERKEYBOARD2 = "/easycontroller"
+-- The names it had before 1.1
+SLASH_CONTROLLERKEYBOARD3 = "/ck"
+SLASH_CONTROLLERKEYBOARD4 = "/controllerkeyboard"
 SlashCmdList.CONTROLLERKEYBOARD = slash
 
 ---------------------------------------------------------------------------

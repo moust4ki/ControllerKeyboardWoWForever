@@ -229,6 +229,8 @@ end
 -- What an input does in a layer, as text
 function W:SlotText(input, layer)
     local state = M:State(input, layer)
+    -- A paddle's shared key, taken by a game function
+    if state == "locked" and input.paddle then return M:ActionName(M:EffectiveAction(input, layer)) or L.MAP_LOCKED end
     -- No layer of its own: the game gets the button as without the trigger
     if state == "locked" then return M:NativeInfo(input, "") or L.MAP_LOCKED end
     if state == "native" then return M:NativeInfo(input, layer) or L.MAP_GAME end
@@ -251,7 +253,15 @@ function W:RenderSlot(b, layer)
     b.icon:SetDesaturated(false)
     b.icon:SetAlpha(1)
     b:SetAlpha(1)
-    if state == "locked" then
+    if state == "locked" and input.paddle then
+        -- A shared key a game function takes: that function, faded
+        local shown = M:EffectiveAction(input, layer)
+        P.SetIcon(b.icon, M:ActionIcon(shown) or { glyph = GLYPH[input.id] })
+        b.icon:SetAlpha(0.5)
+        b.name:SetText(M:ActionName(shown) or "—")
+        b.name:SetTextColor(unpack(GREY))
+        b:SetAlpha(0.6)
+    elseif state == "locked" then
         -- No layer of its own: what the button does without the trigger
         local name, icon = M:NativeInfo(input, "")
         P.SetIcon(b.icon, icon or { glyph = GLYPH[input.id] })
@@ -276,7 +286,9 @@ function W:RenderSlot(b, layer)
     elseif action then
         P.SetIcon(b.icon, M:ActionIcon(action))
         b.name:SetText(M:ActionName(action))
-        b.name:SetTextColor(unpack(GOLD))
+        local inactive = M:Inactive(input, layer)
+        b.icon:SetDesaturated(inactive)
+        b.name:SetTextColor(unpack(inactive and GREY or GOLD))
     else
         P.SetIcon(b.icon, nil)
         b.plus:Show()
@@ -317,6 +329,9 @@ function W:RenderSide(layer)
         local action = M:Get(input.id, layer)
         if P:IsCapturing(input.id) then
             status = L.MAP_PADDLE_PRESS
+        elseif state == "locked" and input.paddle then
+            local base = M:SharedLayers(layer)[1]
+            status = format(L.MAP_SHARED_LOCKED, comboLabel(input, base), M:ActionName(M:Get(input.id, base)) or "")
         elseif state == "locked" then
             local name = M:NativeInfo(input, "")
             status = (name and (name .. "\n") or "") .. "|cff9d9a8c" .. L.MAP_LOCKED .. "|r"
@@ -324,10 +339,16 @@ function W:RenderSide(layer)
             status = "|cffffd100" .. (M:NativeInfo(input, layer) or L.MAP_EMPTY_SLOT) .. "|r\n|cff9d9a8c" .. L.MAP_SLOT_HINT .. "|r"
         elseif state == "native" then
             status = (M:NativeInfo(input, layer) or L.MAP_GAME) .. "\n|cff9d9a8c" .. L.MAP_NATIVE_HINT .. "|r"
+        elseif action and M:Inactive(input, layer) then
+            status = "|cff9d9a8c" .. (M:ActionName(action) or "") .. "|r\n" .. L.MAP_SHARED_INACTIVE
         elseif action then
             status = "|cffffd100" .. (M:ActionName(action) or "") .. "|r\n|cff9d9a8c" .. L.MAP_ASSIGNED_HINT .. "|r"
         else
             status = L.MAP_FREE_HINT
+        end
+        -- A shared key: spells, items and macros only
+        if input.paddle and state == "free" and M:PaddleTabs(input, layer) == M.SLOT_TABS and not M:Inactive(input, layer) then
+            status = status .. "\n|cff9d9a8c" .. L.MAP_SHARED_HINT .. "|r"
         end
         if input.paddle and not P:IsCapturing(input.id) then
             local key = M:InputKey(input)
@@ -473,7 +494,7 @@ function W:Choose()
     if state == "slot" then
         self.picker = { layer = layer, tab = 1, tabs = M.SLOT_TABS, slot = M:NativeSlot(input, layer) }
     elseif state == "free" then
-        self.picker = { layer = layer, tab = 1, tabs = M.TABS }
+        self.picker = { layer = layer, tab = 1, tabs = input.paddle and M:PaddleTabs(input, layer) or M.TABS }
     else
         return
     end

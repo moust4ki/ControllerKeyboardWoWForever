@@ -1,7 +1,7 @@
 local _, CK = ...
 local L = CK.L
 
--- The addon's own configuration panel (RB + D-pad down, /ck config): every
+-- The addon's own configuration panel (RB + D-pad down, /ec config): every
 -- setting, in tabs (General, Keyboard, Gamepad), driven with the pad or the
 -- mouse. Like the keyboard it is our own frame, never a game panel: while it
 -- is open the pad is bound to hidden buttons of ours, out of combat only, and

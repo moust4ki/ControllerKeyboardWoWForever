@@ -5,7 +5,7 @@ local L = CK.L
 -- suggestions, the input method's area, channel row, mouse buttons and help
 -- band. Coordinates are in px from the panel's top-left corner (y goes down);
 -- the width and the method area height come from the active input method.
-local TEX = "Interface\\AddOns\\ControllerKeyboard\\textures\\"
+local TEX = "Interface\\AddOns\\EasyController\\textures\\"
 local AREA_Y = 92
 
 local function rgb(hex)
@@ -494,7 +494,7 @@ function CK:MakeDragHandle(handle)
     end
 end
 
--- The move grip is only shown while the position is unlocked (/ck lock)
+-- The move grip is only shown while the position is unlocked (/ec lock)
 function CK:UpdateLock()
     if self.frame then
         self.frame.grip:SetShown(not self.db.settings.locked)

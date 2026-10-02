@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.0
+
+- The addon's folder and package are now **EasyController** (were ControllerKeyboard). Settings saved
+  under the old name stay in `WTF/.../SavedVariables/ControllerKeyboard.lua`: copy that file to
+  `EasyController.lua` (game closed) to keep them. Remove the old `ControllerKeyboard` folder.
+- `/ec` is the command (also `/easycontroller`; `/ck` still works).
+- **Back paddles in every trigger layer.** L4 / R4 / L5 / R5 take a spell, an item or a macro in the
+  RT and LT + RT layers too, without RT being a modifier: the paddle's key goes to a secure button
+  that reads the triggers when it is pressed (the game lets secure code read the gamepad) and runs
+  that layer's action. Game functions (key bindings) still need a key of their own: with "RT acts as
+  a modifier" on, every layer has one. A game function on a paddle alone takes the key in the
+  layers that share it; the mapping window says so.
+- **Quest items: a border instead of the glow.** The items a quest asks to collect (meat, cloth...),
+  which the game doesn't mark, get the game's own quest item border in orange; the pulsing glow is
+  gone, and items the game already marks are left alone. Their tooltip line names the quest.
+
 ## 1.0.0
 
 The addon is now **Easy Controller - Forever** (formerly Controller Keyboard): the name players see changes, the

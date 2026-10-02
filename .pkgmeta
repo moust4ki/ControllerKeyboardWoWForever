@@ -1,4 +1,4 @@
-package-as: ControllerKeyboard
+package-as: EasyController
 
 manual-changelog:
   filename: CHANGELOG.md

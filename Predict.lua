@@ -349,11 +349,11 @@ local PINNED_COMMANDS = { "/reload", "/p", "/ra", "/g", "/w" }
 
 -- Suggested after the pinned ones and the player's own commands (most used first)
 local BUILTIN_COMMANDS = {
-    "/r", "/ck", "/ck lock", "/s", "/y", "/e", "/inv",
+    "/r", "/ec", "/ec lock", "/s", "/y", "/e", "/inv",
     "/roll", "/afk", "/dnd", "/who", "/dance", "/sit", "/played", "/follow",
-    "/assist", "/target", "/logout", "/camp", "/ck debug", "/ck auto",
-    "/ck learn", "/ck lang", "/ck scale", "/ck reset", "/ck stats", "/ck invert",
-    "/ck pad", "/ck forget",
+    "/assist", "/target", "/logout", "/camp", "/ec debug", "/ec auto",
+    "/ec learn", "/ec lang", "/ec scale", "/ec reset", "/ec stats", "/ec invert",
+    "/ec pad", "/ec forget",
 }
 
 -- Commands followed by a message: never learn their argument
@@ -373,7 +373,7 @@ function P:LearnCommand(text)
     cmd = CK.Lower(cmd)
     local commands = db.commands
     commands[cmd] = (commands[cmd] or 0) + 1
-    -- "/ck lock": remember a single short argument, not chat messages
+    -- "/ec lock": remember a single short argument, not chat messages
     local arg = rest:match("^([^ \t\r\n]+)$")
     if arg and #arg <= 15 and not CHAT_COMMANDS[cmd] and not cmd:match("^/%d+$") then
         local full = cmd .. " " .. CK.Lower(arg)

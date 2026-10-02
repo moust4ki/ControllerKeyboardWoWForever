@@ -1,6 +1,6 @@
-"""Build the CurseForge / release zip: dist/ControllerKeyboard-<version>.zip
+"""Build the CurseForge / release zip: dist/EasyController-<version>.zip
 
-The zip holds a single ControllerKeyboard/ folder with what the game loads:
+The zip holds a single EasyController/ folder with what the game loads:
 the TOC and its files, Bindings.xml, the TGA textures, LICENSE, README and
 CHANGELOG. Design sources and tools are left out.
 
@@ -13,7 +13,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ADDON = "ControllerKeyboard"
+ADDON = "EasyController"
 EXTRA = ["Bindings.xml", "LICENSE", "README.md", "CHANGELOG.md"]
 
 

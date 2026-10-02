@@ -27,7 +27,7 @@ QWERTZ and the German dictionary.
 ## Installation
 
 1. Download the repository (*Code > Download ZIP*) and extract it, or grab the zip from CurseForge.
-2. Rename the folder to **`ControllerKeyboard`** (exact name) and put it in
+2. Rename the folder to **`EasyController`** (exact name) and put it in
    `World of Warcraft/_classic_beta_/Interface/AddOns/`.
 3. **Fully restart the game** after installing or updating (`/reload` does not load new files).
 
@@ -36,7 +36,7 @@ QWERTZ and the German dictionary.
 The keyboard opens by itself with the chat. It is disabled in combat (the game blocks too many
 actions there, "Not possible in combat") and comes back after combat if the chat is still open.
 
-Choose the input method in the options or with `/ck mode wheel|stick`.
+Choose the input method in the options or with `/ec mode wheel|stick`.
 
 ### Common to both methods
 
@@ -75,7 +75,7 @@ Choose the input method in the options or with `/ck mode wheel|stick`.
 ### Split keyboard
 
 A full keyboard (AZERTY, QWERTY, QWERTZ, Spanish QWERTY with ñ or Italian QWERTY; option or
-`/ck layout azerty|qwerty|qwertz|es|it`), with a numbers / accents / symbols layer whose accents follow
+`/ec layout azerty|qwerty|qwertz|es|it`), with a numbers / accents / symbols layer whose accents follow
 the language (é è à ç… / ä ö ü ß / á é í ó ú ñ ¿ ¡ / à è é ì ò ù), cut in two halves: the **left stick** drives a cursor on
 the left half (columns 1-5), the **right stick** on the right half (columns 6-10). Each stick's
 **tilt is its cursor's position** around the center of its half: released, the cursor is at the
@@ -136,7 +136,7 @@ you typed; then type the message. Deleting on an empty message goes back to the 
 
 **RB + D-pad down** opens the addon's own panel (only watched, never bound: the game's own buttons stay as they are;
 the General tab learns any other pair: press A on it, then hold a button and press a second one;
-also `/ck config`, a
+also `/ec config`, a
 key binding, or *Options > AddOns > Easy Controller - Forever*). It is driven with the gamepad (LB / RB:
 tabs, D-pad: move and change values, A: choose, B: close) or the mouse.
 
@@ -148,7 +148,7 @@ tabs, D-pad: move and change values, A: choose, B: close) or the mouse.
 
 ## Gamepad mapping
 
-The Gamepad tab (`/ck map`) shows the whole controller, in its four trigger layers: alone, LT, RT,
+The Gamepad tab (`/ec map`) shows the whole controller, in its four trigger layers: alone, LT, RT,
 LT + RT (hold the triggers, or click the layer tabs).
 
 - **The game's own buttons stay as they are.** They are shown with what they do and its icon: jump,
@@ -169,8 +169,15 @@ LT + RT (hold the triggers, or click the layer tabs).
 For the Steam Deck and other controllers with back paddles: set each paddle to a keyboard key in
 Steam Input (F13 to F16 for example), then **Identify the back paddles** (under the controller) asks
 you to press each one in turn; B skips a paddle your controller doesn't have. Y on one paddle learns
-it again. `/ck keys` lists the keys the game receives. Controllers whose paddles the game sees
+it again. `/ec keys` lists the keys the game receives. Controllers whose paddles the game sees
 directly (PADPADDLE1-4) work as they are.
+
+The paddles have the four layers: alone, LT, RT, LT + RT. A trigger that is not a keyboard modifier
+in the game's gamepad settings (RT, by default) doesn't change the key a paddle sends: RT + L4 is the
+same key as L4. The addon then reads the triggers when the paddle is pressed, from the game's
+secure code, and runs that layer's **spell, item or macro**. A game function (run / walk, map...) is
+a key binding and needs a key of its own: on such a layer, turn on **"RT acts as a modifier"**
+(General tab), or the layers share it.
 
 L3 / R3 can be shown too (General tab), with what the game does with them (autorun, ping...) or what
 you put on them. Spells are listed with their rank.
@@ -189,8 +196,9 @@ off), X puts a button back. Places follow the compact layout.
 ## Quest items
 
 Item tooltips show an orange **"Quest item: do not sell"** line on quest items, including the items a
-quest asks to collect (cloth, ore, meat...) that the game itself does not mark, and in the bags those
-items get a slowly pulsing orange glow. Selling one to a
+quest asks to collect (cloth, ore, meat...) that the game itself does not mark: for those, the line
+names the quest. In the bags they get the border the game puts on its own quest items, in orange
+(the game's own quest items keep theirs). Selling one to a
 merchant shows a warning with a reminder of the Buyback tab; with the gamepad bag tooltips turned
 off, selecting one at a merchant warns too.
 
@@ -203,20 +211,20 @@ off, selecting one at a merchant warns too.
 - **Next word, iPhone style**: your usual message starters as soon as the chat opens; after each word,
   the most likely next word from your own 2 and 3 word sequences, plus built-in common French phrases.
 - **Slash commands**: a message starting with `/` suggests `/reload`, `/p`, `/ra`, `/g`, `/w`, then your
-  most used commands and common ones (`/r`, `/roll`, `/dance`, `/ck lock`…).
+  most used commands and common ones (`/r`, `/roll`, `/dance`, `/ec lock`…).
 - **Learning**: every message you send (gamepad or keyboard) feeds your words, message starters, word
   sequences and commands. The text after `/w`, `/g`… is never stored as a command. Everything stays
-  local, in `WTF/.../SavedVariables/ControllerKeyboard.lua`.
+  local, in `WTF/.../SavedVariables/EasyController.lua`.
 
 ## Options
 
-In the configuration panel (RB + D-pad down, `/ck config`):
+In the configuration panel (RB + D-pad down, `/ec config`):
 
 - every function on or off (General tab);
 - input method (daisywheel / split keyboard), keyboard layout (AZERTY / QWERTY), stick dead
   zone, stick response (linear, gentle, fast), magnet, cursor lines;
 - lock position, open automatically, only when the gamepad is active;
-- keyboard size: small (80 %), normal, large (125 %), extra large (150 %) — `/ck scale` for any
+- keyboard size: small (80 %), normal, large (125 %), extra large (150 %) — `/ec scale` for any
   other value; invert the sticks vertical axis, show / hide the mouse buttons row;
 - font (Blizzard fonts: Friz Quadrata, Morpheus, Skurri, Arial Narrow, or the chat font);
 - button style (Xbox / PlayStation) and the game's button icons;
@@ -227,24 +235,24 @@ In the configuration panel (RB + D-pad down, `/ck config`):
 
 | Command | Effect |
 |---|---|
-| `/ck` | open the keyboard |
-| `/ck lock` | lock / unlock the position (unlocking shows the keyboard to place it) |
-| `/ck mode wheel\|stick` | daisywheel or split keyboard |
-| `/ck layout azerty\|qwerty\|qwertz\|es\|it` | split keyboard layout |
-| `/ck auto` | open automatically with the chat |
-| `/ck pad` | only open automatically when the gamepad is active |
-| `/ck learn` | turn learning on / off |
-| `/ck lang fr\|en\|de\|es\|it\|both` | suggestion and accent language |
-| `/ck scale 0.8` | keyboard size |
-| `/ck invert` | invert the sticks vertical axis |
-| `/ck reset` | reset the keyboard position |
-| `/ck stats` | statistics |
-| `/ck forget confirm` | forget learned words |
-| `/ck config` | configuration panel (also RB + D-pad down) |
-| `/ck map` | gamepad mapping (free buttons, back paddles) |
-| `/ck keys` | list the keys and buttons the game receives (back paddles) |
-| `/ck glyphs` | list the game's gamepad button icons |
-| `/ck debug` | print received buttons and sticks |
+| `/ec` | open the keyboard |
+| `/ec lock` | lock / unlock the position (unlocking shows the keyboard to place it) |
+| `/ec mode wheel\|stick` | daisywheel or split keyboard |
+| `/ec layout azerty\|qwerty\|qwertz\|es\|it` | split keyboard layout |
+| `/ec auto` | open automatically with the chat |
+| `/ec pad` | only open automatically when the gamepad is active |
+| `/ec learn` | turn learning on / off |
+| `/ec lang fr\|en\|de\|es\|it\|both` | suggestion and accent language |
+| `/ec scale 0.8` | keyboard size |
+| `/ec invert` | invert the sticks vertical axis |
+| `/ec reset` | reset the keyboard position |
+| `/ec stats` | statistics |
+| `/ec forget confirm` | forget learned words |
+| `/ec config` | configuration panel (also RB + D-pad down) |
+| `/ec map` | gamepad mapping (free buttons, back paddles) |
+| `/ec keys` | list the keys and buttons the game receives (back paddles) |
+| `/ec glyphs` | list the game's gamepad button icons |
+| `/ec debug` | print received buttons and sticks |
 
 **"Toggle keyboard"**, **"Easy Controller - Forever configuration"** and **"Gamepad mapping"** key bindings
 are also available in *Escape > Key Bindings > AddOns*.
@@ -291,7 +299,7 @@ OpenSubtitles):
 python tools/build_dict.py fr    # or en, de, es, it
 ```
 
-CurseForge / release package (`dist/ControllerKeyboard-<version>.zip`, page description in
+CurseForge / release package (`dist/EasyController-<version>.zip`, page description in
 `docs/curseforge.md`):
 
 ```bash

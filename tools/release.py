@@ -19,7 +19,7 @@ import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ADDON = "ControllerKeyboard"
+ADDON = "EasyController"
 API = "https://wow.curseforge.com/api"
 
 

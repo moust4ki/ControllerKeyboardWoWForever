@@ -484,9 +484,9 @@ end
 ---------------------------------------------------------------------------
 -- Drawing
 ---------------------------------------------------------------------------
--- The action shown: the held layer's, else the one without trigger
+-- The action shown: the one the held layer runs
 function P:ShownAction(id, layer)
-    return (layer ~= "" and CK.Mapping:Get(id, layer)) or CK.Mapping:Get(id, "")
+    return CK.Mapping:EffectiveAction(CK.Mapping.BY_ID[id], layer or "")
 end
 
 local function hasAnyAction(id)
@@ -1100,7 +1100,7 @@ function P:Init()
 end
 
 ---------------------------------------------------------------------------
--- /ck keys: every key and gamepad button the game receives, for 15 seconds,
+-- /ec keys: every key and gamepad button the game receives, for 15 seconds,
 -- and which pad buttons act as Shift / Ctrl / Alt
 ---------------------------------------------------------------------------
 local DETECT_TIME = 15
