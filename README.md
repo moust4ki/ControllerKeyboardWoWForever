@@ -237,11 +237,13 @@ kind can be left out (Wheel tab).
 
 - Give it a key in the Gamepad tab (Items list: any free button, or a back paddle in any layer) or
   in *Escape > Key Bindings > AddOns*.
-- Open: the **right stick** aims (or the D-pad turns the selection), **A** uses, **B** closes; the
-  mouse clicks a slot. The aimed item's name shows in the middle. Nothing is chosen when it opens:
-  with the stick back in the middle, A closes it without using anything.
-- It sits in the middle of the screen; unlocked, drag the open wheel with the mouse, or move it with
-  the D-pad from the Wheel tab.
+- Open, like the game's own radial menu: **push the right stick** towards an item and **let it go**
+  to use it; **B** cancels. Nothing is aimed when it opens. The D-pad and A, or the mouse, work too.
+  The camera stays still while it is open.
+- It sits in the middle of the screen (unlocked, drag the open wheel with the mouse, or move it with
+  the D-pad from the Wheel tab).
+- Letting the stick go is seen through the game's stick direction buttons: the wheel turns on the
+  game's *GamePadStickAxisButtons* setting (and puts it back when the wheel is turned off).
 - It works **in combat**: the wheel and the keys it takes are secure, run by the game. Food and drink
   are greyed there (the game forbids them in combat). Its content is updated out of combat only (a
   rule of the game).

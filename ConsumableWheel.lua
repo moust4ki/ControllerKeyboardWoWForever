@@ -4,11 +4,16 @@ local L = CK.L
 -- Module "consumables wheel": a key of its own (Gamepad tab, or the game's key
 -- bindings) opens a wheel of up to 12 consumables from the bags: food, drink,
 -- health and mana potions, healthstone, mana gem, bandages, buff food,
--- elixirs and flasks, scrolls. The right stick aims (or the D-pad turns the
--- selection), A uses, B closes; the mouse clicks a slot. Nothing is chosen
--- when it opens: with the stick back in the middle, A closes it unused. It is
--- placed freely (mouse while unlocked, or the D-pad), the middle of the
--- screen by default.
+-- elixirs and flasks, scrolls. Like the game's own radial menu: the right
+-- stick aims, letting it go back uses the item aimed, B cancels (A, the
+-- D-pad and the mouse work too). Nothing is aimed when it opens. The camera
+-- stays still while it is open. In the middle of the screen (or placed with
+-- the mouse or the D-pad).
+--
+-- Letting the stick go is seen by secure code through the game's stick
+-- direction buttons (PADRSTICKUP...: the GamePadStickAxisButtons setting,
+-- turned on with the wheel): their presses and releases go to the wheel
+-- while it is open, and the last release uses the slot aimed.
 --
 -- It works in combat: the wheel, its slots and the keys it takes while open
 -- are secure frames and snippets run by the game (its restricted
@@ -156,6 +161,7 @@ local OPEN = [[
     end
     if (owner:GetAttribute("count") or 0) == 0 then return false end
     owner:SetAttribute("selected", 0)
+    owner:SetAttribute("ck-held", 0)
     owner:Show()
     for prefix in gmatch(owner:GetAttribute("ck-prefixes"), "([^,]*),") do
         owner:SetBindingClick(true, prefix .. "PAD1", "ControllerKeyboardWheelUse")
@@ -164,6 +170,11 @@ local OPEN = [[
         owner:SetBindingClick(true, prefix .. "PADDUP", "ControllerKeyboardWheelPrev")
         owner:SetBindingClick(true, prefix .. "PADDRIGHT", "ControllerKeyboardWheelNext")
         owner:SetBindingClick(true, prefix .. "PADDDOWN", "ControllerKeyboardWheelNext")
+        owner:SetBindingClick(true, prefix .. "PADRSTICKUP", "ControllerKeyboardWheelAim")
+        owner:SetBindingClick(true, prefix .. "PADRSTICKDOWN", "ControllerKeyboardWheelAim")
+        owner:SetBindingClick(true, prefix .. "PADRSTICKLEFT", "ControllerKeyboardWheelAim")
+        owner:SetBindingClick(true, prefix .. "PADRSTICKRIGHT", "ControllerKeyboardWheelAim")
+        owner:SetBindingClick(true, prefix .. "PADRSTICK", "ControllerKeyboardWheelClose")
     end
     owner:SetBindingClick(true, "ESCAPE", "ControllerKeyboardWheelClose")
     return false
@@ -189,6 +200,30 @@ local USE = [[
         owner:ClearBindings()
         return false
     end
+    return "s" .. slot, true
+]]
+
+-- The right stick's direction buttons: each press or release aims again
+-- (the stick's own position, the closest slot, while it is still pushed);
+-- the last release, the stick back in the middle, uses the slot aimed
+local AIM_RELEASE = [[
+    local held = (owner:GetAttribute("ck-held") or 0) + (down and 1 or -1)
+    if held < 0 then held = 0 end
+    owner:SetAttribute("ck-held", held)
+    local count = owner:GetAttribute("count") or 0
+    local state = GetGamePadState()
+    local stick = state and state.sticks and state.sticks[owner:GetAttribute("ck-stick") or 2]
+    if stick and stick.len and stick.len > 0.3 then
+        local best, bestDot = nil, -2
+        for i = 1, count do
+            local dot = stick.x * (owner:GetAttribute("ck-x" .. i) or 0) + stick.y * (owner:GetAttribute("ck-y" .. i) or 0)
+            if dot > bestDot then best, bestDot = i, dot end
+        end
+        if best then owner:SetAttribute("selected", best) end
+    end
+    if down or held > 0 then return false end
+    local slot = owner:GetAttribute("selected") or 0
+    if slot < 1 or slot > count then return false end
     return "s" .. slot, true
 ]]
 
@@ -218,9 +253,9 @@ end
 
 -- A button for the wheel's keys: a secure action button that does nothing
 -- itself, its OnClick wrapped by the wheel
-local function keyButton(name, wheel, pre, post, clicks)
+local function keyButton(name, wheel, pre, post, ...)
     local b = CK.NewFrame("Button", name, UIParent, "SecureActionButtonTemplate")
-    b:RegisterForClicks(clicks or "AnyDown")
+    if ... then b:RegisterForClicks(...) else b:RegisterForClicks("AnyDown") end
     b:SetAttribute("useOnKeyDown", true)
     b:Hide()
     SecureHandlerWrapScript(b, "OnClick", wheel, pre, post)
@@ -257,6 +292,12 @@ function W:Build()
     use:SetAttribute("type", "click")
     self.use = use
     keyButton("ControllerKeyboardWheelClose", wheel, CLOSE)
+    -- The stick's direction buttons: presses and releases; it acts on the
+    -- last release
+    local aim = keyButton("ControllerKeyboardWheelAim", wheel, AIM_RELEASE, DONE, "AnyDown", "AnyUp")
+    aim:SetAttribute("useOnKeyDown", false)
+    aim:SetAttribute("type", "click")
+    self.aim = aim
     keyButton("ControllerKeyboardWheelPrev", wheel, turn(-1))
     keyButton("ControllerKeyboardWheelNext", wheel, turn(1))
 
@@ -283,7 +324,11 @@ function W:Build()
     view.help:SetPoint("TOP", view.count, "BOTTOM", 0, -10)
     view.help:SetTextColor(unpack(CK.UIKit.C.btn))
     view:SetScript("OnUpdate", function() W:Track() end)
-    view:SetScript("OnShow", function() W:Paint() end)
+    view:SetScript("OnShow", function()
+        W:HoldCamera(true)
+        W:Paint()
+    end)
+    view:SetScript("OnHide", function() W:HoldCamera(false) end)
     self.view = view
 
     self.slots, self.buttons = {}, {}
@@ -307,6 +352,7 @@ function W:Build()
         SecureHandlerWrapScript(b, "OnClick", wheel, "return nil, true", DONE)
         b:Hide()
         use:SetAttribute("*clickbutton-s" .. i, b)
+        self.aim:SetAttribute("*clickbutton-s" .. i, b)
         self.buttons[i] = b
     end
 end
@@ -390,7 +436,7 @@ function W:Paint()
         end)
     end
     local g = function(key) return CK:GlyphMarkup(key, 14) end
-    self.view.help:SetText(format("%s %s   %s %s   %s %s", g("RS"), L.WHEEL_AIM, g("A"), L.WHEEL_USE, g("B"), L.WHEEL_CLOSE))
+    self.view.help:SetText(format("%s %s   %s %s", g("RS"), L.WHEEL_AIM, g("B"), L.WHEEL_CLOSE))
     self.aimed = nil
     self:Track()
 end
@@ -443,7 +489,7 @@ function W:Place()
     if type(pos) == "table" and pos.point then
         wheel:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
     else
-        wheel:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
+        wheel:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     end
 end
 
@@ -511,6 +557,43 @@ function W:PlacementPress(name)
     end
 end
 
+---------------------------------------------------------------------------
+-- The game's settings the wheel needs: the stick's direction buttons (so a
+-- release is seen), and the camera still while it is open (its speeds are
+-- kept, given back when it closes, or at the next login after a crash)
+---------------------------------------------------------------------------
+local STICK_BUTTONS = "GamePadStickAxisButtons"
+local CAMERA = { "GamePadCameraYawSpeed", "GamePadCameraPitchSpeed" }
+
+function W:StickButtons(on)
+    if InCombatLockdown() or GetCVar(STICK_BUTTONS) == nil then return end
+    local s = settings()
+    if on and GetCVar(STICK_BUTTONS) ~= "1" then
+        s.stickButtonsWas = GetCVar(STICK_BUTTONS)
+        SetCVar(STICK_BUTTONS, "1")
+    elseif not on and s.stickButtonsWas then
+        SetCVar(STICK_BUTTONS, s.stickButtonsWas)
+        s.stickButtonsWas = nil
+    end
+end
+
+function W:HoldCamera(hold)
+    local s = settings()
+    if hold and not s.camera then
+        s.camera = {}
+        for _, cvar in ipairs(CAMERA) do
+            local value = GetCVar(cvar)
+            if value then
+                s.camera[cvar] = value
+                pcall(SetCVar, cvar, "0")
+            end
+        end
+    elseif not hold and s.camera then
+        for cvar, value in pairs(s.camera) do pcall(SetCVar, cvar, value) end
+        s.camera = nil
+    end
+end
+
 -- The action the Gamepad tab puts on an input: its key opens the wheel
 function W:Toggle()
     self:Build()
@@ -521,6 +604,9 @@ end
 -- Events
 ---------------------------------------------------------------------------
 function W:Init()
+    -- A wheel left open by a crash or a reload: the camera back
+    self:HoldCamera(false)
+    self:StickButtons(settings().enabled)
     self:Build()
     local f = CreateFrame("Frame")
     for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "BAG_UPDATE_DELAYED", "PLAYER_REGEN_ENABLED",
