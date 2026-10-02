@@ -20,9 +20,12 @@ without changing it:
   own, made with the gamepad.
 - **Consumables wheel**: one key opens a wheel of your food, drinks, potions, healthstone, bandages,
   elixirs...; point with the left stick, A uses. Works in combat.
+- **Better items**: a green arrow on the items of your bags that are better than what you wear,
+  judged by their stats for your class.
+- **At merchants**: grey items sold and equipment repaired by themselves, if you want it.
 
-Everything is driven with the gamepad (RB + D-pad down opens the configuration), every function can
-be turned off, and the look matches WoW Forever's gamepad UI.
+Everything is driven with the gamepad (RB + D-pad down opens the configuration panel), every function
+can be turned off, and the look matches WoW Forever's gamepad UI.
 
 ## Chat keyboard
 
@@ -73,9 +76,17 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
 
 **Configuration panel**
 RB + D-pad down (or `/ec config`) opens the addon's own panel, driven with the gamepad or the mouse:
-Home (every module and its state), Gamepad (your controller drawn button by button), Wheels, Keyboard
-and Alerts (vibrations, supplies, quest items). Sections on the left, settings in the middle, what the
-selected one does on the right, and a help bar showing the buttons that work.
+Home (every module and its state, the panel's shortcut, the look, automation at merchants), Gamepad
+(your controller drawn button by button), Wheels, Keyboard and Alerts (vibrations, supplies, quest
+items, better items). Sections on the left, settings in the middle, what the selected one does on the
+right, and a help bar showing only the buttons that work there.
+
+**Your own wheels**
+Up to 8 wheels of your own, shown as cards (their 8 slots, their name, the button they're on). Each
+opens an editor: the wheel with its slots around it and the lists beside it (spells, items, macros);
+a choice fills the slot and goes on to the next one. Name it with the gamepad keyboard, give it a
+button straight from the editor ("Assign a button"). Each wheel works like the consumables wheel, in
+combat too.
 
 **Consumables wheel**
 A key of its own (any free button, or a back paddle in any trigger layer) opens a wheel drawn like
@@ -109,9 +120,9 @@ Select) can be replaced too, its menus keeping their buttons; one button gives t
 
 **Back paddles (L4 / R4 / L5 / R5)**
 Steam Deck and other controllers: set each paddle to a keyboard key in Steam Input (F13 to F16 for
-example), then "Identify the back paddles" asks for each one in turn. Each paddle has the four
-trigger layers (alone, LT, RT, LT + RT) for spells, items and macros, even when RT is no modifier;
-game functions too once "RT acts as a modifier" is on. The extra buttons (back
+example), then "Identify paddles" asks for each one in turn. Each paddle has the four trigger layers
+(alone, LT, RT, LT + RT) for spells, items and macros, even when RT is no modifier; game functions
+too once "RT as a modifier" is on (Gamepad › Display). The extra buttons (back
 paddles, L3, R3) are shown around the gamepad action bar, in its own round slot style, with the
 action's icon, count and cooldown, and press down like the game's buttons. Place each one where you
 want among fixed places around the bar's controls, with the D-pad or the mouse, mirrored left / right.
@@ -120,6 +131,18 @@ want among fixed places around the bar's controls, with the D-pad or the mouse, 
 The items a quest asks to collect (cloth, ore, meat...), which the game does not mark, get the game's
 own quest item border in orange in your bags, and an orange "Quest item (quest name): do not sell"
 line in their tooltip. A warning with a Buyback reminder if you sell one anyway.
+
+**Better items**
+A green arrow at the bottom right of an item in your bags that would be better than what you wear in
+its slot. Items are compared by their stats, weighed for your class: a weapon's damage per second
+first, then strength, agility, stamina, intellect, spirit, attack and spell power, armor (hybrids by
+their main talent tree: a holy paladin weighs intellect and healing). Only what you can use and your
+class's armor type; rings, trinkets and one-hand weapons against the weaker of the two you wear. The
+panel shows your weights.
+
+**At merchants**
+Turn them on in Home › Automation: grey items sold by themselves (never a quest item), then
+everything repaired, with a line in the chat for each; the guild's money first if you want it.
 
 **Quest links and drafts**
 A "Quests" chip in the channel row lists your quests and inserts their links. Links from Shift+click
