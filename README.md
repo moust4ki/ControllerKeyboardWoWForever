@@ -148,11 +148,11 @@ left it. Forgetting the learned words, restoring the game's buttons and deleting
 second A.
 
 - **Home**: every module with its state, Y on one jumps to its settings; the panel's shortcut;
-  button glyphs (Xbox / PlayStation), the game's button icons, font.
+  button glyphs (Xbox / PlayStation), the game's button icons, font; automation at merchants.
 - **Gamepad**: the mapping below.
 - **Wheels**: your own wheels, the consumables wheel, where they open.
 - **Keyboard**: opening, input method and layout, size, sticks, prediction, position.
-- **Alerts**: the vibrations, the supplies buttons and the quest items below.
+- **Alerts**: the vibrations, the supplies buttons, the quest items and the better items below.
 
 ## Gamepad mapping
 
@@ -302,6 +302,25 @@ names the quest. In the bags they get the border the game puts on its own quest 
 (the game's own quest items keep theirs). Selling one to a
 merchant shows a warning with a reminder of the Buyback tab; with the gamepad bag tooltips turned
 off, selecting one at a merchant warns too.
+
+## Better items
+
+A green arrow at the bottom right of a bag item that would be better than what you wear in its slot
+(Alerts › Inventory): a higher item level, an item you can use (nothing in red in its tooltip: armor
+type, weapon skill, level, class), of your class's armor type or of the type you already wear there
+(no cloth arrow for a warrior; plate from level 40 for warriors and paladins, mail for hunters and
+shamans). Rings, trinkets and one-hand weapons (when you can dual wield) are compared with the weaker
+of the two you wear; an empty slot takes anything.
+
+## At merchants
+
+Home › Automation (both off until you turn them on):
+
+- **Sell grey items**: the grey (poor quality) items of your bags are sold one after the other, and a
+  line in the chat says how much they brought. Quest items are never sold.
+- **Repair at merchants**: once the grey items are sold, a merchant who repairs repairs everything,
+  and a line in the chat says what it cost (or that the money was short). **With the guild's money**
+  makes the guild pay first, when it allows you and has enough.
 
 ## Prediction
 

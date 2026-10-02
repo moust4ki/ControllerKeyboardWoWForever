@@ -271,6 +271,8 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
         safe(function() CK.Supplies:Init() end)
         safe(function() CK.MyWheels:Init() end)
         safe(function() CK.ConsumableWheel:Init() end)
+        safe(function() CK.Upgrades:Init() end)
+        safe(function() CK.Automation:Init() end)
         -- Build the frames now, never while the chat is open (see Input.lua)
         if InCombatLockdown() then CK.buildPending = true else CK:BuildUI() end
         CK:RegisterOptions()

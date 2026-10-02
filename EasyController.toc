@@ -30,6 +30,8 @@ Paddles.lua
 Mapping.lua
 Vibration.lua
 Supplies.lua
+Upgrades.lua
+Automation.lua
 ConsumableWheel.lua
 ConfigKit.lua
 ConfigWindow.lua

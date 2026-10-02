@@ -79,6 +79,13 @@ local function moduleRows(b)
         get = function() return mods.questItems end,
         set = function(v) mods.questItems = v end,
         onY = function() Config:SetTab("alerts", 3) end, yVerb = L.V_SETTINGS })
+    b.check({ id = "m_up", label = L.LBL_UPGRADES, tip = L.TIP_UPGRADES,
+        get = function() return mods.upgrades end,
+        set = function(v)
+            mods.upgrades = v
+            CK.Upgrades:Refresh()
+        end,
+        onY = function() Config:SetTab("alerts", 4) end, yVerb = L.V_SETTINGS })
     local yours = 0
     for _ in pairs(s.mapping) do yours = yours + 1 end
     for _ in pairs(s.replaced) do yours = yours + 1 end
@@ -121,6 +128,12 @@ local function moduleRows(b)
             if v then V:Play("pulse") else V:Stop() end
         end,
         onY = function() Config:SetTab("alerts", 1) end, yVerb = L.V_SETTINGS })
+    b.check({ id = "m_junk", label = L.LBL_SELL_JUNK, tip = L.TIP_SELL_JUNK,
+        get = function() return mods.sellJunk end, set = function(v) mods.sellJunk = v end,
+        onY = function() Config:SetTab("home", 4) end, yVerb = L.V_SETTINGS })
+    b.check({ id = "m_repair", label = L.LBL_AUTO_REPAIR, tip = L.TIP_AUTO_REPAIR,
+        get = function() return mods.autoRepair end, set = function(v) mods.autoRepair = v end,
+        onY = function() Config:SetTab("home", 4) end, yVerb = L.V_SETTINGS })
 end
 
 local function shortcutRows(b)
@@ -171,12 +184,27 @@ local function lookRows(b)
     b.choice({ id = "font", label = L.OPT_FONT, text = text, step = step, tip = L.TIP_FONT })
 end
 
+-- At merchants (Automation.lua)
+local function automationRows(b)
+    local s = settings()
+    local mods = s.modules
+    b.header(L.SEC_AUTOMATION)
+    b.check({ id = "a_junk", label = L.LBL_SELL_JUNK, tip = L.TIP_SELL_JUNK,
+        get = function() return mods.sellJunk end, set = function(v) mods.sellJunk = v end })
+    b.check({ id = "a_repair", label = L.LBL_AUTO_REPAIR, tip = L.TIP_AUTO_REPAIR,
+        get = function() return mods.autoRepair end, set = function(v) mods.autoRepair = v end })
+    if not mods.autoRepair then return end
+    b.check({ id = "a_guild", label = L.LBL_GUILD_REPAIR, indent = true, tip = L.TIP_GUILD_REPAIR,
+        get = function() return s.automation.guildRepair end, set = function(v) s.automation.guildRepair = v end })
+end
+
 Config.pages.home = Config.NewRailPage({
     key = "home",
     sections = {
         { key = "modules", label = L.SEC_MODULES, tip = L.TIP_SEC_MODULES, rows = moduleRows },
         { key = "shortcut", label = L.SEC_SHORTCUT, tip = L.TIP_SEC_SHORTCUT, rows = shortcutRows },
         { key = "look", label = L.SEC_LOOK, tip = L.TIP_SEC_LOOK, rows = lookRows },
+        { key = "automation", label = L.SEC_AUTOMATION, tip = L.TIP_SEC_AUTOMATION, rows = automationRows },
     },
 })
 
@@ -515,12 +543,25 @@ local function questRows(b)
         get = function() return f.questHoverAlert end, set = function(v) f.questHoverAlert = v end })
 end
 
+-- Marks in the bags (Upgrades.lua)
+local function inventoryRows(b)
+    local mods = settings().modules
+    b.header(L.SEC_INVENTORY)
+    b.check({ id = "i_up", label = L.LBL_UPGRADES, tip = L.TIP_UPGRADES,
+        get = function() return mods.upgrades end,
+        set = function(v)
+            mods.upgrades = v
+            CK.Upgrades:Refresh()
+        end })
+end
+
 Config.pages.alerts = Config.NewRailPage({
     key = "alerts",
     sections = {
         { key = "vibrations", label = L.SEC_VIBRATIONS, tip = L.TIP_SEC_VIBRATIONS, rows = vibrationRows },
         { key = "supplies", label = L.SEC_SUPPLIES, tip = L.SUP_INFO, rows = suppliesRows },
         { key = "quest", label = L.SEC_QUESTITEMS, tip = L.TIP_SEC_QUESTITEMS, rows = questRows },
+        { key = "inventory", label = L.SEC_INVENTORY, tip = L.TIP_SEC_INVENTORY, rows = inventoryRows },
     },
 })
 

@@ -38,20 +38,20 @@ closes.
   - limit: what a wheel holds can only change out of combat (the game locks secure buttons in
     combat).
 
-## Next: automation at merchants
+## Next version: automation at merchants
 
 Both turned on or off in Home › Modules, and set in a new Home › Automation section (under Look).
 
-- [ ] **Auto-sell junk**: at a merchant, the grey (poor quality) items of the bags are sold by
+- [x] **Auto-sell junk**: at a merchant, the grey (poor quality) items of the bags are sold by
   themselves; a line in the chat says how much they brought.
-- [ ] **Auto-repair**: at a merchant who repairs, the equipment is repaired by itself; a line in the
-  chat says what it cost (or that the money was short).
+- [x] **Auto-repair**: at a merchant who repairs, the equipment is repaired by itself; a line in the
+  chat says what it cost (or that the money was short). With the guild's money first, as an option.
 
-## Next: inventory, better items
+## Next version: inventory, better items
 
 A new Alerts › Inventory section.
 
-- [ ] **Upgrades in the bags**: a green up arrow at the bottom right of an item that would be better
+- [x] **Upgrades in the bags**: a green up arrow at the bottom right of an item that would be better
   than what is equipped in its slot.
   - What the client gives: the item level (`C_Item.GetDetailedItemLevelInfo`, or `GetItemInfo`'s
     fourth value), the item's slot (`itemEquipLoc`), the equipped items (`GetInventoryItemLink`), the
@@ -60,13 +60,13 @@ A new Alerts › Inventory section.
     "better" in WoW Forever: its equipment flyout leaves it empty.
   - "Better": a higher item level for the same slot (rings, trinkets and one-hand weapons against the
     weaker of the two), only for what the character can wear (armor type, weapons, level, class).
-    To decide: item level alone, or item level and the class's main stats (a cloth caster item is
-    not better for a warrior, even with a higher level).
+    Chosen: the item level, and the class's armor type (or the type already worn in that slot).
 
-## To decide
+## Set aside
 
 - **Chat keyboard, writing in the chat box**: let the game send the message natively when the text
-  is unchanged; never bring back text already sent or erased.
+  is unchanged. Writing in the game's chat box can block its gamepad UI and freeze the client; the
+  secure macro sending stays.
 
 ## By hand on CurseForge (no API for these)
 
