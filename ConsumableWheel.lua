@@ -3,7 +3,8 @@ local L = CK.L
 
 -- Module "consumables wheel": a key of its own (Gamepad tab, or the game's key
 -- bindings) opens a wheel of consumables from the bags, drawn like the game's
--- own radial menu (its wheel, its highlight, its banners): 8 per page, LB / RB
+-- own radial menu (its wheel, its highlight, its veil), the aimed item and the
+-- help in its middle: 8 per page, LB / RB
 -- turn the pages (up to 3). Food, drink,
 -- health and mana potions, healthstone, mana gem, bandages, buff food,
 -- elixirs and flasks, scrolls. Like the game's own radial menu: push a
@@ -442,26 +443,19 @@ function W:Build()
         t:SetBlendMode("ADD")
     end)
     view.highlight:Hide()
-    -- Title, and the pages' banner (LB, dots, RB)
-    view.top = view:CreateTexture(nil, "BACKGROUND")
-    view.top:SetPoint("BOTTOM", bg, "TOP", 0, -6)
-    atlas(view.top, "gamepad-radial-menu-toptext")
-    view.title = view:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    view.title:SetPoint("BOTTOM", view.top, "TOP", 0, 6)
-    view.title:SetTextColor(1, 1, 1)
-    view.title:SetText(L.WHEEL_NAME)
-    view.pages = view:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    view.pages:SetPoint("CENTER", view.top, "CENTER", 0, 2)
-    -- The aimed item and the help, in the bottom banner
-    view.bottom = view:CreateTexture(nil, "BACKGROUND")
-    view.bottom:SetPoint("TOP", bg, "BOTTOM", 0, 8)
-    atlas(view.bottom, "gamepad-radial-menu-bottomtext")
-    view.name = view:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    view.name:SetPoint("TOP", view.bottom, "TOP", 0, -14)
+    -- In the middle: the aimed item (or what to do), then B and the pages
+    view.name = view:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    view.name:SetPoint("BOTTOM", bg, "CENTER", 0, 8)
+    view.name:SetWidth(128)
+    view.name:SetWordWrap(true)
     view.count = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    view.count:SetPoint("TOP", view.name, "BOTTOM", 0, -3)
+    view.count:SetPoint("TOP", bg, "CENTER", 0, 2)
+    view.count:SetWidth(124)
+    view.count:SetWordWrap(true)
     view.help = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    view.help:SetPoint("TOP", view.bottom, "BOTTOM", 0, -2)
+    view.help:SetPoint("TOP", view.count, "BOTTOM", 0, -6)
+    view.pages = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    view.pages:SetPoint("TOP", view.help, "BOTTOM", 0, -4)
     view:SetScript("OnUpdate", function() W:Track() end)
     view:SetScript("OnShow", function() W:Paint() end)
 
@@ -623,18 +617,18 @@ function W:Paint()
     end
     -- LB  o * o  RB, with more than one page
     local pages = self.frame:GetAttribute("ck-pages") or 1
-    local g = function(key) return CK:GlyphMarkup(key, 18) end
+    local g = function(key) return CK:GlyphMarkup(key, 14) end
     if pages > 1 then
         local dots = {}
         for p = 1, pages do
-            dots[#dots + 1] = format("|A:gamepad-radialgamemenu-cursorbg-%s:14:14|a", p == page and "neutral" or "inactive")
+            dots[#dots + 1] = format("|A:gamepad-radialgamemenu-cursorbg-%s:11:11|a", p == page and "neutral" or "inactive")
         end
-        self.view.pages:SetText(g("LB") .. "  " .. table.concat(dots, " ") .. "  " .. g("RB"))
+        self.view.pages:SetText(g("LB") .. " " .. table.concat(dots, " ") .. " " .. g("RB"))
     else
         self.view.pages:SetText("")
     end
     local h = function(key) return CK:GlyphMarkup(key, 14) end
-    self.view.help:SetText(format("%s%s %s   %s %s", h("LS"), h("RS"), L.WHEEL_AIM, h("B"), L.WHEEL_CLOSE))
+    self.view.help:SetText(format("%s %s", h("B"), L.WHEEL_CLOSE))
     -- Turned off by something else since: on again (out of combat)
     self:StickKeys(settings().enabled)
     self.aimed = nil

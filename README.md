@@ -233,7 +233,7 @@ One round button per resource, in the gamepad bar's style (Supplies tab):
 ## Consumables wheel
 
 A key of its own opens a wheel of consumables from your bags, drawn with the game's own radial menu
-art (its wheel, highlight and banners): 8 per page, **LB / RB** turn the pages (up to 3). Food,
+art (its wheel, highlight and veil), the aimed item and the help in its middle: 8 per page, **LB / RB** turn the pages (up to 3). Food,
 drink, healing and mana potions, healthstone, mana gem, bandages (used on yourself), buff food,
 elixirs and flasks, scrolls. The best of each kind comes first, then the other variants you carry (an option); each
 kind can be left out (Wheel tab).

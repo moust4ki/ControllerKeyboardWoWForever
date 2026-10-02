@@ -17,7 +17,7 @@
   is placed freely (mouse drag while unlocked, or the D-pad), growing right, left, down or up, in 3 sizes; a
   click opens the bags. Low supplies and little room can vibrate.
 - **Consumables wheel.** A key of its own (Gamepad tab, Items list: any free button or a back paddle
-  in any layer; or the game's key bindings) opens a wheel drawn with the game's own radial menu art,
+  in any layer; or the game's key bindings) opens a wheel drawn with the game's own radial menu art (the aimed item and the help in its middle),
   8 consumables a page (LB / RB turn the pages, up to 3), from the bags:
   food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
   elixirs and flasks, scrolls, the best of each kind first and the other variants after. The right
