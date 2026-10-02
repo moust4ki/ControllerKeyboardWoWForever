@@ -23,6 +23,19 @@ closes.
   layers of a replaced button are bound to what the game does there. To check in game: a menu
   opened in combat (bindings can't change then), `/ec binds`.
 
+## Next: your own wheels
+
+- [ ] **Wheels of your own, like the consumables wheel**, each filled with the spells, items and
+  macros you choose, and opened by a shortcut:
+  - same look and handling as the consumables wheel: the left stick points, A uses, B cancels,
+    LB / RB turn the pages, usable in combat;
+  - created, named, filled and reordered from the configuration panel with the gamepad, from the
+    same lists as the Gamepad tab (spells, items, macros); several wheels;
+  - each wheel's shortcut: any free button, a back paddle, a game button replaced, or a key binding
+    of the game (its Key Bindings menu);
+  - limit: what a wheel holds can only change out of combat (the game locks secure buttons in
+    combat).
+
 ## To decide
 
 - **Vibrations, low health and big hit**: WoW Forever hides the player's health from addons in
