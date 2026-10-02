@@ -12,8 +12,9 @@
   (alone), Start and Select take any function, in any layer: a slot of the gamepad bar still takes a
   spell, an item or a macro in the slot; anything else replaces the button, with its picture over
   the game's, and X gives the button back (with what its slot held). The game's menus keep their
-  buttons; LT and RT become modifiers so that each layer has a key of its own. `/ec binds` shows
-  the replaced keys.
+  buttons; LT and RT become modifiers so that each layer has a key of its own. Turned off again,
+  every replaced button gets the game's default binding back (the game's slots, free buttons and
+  paddles keep theirs). `/ec binds` shows the replaced keys.
 - **Consumables wheel**: after a reload, the banner under the wheel was empty on its first opening.
 
 ## 1.2.0

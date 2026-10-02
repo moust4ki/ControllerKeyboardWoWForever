@@ -352,8 +352,11 @@ function M:ReplaceOn()
     return self:Enabled() and settings().features.gameButtons or false
 end
 
+-- Off: every replaced button back to the game's own binding (what the
+-- player put in the game's slots, on the free buttons and paddles stays)
 function M:SetReplaceOn(on)
     settings().features.gameButtons = on and true or false
+    if not on then wipe(settings().replaced) end
     self:Apply()
     CK.Paddles:Apply()
 end
@@ -1005,15 +1008,33 @@ end
 
 -- /ec binds: the game's buttons replaced, and what each key runs now
 function M:Diagnose()
+    local manager = GamepadSharedUtility and GamepadSharedUtility.InputBindingManager
+    local stack = manager and manager.bindingSetStack
     CK:Print(format(L.REPLACE_DIAG, tostring(self:ReplaceOn()), tostring(self:OwnKeys()),
-        tostring(InCombatLockdown()), tostring(self:CoreActive())))
+        tostring(InCombatLockdown()), tostring(self:CoreActive()))
+        .. format(" | pending %s, game sets %s", tostring(self.pending), stack and #stack or "?"))
+    -- What is saved, and whether it can be bound
+    for comboId, action in pairs(settings().replaced) do
+        local inputId, layer = comboId:match("^(%w+):(%a*)$")
+        local input = inputId and M.BY_ID[inputId]
+        DEFAULT_CHAT_FRAME:AddMessage(format("  %s = %s: %s, replaceable %s, key %s", comboId, action,
+            input and self:State(input, layer) or "?", tostring(input and self:Replaceable(input, layer)),
+            tostring(input and self:Combo(input, layer))))
+    end
+    -- Each key bound: ours, what runs now, the game's own (its gamepad context)
     local keys = {}
     for combo in pairs(self.taken) do keys[#keys + 1] = combo end
     table.sort(keys)
     for _, combo in ipairs(keys) do
         local now = GetBindingAction(combo, true)
+        local game
+        if C_KeyBindings and C_KeyBindings.GetBindingByKey and Enum and Enum.BindingContext then
+            local ok, value = pcall(C_KeyBindings.GetBindingByKey, combo, Enum.BindingContext.GamepadModeInGameCore)
+            game = ok and value or nil
+        end
         local color = now == self.taken[combo] and "|cff6fd36f" or "|cffff6060"
-        DEFAULT_CHAT_FRAME:AddMessage(format("  %s%s|r: %s (%s)", color, combo, tostring(self.taken[combo]), tostring(now)))
+        DEFAULT_CHAT_FRAME:AddMessage(format("  %s%s|r: %s | now %s | game %s", color, combo,
+            tostring(self.taken[combo]), tostring(now), tostring(game)))
     end
 end
 

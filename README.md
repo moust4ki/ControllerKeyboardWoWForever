@@ -186,6 +186,8 @@ default: the addon then never touches a button the game uses). Turned on:
   class and pet actions read them directly), and so do LT / RT.
 - Each layer needs a key of its own, so LT and RT become modifiers (the game's gamepad setting, like
   LT already sending Shift); the other layers of a replaced button keep what the game does there.
+- Turned off again, every replaced button is the game's again (its default binding); what you put
+  in the game's slots, on the free buttons and on the paddles stays.
 - `/ec binds` lists the replaced keys and what each one runs right now.
 
 ### Back paddles (L4 / R4 / L5 / R5) and extra buttons
