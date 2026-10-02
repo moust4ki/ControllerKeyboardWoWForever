@@ -418,17 +418,8 @@ local function wheelRows()
     return rows
 end
 
--- The player's wheels read the pad first (B closes a list, LB / RB change it)
-local wheelPage = CK.Config.NewListPage(wheelRows)
-local listPress, listHelp = wheelPage.Press, wheelPage.Help
-function wheelPage:Press(name)
-    if CK.MyWheels:PagePress(self, name) then return true end
-    return listPress(self, name)
-end
-function wheelPage:Help(g)
-    return CK.MyWheels:PageHelp(g) or listHelp(self, g)
-end
-CK.Config.pages.wheel = wheelPage
+-- The list, or a wheel's editor in its place (MyWheels.lua)
+CK.Config.pages.wheel, CK.MyWheels.list = CK.MyWheels:TabPage(CK.Config.NewListPage(wheelRows))
 
 ---------------------------------------------------------------------------
 -- The game's settings panel (Escape > Options > AddOns > Controller

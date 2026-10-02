@@ -267,10 +267,12 @@ kind can be left out (Wheel tab).
 
 ### Your own wheels
 
-Up to 8 wheels of your own, made in the Wheels tab with the gamepad: **New wheel**, then pick what
-goes in each of its 8 slots (top, top right, right... clockwise) from the Spells, Items or Macros
-list (LB / RB change the list, B goes back). **Rename** types its name with the addon's keyboard (A
-confirms, B cancels) or a physical one (Enter / Escape). Each wheel shows and works like the
+Up to 8 wheels of your own, made in the Wheels tab with the gamepad. **New wheel** (or A on a wheel)
+opens its editor: the wheel as the game draws it, its 8 slots around it. The D-pad (or LB / RB) goes
+from slot to slot, A opens the slot's list on the right (Spells, Items, Macros; LB / RB change it),
+A on an entry fills the slot and goes on to the next one, the list still open; X empties a slot, B
+goes back. **Rename** (Y) types its name with the addon's keyboard (A confirms, B cancels) or a
+physical one (Enter / Escape); **Delete** asks twice. Each wheel shows and works like the
 consumables wheel (left stick, A, B; in combat too) with its name in the banner, and gets a key of
 its own: Gamepad tab, Items list, on any free button or paddle (or the game's Key Bindings, under
 AddOns). What a wheel holds changes out of combat only.
