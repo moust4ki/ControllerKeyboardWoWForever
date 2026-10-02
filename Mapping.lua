@@ -710,11 +710,11 @@ end
 local owner
 local takeOwner         -- the game's buttons replaced: priority bindings
 
--- Every key set on an owner taken away, then the owner cleared. A binding
--- to one of the game's gamepad commands (ping, Start menu...) outlives
--- both ClearOverrideBindings and a nil binding: each key bound to a command
--- (this session) first goes to one that does nothing, and to a button that
--- does nothing, then to none.
+-- Every key set on an owner taken away, then the owner cleared. In case a
+-- binding to one of the game's gamepad commands (ping, Start menu...) would
+-- outlive ClearOverrideBindings, each key bound to a command this session
+-- first goes to one that does nothing, and to a button that does nothing,
+-- then to none.
 local noop
 local commanded = {}    -- owner -> keys it bound to a command, this session
 local function unbindAll(o, record, priority)
@@ -923,7 +923,28 @@ function M:CoreActive()
     return not (CK.Config and CK.Config:IsOpen())
 end
 
+-- The game's gamepad ping held: its wheel waits for the same key to be
+-- pressed again, a full-screen listener of the game shown meanwhile. Our
+-- keys stay as they are until it is done: without that key the listener
+-- would stay, and take every click (A in a menu) as a ping.
+function M:PingPending()
+    return PingListenerFrame and PingListenerFrame:IsShown() or false
+end
+
+function M:WaitPing()
+    self.pending = true
+    if self.pingWait then return end
+    self.pingWait = true
+    local function check()
+        if self:PingPending() then return C_Timer.After(0.25, check) end
+        self.pingWait = false
+        if not InCombatLockdown() then self:Apply() end
+    end
+    C_Timer.After(0.25, check)
+end
+
 function M:Apply()
+    if self:PingPending() then return self:WaitPing() end
     if InCombatLockdown() or not self:CoreActive() then
         self.pending = true
         -- A menu of the game, or our panel: its buttons back to it
@@ -999,6 +1020,7 @@ end
 -- panel) has the focus. Set again when it closes.
 function M:Release()
     if InCombatLockdown() or not (takeOwner and next(self.taken)) then return end
+    if self:PingPending() then return self:WaitPing() end
     local keys = {}
     for combo in pairs(self.taken) do keys[#keys + 1] = combo end
     self.applying = true

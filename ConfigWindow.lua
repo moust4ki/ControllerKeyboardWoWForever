@@ -476,6 +476,11 @@ end
 ---------------------------------------------------------------------------
 function C:Open(tab)
     if CK:BlockedByCombat() then return end
+    -- A gamepad ping waiting for its key: the panel would take that key
+    if CK.Mapping:PingPending() then
+        if UIErrorsFrame then UIErrorsFrame:AddMessage(L.PING_PENDING, 1, 0.1, 0.1) end
+        return
+    end
     self:Build()
     if tab and self.pages[tab] then
         if self.frame:IsShown() then self:SetTab(tab) return end
