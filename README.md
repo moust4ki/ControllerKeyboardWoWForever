@@ -239,7 +239,7 @@ kind can be left out (Wheel tab).
 
 - Give it a key in the Gamepad tab (Items list: any free button, or a back paddle in any layer) or
   in *Escape > Key Bindings > AddOns*.
-- **Hold its key, aim with the right stick, let the key go**: the item aimed is used (the stick in
+- **Hold its key, aim with a stick (left or right), let the key go**: the item aimed is used (the stick in
   the middle: nothing). A quick press keeps it open: aim, then A or the key again. **B** cancels;
   the D-pad and the mouse work too. While it is open it takes the sticks, like the game's own
   wheels: the camera and the character stay still. (In combat an addon only sees key presses and

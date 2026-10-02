@@ -23,7 +23,7 @@ in game, then released on GitHub and CurseForge. Done items move to the [CHANGEL
   or back paddle in any layer; or the game's key bindings) opens a wheel of up to 12 consumables:
   food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
   elixirs and flasks, scrolls; the best of each kind first, the variants after (an option). The
-  hold its key, aim with the right stick, let the key go to use the item; a quick press keeps it
+  hold its key, aim with a stick, let the key go to use the item; a quick press keeps it
   open (aim, then A); B cancels; the sticks are taken while open (camera and character still).
   Secure: works in combat
   (food and drink greyed there); its content changes out of combat only. "Wheel ticks" vibrate.

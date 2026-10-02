@@ -20,7 +20,7 @@
   in any layer; or the game's key bindings) opens a wheel of up to 12 consumables from the bags:
   food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
   elixirs and flasks, scrolls, the best of each kind first and the other variants after. The right
-  hold its key, aim with the right stick, let the key go: the item is used (a quick press keeps it
+  hold its key, aim with a stick, let the key go: the item is used (a quick press keeps it
   open: aim, then A); B cancels; the D-pad and the mouse work too. While open it takes the sticks,
   like the game's wheels: the camera and the character stay still. In the middle of the screen
   (or placed with the mouse or the D-pad). It works in combat (secure

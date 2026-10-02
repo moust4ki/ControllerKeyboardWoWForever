@@ -4,7 +4,7 @@ local L = CK.L
 -- Module "consumables wheel": a key of its own (Gamepad tab, or the game's key
 -- bindings) opens a wheel of up to 12 consumables from the bags: food, drink,
 -- health and mana potions, healthstone, mana gem, bandages, buff food,
--- elixirs and flasks, scrolls. Hold its key, aim with the right stick, let
+-- elixirs and flasks, scrolls. Hold its key, aim with a stick, let
 -- the key go: the item aimed is used (nothing aimed: nothing used). A quick
 -- press keeps it open: aim, then A or the key again. B cancels; the D-pad
 -- and the mouse work too. While it is open it takes the sticks, like the
@@ -153,13 +153,16 @@ end
 ---------------------------------------------------------------------------
 local PREFIXES = ",SHIFT-,CTRL-,ALT-,CTRL-SHIFT-,ALT-SHIFT-,ALT-CTRL-,ALT-CTRL-SHIFT-,"
 
--- `slot`: the slot the right stick points at (past half its course), else
--- the one chosen with the D-pad, else 0
+-- `slot`: the slot a stick points at (either one, the one pushed further,
+-- past half its course), else the one chosen with the D-pad, else 0
 local AIMED = [[
     local count = owner:GetAttribute("count") or 0
     local slot = owner:GetAttribute("selected") or 0
     local state = GetGamePadState()
-    local stick = state and state.sticks and state.sticks[owner:GetAttribute("ck-stick") or 2]
+    local sticks = state and state.sticks
+    local stick = sticks and sticks[owner:GetAttribute("ck-stick") or 2]
+    local other = sticks and sticks[owner:GetAttribute("ck-stick2") or 1]
+    if other and other.len and (not (stick and stick.len) or other.len > stick.len) then stick = other end
     if stick and stick.len and stick.len > ]] .. AIM .. [[ then
         local bestDot = -2
         for i = 1, count do
@@ -289,6 +292,10 @@ function W:Build()
         self:StopMovingOrSizing()
         W:SavePosition()
     end)
+    -- Taking the sticks (EnableGamePadStick, from the snippets) needs a
+    -- stick script on the frame, like the game's wheels: without one the
+    -- camera and the character still get them
+    wheel:SetScript("OnGamePadStick", function() W:Track() end)
     wheel:SetAttribute("ck-prefixes", PREFIXES)
     self.frame = wheel
     self:Place()
@@ -361,14 +368,14 @@ end
 -- Filling it (out of combat only)
 ---------------------------------------------------------------------------
 -- The right stick: the game names it "Camera"
-local function cameraStick()
+local function stickIndex(name, default)
     local state = C_GamePad and C_GamePad.GetDeviceMappedState and C_GamePad.GetDeviceMappedState()
     if state and C_GamePad.StickIndexToConfigName then
         for i = 1, state.stickCount or 0 do
-            if C_GamePad.StickIndexToConfigName(i - 1) == "Camera" then return i end
+            if C_GamePad.StickIndexToConfigName(i - 1) == name then return i end
         end
     end
-    return 2
+    return default
 end
 
 function W:Fill()
@@ -412,7 +419,9 @@ function W:Fill()
         end
     end
     wheel:SetAttribute("count", count)
-    wheel:SetAttribute("ck-stick", cameraStick())
+    -- The game names its sticks: "Camera" (right), "Movement" (left)
+    wheel:SetAttribute("ck-stick", stickIndex("Camera", 2))
+    wheel:SetAttribute("ck-stick2", stickIndex("Movement", 1))
     if (wheel:GetAttribute("selected") or 0) > count then wheel:SetAttribute("selected", 0) end
     self.items = items
     self:Paint()
@@ -437,7 +446,7 @@ function W:Paint()
         end)
     end
     local g = function(key) return CK:GlyphMarkup(key, 14) end
-    self.view.help:SetText(format("%s %s   %s %s", g("RS"), L.WHEEL_AIM, g("B"), L.WHEEL_CLOSE))
+    self.view.help:SetText(format("%s%s %s   %s %s", g("LS"), g("RS"), L.WHEEL_AIM, g("B"), L.WHEEL_CLOSE))
     self.aimed = nil
     self:Track()
 end
@@ -446,7 +455,10 @@ function W:Aimed()
     local wheel = self.frame
     local count = #(self.items or {})
     local state = C_GamePad and C_GamePad.GetDeviceMappedState and C_GamePad.GetDeviceMappedState()
-    local stick = state and state.sticks and state.sticks[wheel:GetAttribute("ck-stick") or 2]
+    local sticks = state and state.sticks
+    local stick = sticks and sticks[wheel:GetAttribute("ck-stick") or 2]
+    local other = sticks and sticks[wheel:GetAttribute("ck-stick2") or 1]
+    if other and other.len and (not (stick and stick.len) or other.len > stick.len) then stick = other end
     if stick and stick.len and stick.len > AIM and count > 0 then
         local best, bestDot = nil, -2
         for i = 1, count do
