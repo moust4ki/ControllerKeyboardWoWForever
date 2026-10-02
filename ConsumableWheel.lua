@@ -133,6 +133,60 @@ function W.Reason(id)
     return nil, cat
 end
 
+---------------------------------------------------------------------------
+-- The sticks while the wheel is open, and just after
+---------------------------------------------------------------------------
+function W:TakeSticks(frame, on)
+    if frame.EnableGamePadStick then pcall(frame.EnableGamePadStick, frame, on) end
+end
+
+-- A plain frame that keeps the sticks after the wheel closes, until they
+-- are back near the middle (at most 6 seconds)
+function W:BuildHold()
+    local hold = CK.NewFrame("Frame", nil, UIParent)
+    hold:SetAllPoints(UIParent)
+    hold:Hide()
+    hold.lens, hold.elapsed = {}, 0
+    hold:SetScript("OnGamePadStick", function(self, stick, x, y, len)
+        self.lens[stick] = len or math.sqrt((x or 0) ^ 2 + (y or 0) ^ 2)
+        local longest = 0
+        for _, value in pairs(self.lens) do longest = math.max(longest, value) end
+        if longest < 0.2 then self:Hide() end
+    end)
+    hold:SetScript("OnShow", function(self)
+        self.lens, self.elapsed = {}, 0
+        W:TakeSticks(self, true)
+    end)
+    hold:SetScript("OnUpdate", function(self, elapsed)
+        self.elapsed = self.elapsed + elapsed
+        if self.elapsed > 6 then self:Hide() end
+    end)
+    self.hold = hold
+end
+
+function W:HoldSticks()
+    local state = C_GamePad and C_GamePad.GetDeviceMappedState and C_GamePad.GetDeviceMappedState()
+    for _, stick in ipairs(state and state.sticks or {}) do
+        if (stick.len or 0) >= 0.2 then
+            self.hold:Show()
+            return
+        end
+    end
+end
+
+-- What happened on the last openings and presses, for /ec wheel
+local log = {}
+function W:Log(what)
+    local view, wheel = self.view, self.frame
+    local state = C_GamePad and C_GamePad.GetDeviceMappedState and C_GamePad.GetDeviceMappedState()
+    local stick = state and state.sticks and state.sticks[wheel and wheel:GetAttribute("ck-stick") or 1]
+    local taken = view and view.IsGamePadStickEnabled and view:IsGamePadStickEnabled()
+    log[#log + 1] = format("%s: %s, combat %s, sticks taken %s, left stick %.2f, A = %s, aimed %s",
+        date("%H:%M:%S"), what, tostring(InCombatLockdown()), tostring(taken), stick and stick.len or 0,
+        tostring(GetBindingAction("PAD1", true)), tostring(self.aimed))
+    while #log > 8 do table.remove(log, 1) end
+end
+
 -- /ec wheel: what is in it, what is not and why
 function W:Diagnose()
     local wheel = self.frame
@@ -154,6 +208,7 @@ function W:Diagnose()
             end
         end
     end
+    for _, line in ipairs(log) do DEFAULT_CHAT_FRAME:AddMessage("  |cff9d9a8c" .. line .. "|r") end
 end
 
 -- The best first: required level, then item level
@@ -361,6 +416,7 @@ function W:Build()
     self.toggle = toggle
     local use = keyButton("ControllerKeyboardWheelUse", wheel, USE, DONE)
     use:SetAttribute("type", "click")
+    use:HookScript("OnClick", function(_, _, down) if down ~= false then W:Log("A") end end)
     self.use = use
     keyButton("ControllerKeyboardWheelClose", wheel, CLOSE)
     -- The stick direction keys: their presses and releases move the choice
@@ -373,12 +429,9 @@ function W:Build()
     self.view = view
     -- The sticks: taken by this plain frame of ours while it shows (with the
     -- wheel), like the game's own wheels, so the character and the camera
-    -- don't move (and food can be eaten: not while moving). Set once, out
-    -- of combat; its stick script is needed for the game to give it them.
-    if view.EnableGamePadStick then
-        pcall(view.EnableGamePadStick, view, true)
-        view:SetScript("OnGamePadStick", function() W:Track() end)
-    end
+    -- don't move (and food can be eaten: not while moving). Turned on each
+    -- time it shows; its stick script is needed for the game to give it them.
+    view:SetScript("OnGamePadStick", function() W:Track() end)
     local bg = view:CreateTexture(nil, "BACKGROUND")
     bg:SetPoint("CENTER")
     atlas(bg, "gamepad-radial-menu-wheelbg", function(t)
@@ -416,7 +469,16 @@ function W:Build()
     view.pages = view:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     view.pages:SetPoint("TOP", view.help, "BOTTOM", 0, -4)
     view:SetScript("OnUpdate", function() W:Track() end)
-    view:SetScript("OnShow", function() W:Paint() end)
+    view:SetScript("OnShow", function()
+        W:TakeSticks(view, true)
+        W.hold:Hide()
+        W:Paint()
+        W:Log("open")
+    end)
+    -- Closed with a stick still pushed: held until it is let go, so the
+    -- character doesn't walk off (or stand up from eating)
+    view:SetScript("OnHide", function() W:HoldSticks() end)
+    self:BuildHold()
 
     self.segments, self.buttons = {}, {}
     for i = 1, SEGMENTS do
@@ -459,6 +521,7 @@ function W:Build()
         end)
         b:SetScript("OnLeave", function() GameTooltip:Hide() end)
         SecureHandlerWrapScript(b, "OnClick", wheel, "return nil, true", DONE)
+        b:HookScript("OnClick", function() W:Log("use " .. i) end)
         b:Hide()
         SecureHandlerSetFrameRef(wheel, "slot" .. i, b)
         use:SetAttribute("*clickbutton-s" .. i, b)
