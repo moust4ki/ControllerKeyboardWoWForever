@@ -50,8 +50,9 @@ local function list()
     function b.check(text, get, set, indent, tip)
         rows[#rows + 1] = { kind = "check", text = text, get = get, set = set, indent = indent, tip = tip }
     end
-    function b.choice(text, get, step, indent)
-        rows[#rows + 1] = { kind = "choice", text = text, get = get, step = step, indent = indent }
+    -- key: a name to find the row by (ListPage selectKey)
+    function b.choice(text, get, step, indent, key)
+        rows[#rows + 1] = { kind = "choice", text = text, get = get, step = step, indent = indent, key = key }
     end
     -- A choice among { key, name } items stored in settings[field]
     function b.pick(text, items, s, field, after, indent)
@@ -61,8 +62,8 @@ local function list()
             if after then after() end
         end, indent)
     end
-    function b.button(text, func, indent)
-        rows[#rows + 1] = { kind = "button", text = text, func = func, indent = indent }
+    function b.button(text, func, indent, key)
+        rows[#rows + 1] = { kind = "button", text = text, func = func, indent = indent, key = key }
     end
     -- A box with a choice beside it, and a test (A; X for the box)
     function b.toggle(text, get, set, value, step, test, tip)
@@ -377,7 +378,8 @@ end
 
 CK.Config.pages.supplies = CK.Config.NewListPage(suppliesRows)
 
--- Consumables wheel: on / off, its kinds, the variants
+-- Wheels: the consumables wheel (on / off, its kinds, the variants), then
+-- the player's own (MyWheels.lua)
 local function wheelRows()
     local W = CK.ConsumableWheel
     local s = CK.db.settings.wheel
@@ -390,28 +392,43 @@ local function wheelRows()
     end)
     b.info(L.WHEEL_INFO)
     b.info(L.WHEEL_INFO2)
-    if not s.enabled then return rows end
-    b.check(L.WHEEL_VARIANTS, function() return s.variants end, function(v)
-        s.variants = v
-        W:Fill()
-    end)
+    if s.enabled then
+        b.check(L.WHEEL_VARIANTS, function() return s.variants end, function(v)
+            s.variants = v
+            W:Fill()
+        end)
+    end
+    -- Where every wheel shows
     b.check(L.WHEEL_LOCK, function() return s.locked end, function(v) s.locked = v end)
     b.button(L.WHEEL_MOVE, function()
         CK.Config:BeginPlacement(W)
         W:StartPlacement()
     end, true)
     b.button(L.WHEEL_RESET, function() W:ResetPosition() end, true)
-    b.header(L.WHEEL_H_CATEGORIES)
-    for _, cat in ipairs(W.CATEGORIES) do
-        b.check(L["WHEEL_CAT_" .. cat:upper()], function() return s.categories[cat] end, function(v)
-            s.categories[cat] = v
-            W:Fill()
-        end, true)
+    if s.enabled then
+        b.header(L.WHEEL_H_CATEGORIES)
+        for _, cat in ipairs(W.CATEGORIES) do
+            b.check(L["WHEEL_CAT_" .. cat:upper()], function() return s.categories[cat] end, function(v)
+                s.categories[cat] = v
+                W:Fill()
+            end, true)
+        end
     end
+    CK.MyWheels:AddRows(b)
     return rows
 end
 
-CK.Config.pages.wheel = CK.Config.NewListPage(wheelRows)
+-- The player's wheels read the pad first (B closes a list, LB / RB change it)
+local wheelPage = CK.Config.NewListPage(wheelRows)
+local listPress, listHelp = wheelPage.Press, wheelPage.Help
+function wheelPage:Press(name)
+    if CK.MyWheels:PagePress(self, name) then return true end
+    return listPress(self, name)
+end
+function wheelPage:Help(g)
+    return CK.MyWheels:PageHelp(g) or listHelp(self, g)
+end
+CK.Config.pages.wheel = wheelPage
 
 ---------------------------------------------------------------------------
 -- The game's settings panel (Escape > Options > AddOns > Controller

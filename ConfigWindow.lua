@@ -131,11 +131,44 @@ function ListPage:Move(delta)
     local i = self.index or 0
     repeat i = i + delta until not self.list[i] or selectable(self.list[i])
     if self.list[i] then self.index = i end
-    -- Keep the selection and its section title in view
+    self:Reveal()
+    C:Render()
+end
+
+-- Keep the selection and its section title in view
+function ListPage:Reveal()
+    if not self.index then return end
     local top = self.index
     while self.list[top - 1] and not selectable(self.list[top - 1]) do top = top - 1 end
     if top <= self.offset then self.offset = math.max(0, top - 1) end
     if self.index > self.offset + ROWS then self.offset = self.index - ROWS end
+end
+
+-- The rows built again; `selectKey` (a row's key) moves the selection there
+function ListPage:Rebuild()
+    self.list = self.rows()
+    local key = self.selectKey
+    self.selectKey = nil
+    if key then
+        for i, row in ipairs(self.list) do
+            if row.key == key then
+                self.index = i
+                break
+            end
+        end
+    end
+    if not selectable(self.list[self.index or 0]) then
+        self.index = nil
+        for i, row in ipairs(self.list) do
+            if selectable(row) then self.index = i break end
+        end
+    end
+    self.offset = math.max(0, math.min(self.offset, #self.list - ROWS))
+    self:Reveal()
+end
+
+function ListPage:Refresh()
+    self:Rebuild()
     C:Render()
 end
 
@@ -143,7 +176,7 @@ function ListPage:Step(index, delta)
     local row = self.list[index]
     if row and (row.kind == "choice" or row.kind == "toggle") then
         row.step(delta)
-        self.list = self.rows()
+        self:Rebuild()
         C:Render()
     end
 end
@@ -159,7 +192,7 @@ function ListPage:Activate()
         row.func()
     end
     -- Rows can depend on others (indented options)
-    self.list = self.rows()
+    self:Rebuild()
     -- A row that opened a list below it: on to its first entry
     if self.selectNext then
         self.selectNext = nil
@@ -433,7 +466,8 @@ end
 -- once released: its release belongs to the game, which saw it pressed (RB
 -- held is the game's hostile targeting, until it is released)
 function C:BindPad()
-    if InCombatLockdown() or not self.frame then return end
+    -- The addon's keyboard typing a name for the panel: the pad is its own
+    if InCombatLockdown() or not self.frame or CK.prompt then return end
     local f = self.frame
     ClearOverrideBindings(f)
     self.heldKeys = {}

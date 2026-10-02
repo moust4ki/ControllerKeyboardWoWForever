@@ -166,6 +166,8 @@ local function bindingButtonName(key)
 end
 
 local SEND_BUTTON = "ControllerKeyboardSendButton"
+-- A in a prompt (a name for one of ours): confirms, nothing is sent
+local PROMPT_BUTTON = "ControllerKeyboardPromptButton"
 
 function CK:CreateButtons()
     -- One hidden button per pad button any method may use, plus B
@@ -190,6 +192,11 @@ function CK:CreateButtons()
             end
         end)
     end
+
+    local ok = CK.NewFrame("Button", PROMPT_BUTTON)
+    ok:SetSize(1, 1)
+    ok:RegisterForClicks("AnyDown")
+    ok:SetScript("OnClick", function() CK:FinishPrompt(true) end)
 
     -- Secure macro button laid over the "Send" button for the mouse
     -- (the pad sends with A through the game's own chat UI)
@@ -288,12 +295,17 @@ function CK:EnableButtons()
     for key in pairs(self:GetMethod().buttons) do
         SetOverrideBindingClick(f, true, key, bindingButtonName(key))
     end
-    -- A sends the keyboard's buffer (the chat edit box stays empty)
-    SetOverrideBindingClick(f, true, "PAD1", SEND_BUTTON)
     if self.standalone then
         SetOverrideBindingClick(f, true, "PAD2", bindingButtonName("PAD2"))
     end
     self.bindingsActive = true
+    -- A prompt: A confirms, nothing goes to the chat
+    if self.prompt then
+        SetOverrideBindingClick(f, true, "PAD1", PROMPT_BUTTON)
+        return
+    end
+    -- A sends the keyboard's buffer (the chat edit box stays empty)
+    SetOverrideBindingClick(f, true, "PAD1", SEND_BUTTON)
     self:UpdateCancelBinding()
     self:PositionSendButton()
     self.sendButton:Show()

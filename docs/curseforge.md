@@ -16,6 +16,8 @@ without changing it:
   level up, bags full...), each with its own pattern.
 - **Supplies**: a button per resource (bag space, ammo, soul shards, reagents, any item) that glows
   when you run low.
+- **Your own wheels**: up to 8 wheels of the spells, items and macros you choose, each on a key of its
+  own, made with the gamepad.
 - **Consumables wheel**: one key opens a wheel of your food, drinks, potions, healthstone, bandages,
   elixirs...; point with the left stick, A uses. Works in combat.
 

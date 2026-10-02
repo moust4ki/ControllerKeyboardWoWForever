@@ -565,7 +565,9 @@ function M:ActionName(action)
     elseif kind == "bar" then
         return CK.Paddles:ActionLabel(action)
     elseif kind == "wheel" then
-        return L.WHEEL_NAME
+        local n = tonumber(value)
+        if not n then return L.WHEEL_NAME end
+        return CK.MyWheels and CK.MyWheels:Name(n) or L.MYWHEEL_GONE
     end
 end
 
@@ -587,7 +589,8 @@ function M:ActionIcon(action)
     elseif kind == "bar" then
         return CK.Paddles:ActionIcon(action)
     elseif kind == "wheel" then
-        return M.WHEEL_ICON
+        local n = tonumber(value)
+        return n and CK.MyWheels and CK.MyWheels:Icon(n) or M.WHEEL_ICON
     end
 end
 
@@ -665,6 +668,10 @@ function M:Catalog(tab, forSlot)
         if not forSlot and CK.ConsumableWheel then
             list[#list + 1] = { header = "Easy Controller" }
             list[#list + 1] = { action = "wheel:consumables", name = L.WHEEL_NAME, icon = M.WHEEL_ICON }
+            -- The player's own wheels
+            for _, w in ipairs(CK.MyWheels and CK.MyWheels:List() or {}) do
+                list[#list + 1] = { action = "wheel:" .. w.id, name = w.name, icon = CK.MyWheels:Icon(w.id) }
+            end
             list[#list + 1] = { header = L.MAP_TAB_ITEMS }
         end
         local seen = {}
@@ -788,8 +795,8 @@ local function bindAction(combo, comboId, action, replace)
         local native = CK.Paddles:NativeButton(action)
         click = native and native:GetName()
     elseif kind == "wheel" then
-        -- Its key opens the consumables wheel
-        click = CK.ConsumableWheel:Toggle():GetName()
+        -- Its key opens that wheel
+        click = CK.ConsumableWheel:Toggle(value):GetName()
     elseif M.Routable(action) then
         local b = actionButton(comboId, action)
         -- Pressed by its key: acts on the press
@@ -868,7 +875,7 @@ local function routeKey(combo, input, shared)
         local from = M:Get(input.id, layer) and layer or base
         local action = M:Get(input.id, from)
         if M.Routable(action) then
-            local b = action:find("^wheel:") and CK.ConsumableWheel:Toggle()
+            local b = action:find("^wheel:") and CK.ConsumableWheel:Toggle(action:match("^wheel:(.+)$"))
                 or actionButton(input.id .. ":" .. from, action)
             -- Clicked by the key's button, once per press
             b:SetAttribute("useOnKeyDown", false)

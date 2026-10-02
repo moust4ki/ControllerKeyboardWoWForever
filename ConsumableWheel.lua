@@ -26,10 +26,15 @@ local L = CK.L
 -- items in the slots can only change out of combat (a rule of the game): the
 -- wheel is filled from the bags then. The pictures (icons, counts, cooldowns,
 -- the selection ring) are ours, drawn over it.
+--
+-- The same wheel also shows the player's own wheels (MyWheels.lua): each has
+-- a key of its own, 8 slots on one page, spells, items or macros. The open
+-- wheel is the "wheel" attribute: "c" (consumables) or "1" to "8".
 local W = {}
 CK.ConsumableWheel = W
 
 local SEGMENTS, PAGES = 8, 3
+W.MY_MAX = 8
 local MAX = SEGMENTS * PAGES
 local AIM = 0.5     -- the stick aims past half its course
 -- The game's radial menu: its segments' centers (150 from the middle), the
@@ -190,7 +195,7 @@ end
 -- /ec wheel: what is in it, what is not and why
 function W:Diagnose()
     local wheel = self.frame
-    CK:Print(L.WHEEL_DIAG, wheel and wheel:GetAttribute("ck-total") or 0, wheel and wheel:GetAttribute("ck-pages") or 0,
+    CK:Print(L.WHEEL_DIAG, wheel and wheel:GetAttribute("ck-c-total") or 0, wheel and wheel:GetAttribute("ck-c-pages") or 0,
         tostring(settings().enabled), tostring(InCombatLockdown()), tostring(self.pending or false))
     local seen = {}
     for bag = 0, NUM_BAG_SLOTS or 4 do
@@ -272,25 +277,27 @@ end
 ---------------------------------------------------------------------------
 local PREFIXES = ",SHIFT-,CTRL-,ALT-,CTRL-SHIFT-,ALT-SHIFT-,ALT-CTRL-,ALT-CTRL-SHIFT-,"
 
--- A page's items into the 8 slots' buttons (from the wheel's attributes:
--- "ck-p2-5" is page 2, slot 5)
+-- A page of the open wheel into the 8 slots' buttons, from the wheel's
+-- attributes: "ck-c-2-5" is the consumables wheel ("c"; the player's: "1"
+-- to "8"), page 2, slot 5; "-t" its kind (item, spell, macro), "-u" its unit
 local APPLY_PAGE = [[
-    local page = owner:GetAttribute("page") or 1
-    owner:SetAttribute("count", owner:GetAttribute("ck-count-p" .. page) or 0)
+    local key = "ck-" .. (owner:GetAttribute("wheel") or "c") .. "-" .. (owner:GetAttribute("page") or 1) .. "-"
     for i = 1, 8 do
         local b = owner:GetFrameRef("slot" .. i)
-        local item = owner:GetAttribute("ck-p" .. page .. "-" .. i)
-        b:SetAttribute("type", item and "item" or nil)
-        b:SetAttribute("item", item)
-        b:SetAttribute("unit", owner:GetAttribute("ck-u" .. page .. "-" .. i))
-        if item then b:Show() else b:Hide() end
+        local kind, value = owner:GetAttribute(key .. i .. "-t"), owner:GetAttribute(key .. i)
+        b:SetAttribute("type", kind)
+        b:SetAttribute("item", kind == "item" and value or nil)
+        b:SetAttribute("spell", kind == "spell" and value or nil)
+        b:SetAttribute("macro", kind == "macro" and value or nil)
+        b:SetAttribute("unit", owner:GetAttribute(key .. i .. "-u"))
+        if kind then b:Show() else b:Hide() end
     end
 ]]
 
 -- LB / RB: the previous or next page
 local PAGE = [[
     if not down then return false end
-    local pages = owner:GetAttribute("ck-pages") or 1
+    local pages = owner:GetAttribute("ck-" .. (owner:GetAttribute("wheel") or "c") .. "-pages") or 1
     if pages < 2 then return false end
     owner:SetAttribute("page", ((owner:GetAttribute("page") or 1) - 1 + (button == "LB" and -1 or 1)) % pages + 1)
     ]] .. APPLY_PAGE .. [[
@@ -299,7 +306,6 @@ local PAGE = [[
 
 -- `slot`: the slot the left stick points at now (past half its course), else 0
 local AIMED = [[
-    local count = owner:GetAttribute("count") or 0
     local slot = 0
     local state = GetGamePadState()
     local stick = state and state.sticks and state.sticks[owner:GetAttribute("ck-stick") or 1]
@@ -310,7 +316,9 @@ local AIMED = [[
             if dot > bestDot then slot, bestDot = i, dot end
         end
     end
-    if slot > count then slot = 0 end
+    -- An empty slot (after a page's last item, or left empty in a wheel of
+    -- the player's): nothing
+    if slot > 0 and not owner:GetFrameRef("slot" .. slot):IsShown() then slot = 0 end
 ]]
 
 -- Opening: shown, the sticks taken from the camera and the character (like
@@ -333,18 +341,21 @@ local HIDE = [[
     owner:ClearBindings()
 ]]
 
--- The wheel's key: opens or closes it, on its press (a key bound to it
--- sends a press and a release: the release is let pass; a shared paddle
--- key sends one click, no press: that click counts)
+-- A wheel's key (its "ck-wheel"): opens or closes it, on its press (a key
+-- bound to it sends a press and a release: the release is let pass; a shared
+-- paddle key sends one click, no press: that click counts). Another wheel
+-- open: this one takes its place.
 local TOGGLE = [[
     if not down and owner:GetAttribute("ck-down") then
         owner:SetAttribute("ck-down", false)
         return false
     end
     owner:SetAttribute("ck-down", down and true or false)
-    if owner:IsShown() then
+    local wid = self:GetAttribute("ck-wheel") or "c"
+    if owner:IsShown() and owner:GetAttribute("wheel") == wid then
         ]] .. HIDE .. [[
-    elseif (owner:GetAttribute("ck-total") or 0) > 0 then
+    elseif (owner:GetAttribute("ck-" .. wid .. "-total") or 0) > 0 then
+        owner:SetAttribute("wheel", wid)
         ]] .. SHOW .. [[
     end
     return false
@@ -388,8 +399,7 @@ function W:Build()
     wheel:SetSize(480, 600)
     wheel:SetFrameStrata("DIALOG")
     wheel:Hide()
-    wheel:SetAttribute("count", 0)
-    wheel:SetAttribute("ck-total", 0)
+    wheel:SetAttribute("wheel", "c")
     wheel:SetAttribute("page", 1)
     wheel:SetMovable(true)
     wheel:SetClampedToScreen(true)
@@ -413,7 +423,15 @@ function W:Build()
 
     -- The wheel's key: its press (and a shared paddle key's single click)
     local toggle = keyButton("ControllerKeyboardWheelToggle", wheel, TOGGLE, nil, "AnyDown", "AnyUp")
+    toggle:SetAttribute("ck-wheel", "c")
     self.toggle = toggle
+    -- The key of each wheel of the player's
+    self.myToggles = {}
+    for n = 1, W.MY_MAX do
+        local t = keyButton("ControllerKeyboardMyWheel" .. n, wheel, TOGGLE, nil, "AnyDown", "AnyUp")
+        t:SetAttribute("ck-wheel", tostring(n))
+        self.myToggles[n] = t
+    end
     local use = keyButton("ControllerKeyboardWheelUse", wheel, USE, DONE)
     use:SetAttribute("type", "click")
     use:HookScript("OnClick", function(_, _, down) if down ~= false then W:Log("A") end end)
@@ -513,10 +531,16 @@ function W:Build()
         b:RegisterForClicks("AnyUp")
         b:SetAttribute("useOnKeyDown", false)
         b:SetScript("OnEnter", function(self)
-            local item = W:PageItems()[i]
-            if not item then return end
+            local entry = W:PageItems()[i]
+            if not entry then return end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:SetItemByID(item.id)
+            if entry.kind == "item" then
+                GameTooltip:SetItemByID(entry.id)
+            elseif entry.kind == "spell" and GameTooltip.SetSpellByID then
+                GameTooltip:SetSpellByID(entry.id)
+            else
+                GameTooltip:SetText(W.EntryName(entry), 1, 1, 1)
+            end
             GameTooltip:Show()
         end)
         b:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -545,6 +569,42 @@ local function stickIndex(name, default)
     return default
 end
 
+-- A wheel's pages ({ page = { [slot] = entry } }) into its attributes
+local function store(wheel, wid, pages, unitOf)
+    local total = 0
+    for page = 1, PAGES do
+        local list = pages[page] or {}
+        for i = 1, SEGMENTS do
+            local e = list[i]
+            local key = "ck-" .. wid .. "-" .. page .. "-" .. i
+            wheel:SetAttribute(key .. "-t", e and e.kind or nil)
+            wheel:SetAttribute(key, e and (e.kind == "item" and ("item:" .. e.id) or e.kind == "spell" and e.id or e.name) or nil)
+            wheel:SetAttribute(key .. "-u", e and unitOf and unitOf(e) or nil)
+            if e then total = total + 1 end
+        end
+    end
+    local count = 0
+    for page in pairs(pages) do count = math.max(count, page) end
+    wheel:SetAttribute("ck-" .. wid .. "-pages", math.max(1, count))
+    wheel:SetAttribute("ck-" .. wid .. "-total", total)
+    return total
+end
+
+-- What the open wheel's page holds, into the slots' buttons (as the snippet)
+function W:ApplyPage()
+    local wheel = self.frame
+    local key = "ck-" .. (wheel:GetAttribute("wheel") or "c") .. "-" .. (wheel:GetAttribute("page") or 1) .. "-"
+    for i, b in ipairs(self.buttons) do
+        local kind, value = wheel:GetAttribute(key .. i .. "-t"), wheel:GetAttribute(key .. i)
+        b:SetAttribute("type", kind)
+        b:SetAttribute("item", kind == "item" and value or nil)
+        b:SetAttribute("spell", kind == "spell" and value or nil)
+        b:SetAttribute("macro", kind == "macro" and value or nil)
+        b:SetAttribute("unit", wheel:GetAttribute(key .. i .. "-u"))
+        b:SetShown(kind ~= nil)
+    end
+end
+
 function W:Fill()
     if not CK.db then return end
     if InCombatLockdown() then
@@ -553,49 +613,88 @@ function W:Fill()
     end
     self.pending = nil
     self:Build()
-    local s = settings()
-    local items = s.enabled and self:Scan() or {}
     local wheel = self.frame
-    if wheel:IsShown() and #items == 0 then
+    self.lists = {}
+    -- The consumables: by kind, 8 a page
+    local items = settings().enabled and self:Scan() or {}
+    local pages = {}
+    for n, item in ipairs(items) do
+        local page = math.floor((n - 1) / SEGMENTS) + 1
+        pages[page] = pages[page] or {}
+        pages[page][(n - 1) % SEGMENTS + 1] = { kind = "item", id = item.id, cat = item.cat }
+    end
+    -- Bandages on yourself
+    store(wheel, "c", pages, function(e) return e.cat == "bandage" and "player" or nil end)
+    self.lists.c = pages
+    -- The player's own: one page, each slot where it was put
+    for n = 1, W.MY_MAX do
+        local own = { [1] = CK.MyWheels and CK.MyWheels:Entries(n) or {} }
+        store(wheel, tostring(n), own)
+        self.lists[tostring(n)] = own
+    end
+    wheel:SetAttribute("ck-stick", stickIndex("Movement", 1))
+    -- The open wheel emptied: closed
+    local open = wheel:GetAttribute("wheel") or "c"
+    if wheel:IsShown() and (wheel:GetAttribute("ck-" .. open .. "-total") or 0) == 0 then
         wheel:Hide()
         ClearOverrideBindings(wheel)
     end
-    local pages = math.max(1, math.ceil(#items / SEGMENTS))
-    self.pages = {}
-    for page = 1, PAGES do
-        local list = {}
-        for i = 1, SEGMENTS do
-            local item = page <= pages and items[(page - 1) * SEGMENTS + i] or nil
-            list[i] = item
-            wheel:SetAttribute("ck-p" .. page .. "-" .. i, item and ("item:" .. item.id) or nil)
-            -- Bandages on yourself
-            wheel:SetAttribute("ck-u" .. page .. "-" .. i, item and item.cat == "bandage" and "player" or nil)
-        end
-        wheel:SetAttribute("ck-count-p" .. page, math.max(0, math.min(SEGMENTS, #items - (page - 1) * SEGMENTS)))
-        self.pages[page] = list
-    end
-    wheel:SetAttribute("ck-pages", pages)
-    wheel:SetAttribute("ck-total", #items)
-    wheel:SetAttribute("ck-stick", stickIndex("Movement", 1))
     if not wheel:IsShown() then
-        -- Page 1 in the buttons, as the snippet does
         wheel:SetAttribute("page", 1)
-        wheel:SetAttribute("count", wheel:GetAttribute("ck-count-p1"))
-        for i, b in ipairs(self.buttons) do
-            local item = wheel:GetAttribute("ck-p1-" .. i)
-            b:SetAttribute("type", item and "item" or nil)
-            b:SetAttribute("item", item)
-            b:SetAttribute("unit", wheel:GetAttribute("ck-u1-" .. i))
-            b:SetShown(item ~= nil)
-        end
+        self:ApplyPage()
     end
     self.items = items
     self:Paint()
 end
 
 function W:PageItems()
-    local page = self.frame and self.frame:GetAttribute("page") or 1
-    return self.pages and self.pages[page] or {}
+    local wheel = self.frame
+    local pages = wheel and self.lists and self.lists[wheel:GetAttribute("wheel") or "c"]
+    return pages and pages[wheel:GetAttribute("page") or 1] or {}
+end
+
+---------------------------------------------------------------------------
+-- An entry: { kind = "item", id, cat } (consumables), or in the player's
+-- wheels { kind = "item" | "spell", id } / { kind = "macro", name }
+---------------------------------------------------------------------------
+function W.EntryName(e)
+    if e.kind == "item" then return C_Item.GetItemNameByID(e.id) or ("item:" .. e.id) end
+    if e.kind == "spell" then return CK.Mapping.SpellName(e.id) or ("spell:" .. e.id) end
+    return e.name
+end
+
+function W.EntryIcon(e)
+    if e.kind == "item" then return C_Item.GetItemIconByID(e.id) end
+    if e.kind == "spell" then
+        return C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(e.id)
+            or (GetSpellTexture and GetSpellTexture(e.id))
+    end
+    local _, icon = GetMacroInfo(e.name)
+    return icon
+end
+
+local function entryCooldown(e)
+    if e.kind == "item" then return C_Container.GetItemCooldown(e.id) end
+    if e.kind == "spell" then
+        local get = C_Spell and C_Spell.GetSpellCooldown or GetSpellCooldown
+        local start, duration = get(e.id)
+        if type(start) == "table" then return start.startTime, start.duration end
+        return start, duration
+    end
+end
+
+-- Greyed: an item not in the bags (or food in combat), a spell the game
+-- says can't be cast now
+local function entryUnusable(e, combat)
+    if e.kind == "item" then
+        local count = C_Item.GetItemCount and C_Item.GetItemCount(e.id) or 0
+        return count == 0 or (combat and OUT_OF_COMBAT[e.cat] or false)
+    end
+    if e.kind == "spell" then
+        local usable = C_Spell and C_Spell.IsSpellUsable or IsUsableSpell
+        return usable and not usable(e.id) or false
+    end
+    return false
 end
 
 ---------------------------------------------------------------------------
@@ -604,25 +703,24 @@ end
 -- segment (a stick, or the D-pad's choice), the aimed item's name
 ---------------------------------------------------------------------------
 function W:Paint()
-    if not (self.frame and self.pages) then return end
+    if not (self.frame and self.lists) then return end
     local combat = InCombatLockdown()
     local page = self.frame:GetAttribute("page") or 1
-    self.painted = page
+    self.painted, self.paintedWheel = page, self.frame:GetAttribute("wheel") or "c"
     local list = self:PageItems()
     for i, seg in ipairs(self.segments) do
         local item = list[i]
         seg.slot:SetShown(item ~= nil)
         seg.label:SetShown(item ~= nil)
         if item then
-            CK.Paddles.SetIcon(seg.slot.icon, C_Item.GetItemIconByID(item.id))
-            local count = C_Item.GetItemCount and C_Item.GetItemCount(item.id) or 0
-            seg.slot.count:SetText(count)
-            seg.label:SetText(C_Item.GetItemNameByID(item.id) or "")
-            local unusable = (combat and OUT_OF_COMBAT[item.cat]) or count == 0
+            CK.Paddles.SetIcon(seg.slot.icon, W.EntryIcon(item))
+            seg.slot.count:SetText(item.kind == "item" and (C_Item.GetItemCount and C_Item.GetItemCount(item.id) or 0) or "")
+            seg.label:SetText(W.EntryName(item) or "")
+            local unusable = entryUnusable(item, combat)
             seg.slot.icon:SetDesaturated(unusable)
             seg.disabled:SetShown(unusable)
             pcall(function()
-                local start, duration = C_Container.GetItemCooldown(item.id)
+                local start, duration = entryCooldown(item)
                 if start and duration and duration > 0 then
                     seg.slot.cooldown:SetCooldown(start, duration)
                 else
@@ -634,7 +732,7 @@ function W:Paint()
         end
     end
     -- LB  o * o  RB, with more than one page
-    local pages = self.frame:GetAttribute("ck-pages") or 1
+    local pages = self.frame:GetAttribute("ck-" .. self.paintedWheel .. "-pages") or 1
     local g = function(key) return CK:GlyphMarkup(key, 14) end
     if pages > 1 then
         local dots = {}
@@ -654,7 +752,7 @@ end
 
 function W:Aimed()
     local wheel = self.frame
-    local count = wheel:GetAttribute("count") or 0
+    local list = self:PageItems()
     local state = C_GamePad and C_GamePad.GetDeviceMappedState and C_GamePad.GetDeviceMappedState()
     local stick = state and state.sticks and state.sticks[wheel:GetAttribute("ck-stick") or 1]
     if stick and stick.len and stick.len > AIM then
@@ -663,32 +761,41 @@ function W:Aimed()
             local dot = stick.x * wheel:GetAttribute("ck-x" .. i) + stick.y * wheel:GetAttribute("ck-y" .. i)
             if dot > bestDot then best, bestDot = i, dot end
         end
-        return best and best <= count and best or nil
+        return best and list[best] and best or nil
     end
 end
 
 function W:Track()
     if not self.frame then return end
-    -- A page turned (LB / RB, secure): draw it
-    if (self.frame:GetAttribute("page") or 1) ~= self.painted then return self:Paint() end
+    -- A page turned (LB / RB, secure), another wheel's key: draw it
+    if (self.frame:GetAttribute("page") or 1) ~= self.painted
+        or (self.frame:GetAttribute("wheel") or "c") ~= self.paintedWheel then
+        return self:Paint()
+    end
     local i = self:Aimed()
     if i == self.aimed then return end
     self.aimed = i
     local item = i and self:PageItems()[i]
     local view = self.view
     view.highlight:SetShown(item ~= nil)
+    local mine = tonumber(self.paintedWheel)
     if not item then
-        view.name:SetText(L.WHEEL_NOTHING)
-        view.count:SetText(L.WHEEL_NOTHING_HINT)
+        -- A wheel of the player's: its name
+        view.name:SetText(mine and CK.MyWheels and CK.MyWheels:Name(mine) or L.WHEEL_NOTHING)
+        view.count:SetText(mine and L.MYWHEEL_NOTHING_HINT or L.WHEEL_NOTHING_HINT)
         return
     end
     local point = self.segments[i].highlightPoint
     view.highlight:ClearAllPoints()
     view.highlight:SetPoint("CENTER", view.bg, "CENTER", point[1], point[2])
     view.highlight:SetRotation(point[3])
-    view.name:SetText(C_Item.GetItemNameByID(item.id) or "")
-    local count = C_Item.GetItemCount and C_Item.GetItemCount(item.id) or 0
-    view.count:SetText(format("%s  -  %d", L["WHEEL_CAT_" .. item.cat:upper()], count))
+    view.name:SetText(W.EntryName(item) or "")
+    if item.kind == "item" then
+        local count = C_Item.GetItemCount and C_Item.GetItemCount(item.id) or 0
+        view.count:SetText(format("%s  -  %d", item.cat and L["WHEEL_CAT_" .. item.cat:upper()] or L.WHEEL_KIND_ITEM, count))
+    else
+        view.count:SetText(item.kind == "spell" and L.WHEEL_KIND_SPELL or L.WHEEL_KIND_MACRO)
+    end
     if CK.Vibration then CK.Vibration:Fire("wheelTick") end
 end
 
@@ -794,10 +901,12 @@ function W:RestoreSettings()
     end
 end
 
--- The action the Gamepad tab puts on an input: its key opens the wheel
-function W:Toggle()
+-- The action the Gamepad tab puts on an input ("wheel:consumables",
+-- "wheel:3"): its key opens that wheel
+function W:Toggle(which)
     self:Build()
-    return self.toggle
+    local n = tonumber(which)
+    return n and self.myToggles[n] or self.toggle
 end
 
 ---------------------------------------------------------------------------
@@ -808,12 +917,13 @@ function W:Init()
     self:Build()
     local f = CreateFrame("Frame")
     for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "BAG_UPDATE_DELAYED", "PLAYER_REGEN_ENABLED", "PLAYER_LEVEL_UP",
-        "PLAYER_REGEN_DISABLED", "BAG_UPDATE_COOLDOWN", "GET_ITEM_INFO_RECEIVED" }) do
+        "PLAYER_REGEN_DISABLED", "BAG_UPDATE_COOLDOWN", "GET_ITEM_INFO_RECEIVED", "SPELLS_CHANGED", "UPDATE_MACROS",
+        "SPELL_UPDATE_COOLDOWN" }) do
         pcall(f.RegisterEvent, f, event)
     end
     local queued
     f:SetScript("OnEvent", function(_, event)
-        if event == "PLAYER_REGEN_DISABLED" or event == "BAG_UPDATE_COOLDOWN" then
+        if event == "PLAYER_REGEN_DISABLED" or event == "BAG_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_COOLDOWN" then
             W:Paint()
             return
         end

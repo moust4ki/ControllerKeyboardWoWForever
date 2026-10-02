@@ -26,7 +26,7 @@ closes.
 
 ## Next: your own wheels
 
-- [ ] **Wheels of your own, like the consumables wheel**, each filled with the spells, items and
+- [x] **Wheels of your own, like the consumables wheel** (built for 1.2.2, to test in game), each filled with the spells, items and
   macros you choose, and opened by a shortcut:
   - same look and handling as the consumables wheel: the left stick points, A uses, B cancels,
     LB / RB turn the pages, usable in combat;

@@ -266,6 +266,16 @@ kind can be left out (Wheel tab).
   the sticks, like the game's own wheels: the camera and the character stay still. The aimed item's
   name shows in the game's banner under the wheel.
 - No game setting is changed. `/ec wheel` lists what the wheel holds, and why an item is not in it.
+
+### Your own wheels
+
+Up to 8 wheels of your own, made in the Wheels tab with the gamepad: **New wheel**, then pick what
+goes in each of its 8 slots (top, top right, right... clockwise) from the Spells, Items or Macros
+list (LB / RB change the list, B goes back). **Rename** types its name with the addon's keyboard (A
+confirms, B cancels) or a physical one (Enter / Escape). Each wheel shows and works like the
+consumables wheel (left stick, A, B; in combat too) with its name in the banner, and gets a key of
+its own: Gamepad tab, Items list, on any free button or paddle (or the game's Key Bindings, under
+AddOns). What a wheel holds changes out of combat only.
 - It sits in the middle of the screen (unlocked, drag the open wheel with the mouse, or move it with
   the D-pad from the Wheel tab).
 - It works **in combat**: the wheel and the keys it takes are secure, run by the game. Food and drink

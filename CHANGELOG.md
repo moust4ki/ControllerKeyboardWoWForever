@@ -2,6 +2,12 @@
 
 ## 1.2.2
 
+- **Your own wheels** (Wheels tab, formerly Wheel): up to 8 wheels of your own, 8 slots each, filled
+  with the spells, items and macros you choose (Spells / Items / Macros lists, LB / RB). Named with
+  the addon's keyboard or a physical one. They look and work like the consumables wheel, in combat
+  too, and each one gets a key: Gamepad tab, Items list (any free button, a paddle), or the game's
+  Key Bindings. Deleting a wheel takes it off its buttons.
+- **Gamepad tab**: with the game's buttons switch off, the hints say what turning it on allows.
 - **Vibrations**: low health and big hit removed. WoW Forever hides your health from addons in combat,
   so they could never work there.
 

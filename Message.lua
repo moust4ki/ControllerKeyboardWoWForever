@@ -96,6 +96,7 @@ function CK:EnterStandalone()
 end
 
 function CK:GetChannelLabel()
+    if self.prompt then return "|cffffd100" .. self.prompt.title .. " :|r " end
     local chatType = self:GetChatAttr("chatType") or "SAY"
     local label
     if self:GetChatAttr("reply") then
@@ -155,6 +156,10 @@ function CK:Refresh()
     local text = self:GetText()
     self.previewBody = self:GetChannelLabel() .. previewTail(text)
     self:UpdatePreview()
+    -- A prompt's own field follows what is typed
+    if self.prompt and self.prompt.box and self.prompt.box:GetText() ~= text then
+        self.prompt.box:SetText(text)
+    end
 
     -- "/re" -> /reload, "/ec l" -> /ec lock: command and at most one argument
     local n = self.db.settings.numSuggestions
@@ -571,9 +576,43 @@ function CK:BuildMacroText()
 end
 
 -- Only reached when the secure button is not over the "Send" button (the
--- keyboard was opened in combat): press Enter instead.
+-- keyboard was opened in combat): press Enter instead. A prompt: confirmed.
 function CK:Send()
+    if self.prompt then return self:FinishPrompt(true) end
     self:Print(L.SEND_COMBAT)
+end
+
+-- A name typed for one of the addon's own things (a wheel): the keyboard on
+-- its own, nothing sent to the chat. A confirms (onDone(text)), B or its
+-- close button cancel (onDone(nil)); `box`, a field of ours, follows it.
+function CK:OpenPrompt(title, text, onDone, box)
+    if not self.db.settings.modules.keyboard or self:BlockedByCombat() then return false end
+    if not self.frame then self:BuildUI() end
+    if self:IsOpen() then self:Close("prompt") end
+    self.prompt = { title = title, onDone = onDone, box = box }
+    self.standalone = true
+    self.buffer = text or ""
+    self.chatAttrs = { chatType = "SAY" }
+    self.editBox = nil
+    local state = self.state
+    state.layer, state.shift, state.caps, state.aim = "letters", false, false, nil
+    state.activeRow = "suggestions"
+    self:GetMethod():Reset()
+    self.frame:Show()
+    self.frame:Raise()
+    self:EnableButtons()
+    self:UpdateMethod()
+    self:Refresh()
+    return true
+end
+
+function CK:FinishPrompt(confirmed)
+    local prompt = self.prompt
+    if not prompt then return end
+    local text = self:GetText()
+    self.prompt = nil
+    self:Close("prompt")
+    prompt.onDone(confirmed and text or nil)
 end
 
 ---------------------------------------------------------------------------
@@ -641,13 +680,16 @@ function CK:Close(reason)
     if self.db.settings.debug and self:IsOpen() then
         self:Print("close: %s", tostring(reason or "button"))
     end
+    -- A prompt closed (B, its button, combat): cancelled
+    local prompt = self.prompt
+    self.prompt = nil
     self.closing = true
     if self.frame and self.frame:IsShown() then
         self.frame:Hide()
         self:DisableButtons()
     end
     self.closing = false
-    if KEEP_DRAFT[reason] and self.db.settings.features.drafts
+    if not prompt and KEEP_DRAFT[reason] and self.db.settings.features.drafts
         and self.buffer and self.buffer:find("[^ \t\r\n]") then
         self.draft = { text = self.buffer, time = GetTime() }
     end
@@ -660,6 +702,7 @@ function CK:Close(reason)
     self.state.questChip = false
     self:GetMethod():Reset()
     self.repeatFn = nil
+    if prompt then prompt.onDone(nil) end
 end
 
 function CK:IsOpen()
