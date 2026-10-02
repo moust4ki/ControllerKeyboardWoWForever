@@ -589,7 +589,7 @@ function K.Picker(parent, width)
         local tw = (width - 24 - (n - 1) * 4) / n
         for i = 1, math.max(n, #self.tabs) do
             local t = tab(i)
-            t:SetShown(i <= n)
+            t:SetShown(n > 1 and i <= n)
             if i <= n then
                 t:SetWidth(tw)
                 t:ClearAllPoints()

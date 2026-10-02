@@ -155,7 +155,10 @@ M.taken = {}    -- combo -> what we bound there over the game (replaced buttons)
 
 function M:NativeBinding(combo)
     local action = GetBindingAction(combo, true)
-    if action == self.bound[combo] or action == self.taken[combo] then action = GetBindingAction(combo, false) end
+    if action == self.bound[combo] or action == self.taken[combo]
+        or (action and action:find("^CLICK ControllerKeyboardConfigPad")) then
+        action = GetBindingAction(combo, false)
+    end
     if action and action ~= "" then return action end
     if C_KeyBindings and C_KeyBindings.GetBindingByKey and Enum and Enum.BindingContext then
         local ok, context = pcall(C_KeyBindings.GetBindingByKey, combo, Enum.BindingContext.GamepadModeInGameCore)
@@ -1126,11 +1129,11 @@ local PAD_GLYPHS = {
     PADLTRIGGER = "LT", PADRTRIGGER = "RT", PADLSTICK = "LS", PADRSTICK = "RS",
     PADDUP = "DPAD_UP", PADDDOWN = "DPAD_DOWN", PADDLEFT = "DPAD_LEFT", PADDRIGHT = "DPAD_RIGHT",
 }
-local PAD_NAMES = { PADFORWARD = "Start", PADBACK = "Select" }
+local PAD_NAMES = { PADFORWARD = "START", PADBACK = "SELECT" }
 
 local function keyLabel(key)
     if PAD_GLYPHS[key] then return CK:GlyphMarkup(PAD_GLYPHS[key], 16) end
-    if PAD_NAMES[key] then return PAD_NAMES[key] end
+    if PAD_NAMES[key] then return CK.ConfigKit.ChipText(PAD_NAMES[key]) end
     local paddle = key:match("^PADPADDLE(%d)$")
     if paddle then
         for id, k in pairs(M.PADDLE_KEYS) do

@@ -368,6 +368,8 @@ local STEP = 10
 function S:StartPlacement()
     self:BuildBar()
     self.moving = true
+    -- Where it was: B puts it back
+    self.placeFrom = settings().pos
     if not self.banner then
         local banner = CK.NewFrame("Frame", nil, UIParent)
         banner:SetSize(560, 58)
@@ -385,7 +387,8 @@ function S:StartPlacement()
     end
     local g = function(key) return CK:GlyphMarkup(key, 16) end
     self.banner.help:SetText(table.concat({
-        g("DPAD_UP") .. " " .. L.MAP_P_MOVE, g("X") .. " " .. L.PLACE_P_RESET, g("A") .. g("B") .. " " .. L.PLACE_P_DONE,
+        g("DPAD_UP") .. " " .. L.MAP_P_MOVE, g("X") .. " " .. L.PLACE_P_RESET, g("A") .. " " .. L.PLACE_P_DONE,
+        g("B") .. " " .. L.PLACE_P_CANCEL,
     }, "    "))
     self.banner:Show()
     self.bar.ring:Show()
@@ -411,8 +414,13 @@ function S:PlacementPress(name)
         settings().pos = nil
         self:Place()
     elseif name == "A" or name == "B" then
+        if name == "B" then
+            settings().pos = self.placeFrom
+            self:Place()
+        end
         self:StopPlacement()
         CK.Config:EndPlacement()
+        if name == "A" then CK.Config:Toast(L.TOAST_POS_SAVED) end
     end
 end
 
@@ -455,7 +463,10 @@ function S:BagItems()
             end
         end
     end
-    table.sort(list, function(a, b) return a.name < b.name end)
+    table.sort(list, function(a, b)
+        if strcmputf8i then return strcmputf8i(a.name, b.name) < 0 end
+        return a.name < b.name
+    end)
     return list
 end
 

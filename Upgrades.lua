@@ -146,6 +146,11 @@ function U:Scale()
     return SCALES[variant or class], TREE_SCALE[class] and treeName or nil
 end
 
+-- Compared by their stats (this client gives them, the class has weights)
+function U:ByStats()
+    return getStats() ~= nil and self:Scale() ~= nil
+end
+
 -- How the score is made, for the options' side panel: "Weights for
 -- Warrior: Weapon DPS x3, Strength x1..."
 function U:ScaleText()

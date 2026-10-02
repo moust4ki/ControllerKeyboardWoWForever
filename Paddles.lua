@@ -192,9 +192,12 @@ function P:StopCapture(key)
     local id, onDone = f.id, f.onDone
     f.id, f.onDone = nil, nil
     if key then
-        -- One key per paddle
+        -- One key per paddle (learned or by default): the paddle on it takes
+        -- this one's key in exchange
+        local M = CK.Mapping
+        local was = M:InputKey(M.BY_ID[id])
         for _, other in ipairs(P.ORDER) do
-            if other ~= id and self:Config(other).key == key then self:Config(other).key = nil end
+            if other ~= id and M:InputKey(M.BY_ID[other]) == key then self:Config(other).key = was end
         end
         local previous = GetBindingAction and GetBindingAction(key)
         if previous and previous ~= "" then
@@ -221,7 +224,12 @@ function P:Capture(id, onDone)
         end)
         if f.EnableGamePadButton then
             f:SetScript("OnGamePadButtonDown", function(_, button)
-                if not isStandardPadButton(button) then P:StopCapture(button) end
+                if not isStandardPadButton(button) then
+                    P:StopCapture(button)
+                elseif button == "PAD2" or button == "PAD3" then
+                    CK.Config:PressFromCapture(button)
+                end
+                return false
             end)
         end
         f:Hide()

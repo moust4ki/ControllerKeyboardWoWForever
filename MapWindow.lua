@@ -221,6 +221,8 @@ function W:BuildNode(area, n)
     node.label:SetJustifyH("CENTER")
     if node.label.SetMaxLines then node.label:SetMaxLines(1) end
     node.slot:SetScript("OnClick", function(_, button)
+        if W.wizard or P:IsCapturing() then return end
+        C:Disarm()
         W.zone, W.node = "pad", id
         if button == "RightButton" then
             W:Clear()
@@ -272,6 +274,8 @@ function W:Build(parent)
         b.focusBox:SetColors(nil, nil, KC.focus, 1)
         b.focusBox:SetShown(false)
         b:SetScript("OnClick", function()
+            if W.wizard or P:IsCapturing() then return end
+            C:Disarm()
             W.layer, W.zone = layer, "layers"
             C:Render()
         end)
@@ -304,6 +308,8 @@ function W:Build(parent)
     for i = 1, 4 do
         local b = K.Button(actionsRow, 13)
         b:SetScript("OnClick", function()
+            if W.wizard or P:IsCapturing() then return end
+            if i ~= 4 then C:Disarm() end
             W.zone, W.act = "actions", i
             W:Act(i)
         end)
@@ -373,6 +379,7 @@ function W:Show(resume)
     if not resume then
         self.zone, self.node, self.layer, self.act = "pad", "A", "", 1
         self.sub, self.wizard, self.assign = nil, nil, nil
+        if P:IsCapturing() then P:StopCapture(nil) end
         self.picker:Close()
     end
     self.heldLayer = ""
@@ -386,10 +393,8 @@ function W:Show(resume)
 end
 
 function W:Hide()
-    if self.wizard then
-        self.wizard = nil
-        P:StopCapture(nil)
-    end
+    self.wizard = nil
+    if P:IsCapturing() then P:StopCapture(nil) end
     self.picker:Close()
     self.display:Hide()
     self.frame:Hide()

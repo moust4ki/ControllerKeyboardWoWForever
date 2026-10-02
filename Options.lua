@@ -79,7 +79,7 @@ local function moduleRows(b)
         get = function() return mods.questItems end,
         set = function(v) mods.questItems = v end,
         onY = function() Config:SetTab("alerts", 3) end, yVerb = L.V_SETTINGS })
-    b.check({ id = "m_up", label = L.LBL_UPGRADES, status = L.STATUS_CLASS_STATS, tip = L.TIP_UPGRADES,
+    b.check({ id = "m_up", label = L.LBL_UPGRADES, status = function() return CK.Upgrades:ByStats() and L.STATUS_CLASS_STATS or L.STATUS_ITEM_LEVEL end, tip = L.TIP_UPGRADES,
         extra = function() return CK.Upgrades:ScaleText() end,
         get = function() return mods.upgrades end,
         set = function(v)
@@ -291,8 +291,19 @@ local function inputRows(b)
         end,
         step = function(d)
             local i, exact = sizeIndex()
-            -- From a custom value, the first step lands on the nearest preset
-            if exact then i = math.min(#SIZES, math.max(1, i + d)) end
+            if exact then
+                i = math.min(#SIZES, math.max(1, i + d))
+            else
+                -- From a custom value: the next preset that way
+                i = d > 0 and #SIZES or 1
+                for n = 1, #SIZES do
+                    local preset = SIZES[d > 0 and n or (#SIZES + 1 - n)].scale
+                    if (d > 0 and preset > s.scale) or (d < 0 and preset < s.scale) then
+                        i = d > 0 and n or (#SIZES + 1 - n)
+                        break
+                    end
+                end
+            end
             s.scale = SIZES[i].scale
             if CK.frame then
                 CK.frame:SetScale(s.scale)
@@ -329,7 +340,7 @@ local function predictionRows(b)
     b.choice({ id = "k_lang", label = L.LBL_SUGGESTIONS, tip = L.OPT_LANG,
         text = function() return CK:GetLanguage().name end,
         step = function(d)
-            local i = (indexOf(CK.LANGUAGES, s.lang) - 1 + d) % #CK.LANGUAGES + 1
+            local i = (indexOf(CK.LANGUAGES, CK:GetLanguage().key) - 1 + d) % #CK.LANGUAGES + 1
             CK:SetLanguage(CK.LANGUAGES[i].key)
         end })
     b.check({ id = "k_learn", label = L.OPT_LEARN, tip = L.TIP_LEARN,
@@ -542,7 +553,7 @@ end
 local function inventoryRows(b)
     local mods = settings().modules
     b.header(L.SEC_INVENTORY)
-    b.check({ id = "i_up", label = L.LBL_UPGRADES, status = L.STATUS_CLASS_STATS, tip = L.TIP_UPGRADES,
+    b.check({ id = "i_up", label = L.LBL_UPGRADES, status = function() return CK.Upgrades:ByStats() and L.STATUS_CLASS_STATS or L.STATUS_ITEM_LEVEL end, tip = L.TIP_UPGRADES,
         extra = function() return CK.Upgrades:ScaleText() end,
         get = function() return mods.upgrades end,
         set = function(v)
@@ -584,6 +595,7 @@ local function consumableRows(b)
     b.header(L.WHEEL_H_CATEGORIES)
     for _, cat in ipairs(W.CATEGORIES) do
         b.check({ id = "cat_" .. cat, label = L["WHEEL_CAT_" .. cat:upper()], disabled = not s.enabled,
+            tip = L.TIP_WHEEL_CAT,
             get = function() return s.categories[cat] end,
             set = function(v)
                 s.categories[cat] = v

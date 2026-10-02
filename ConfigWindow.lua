@@ -323,6 +323,7 @@ function RailPage:Build(parent)
     list:SetSize(LIST_W, BODY_H)
     list:EnableMouseWheel(true)
     list:SetScript("OnMouseWheel", function(_, delta)
+        if page:Section().view then return end
         page.zone = "list"
         page:MoveFocus(delta > 0 and -1 or 1, 3)
     end)
@@ -368,6 +369,7 @@ end
 
 function RailPage:SetSection(i, zone)
     if not self.def.sections[i] then return end
+    if i ~= self.section then C:Disarm() end
     self.section = i
     if zone then self.zone = zone end
     settings().configSection = settings().configSection or {}
@@ -542,15 +544,25 @@ function RailPage:Render()
     local fi = self:FocusIndex()
     if fi then self:SetFocus(fi) end
     local start = math.max(1, math.min(self.start[sec.key] or 1, #rows))
+    local function sum(a, b)
+        local t = 0
+        for j = a, b do t = t + self:RowHeight(rows[j]) end
+        return t
+    end
+    -- Everything fits (a section that shrank): from its top
+    if sum(1, #rows) <= BUDGET then start = 1 end
     if fi then
         if fi < start then start = (fi > 1 and rows[fi - 1].kind == "header") and fi - 1 or fi end
-        local function sum(a, b)
-            local t = 0
-            for j = a, b do t = t + self:RowHeight(rows[j]) end
-            return t
-        end
         while start < fi and sum(start, fi) > BUDGET do start = start + 1 end
+        local last = true
+        for j = fi + 1, #rows do
+            if focusable(rows[j]) then last = false break end
+        end
+        if last then
+            while start < fi and sum(start, #rows) > BUDGET do start = start + 1 end
+        end
     end
+    while start > 1 and sum(start - 1, #rows) <= BUDGET do start = start - 1 end
     self.start[sec.key] = start
     local used, n, moreBelow = 0, 0, false
     for j = start, #rows do
@@ -606,12 +618,15 @@ end
 ---------------------------------------------------------------------------
 function RailPage:MoveFocus(delta, count)
     local rows, i = self.rows, self:FocusIndex()
-    if not i then return end
+    if not i then return C:Render() end
+    local from = i
     for _ = 1, count or 1 do
         local j = i + delta
         while rows[j] and not focusable(rows[j]) do j = j + delta end
         if rows[j] then i = j end
     end
+    -- The focus moved: an armed button lets go
+    if i ~= from then C:Disarm() end
     self:SetFocus(i)
     C:Render()
 end
@@ -1002,6 +1017,11 @@ function C:CreateInput()
         b:SetSize(1, 1)
         b:RegisterForClicks("AnyDown", "AnyUp")
         b:SetScript("OnClick", function(_, _, down)
+            -- A button of the shortcut just learned, still held
+            if C.swallow and C.swallow[key] then
+                if down == false then C.swallow[key] = nil end
+                return
+            end
             -- B acts on release: closing the panel on the press would leave
             -- the release to the game alone
             if name == "B" then
@@ -1014,7 +1034,7 @@ function C:CreateInput()
             end
             C:Press(name)
             if REPEAT[name] then
-                C.repeatName, C.repeatAt = name, GetTime() + 0.35
+                C.repeatName, C.repeatKey, C.repeatAt = name, key, GetTime() + 0.35
             end
         end)
     end
@@ -1066,6 +1086,10 @@ function C:OnUpdate(elapsed)
     self:BindReleasedKeys()
     local page = self:Page()
     if page and page.OnUpdate then page:OnUpdate(elapsed) end
+    -- Its release went elsewhere (the game rebound the pad): over
+    if self.repeatName and IsKeyDown and self.repeatKey and not IsKeyDown(self.repeatKey) then
+        self.repeatName = nil
+    end
     if self.repeatName and GetTime() >= self.repeatAt then
         self.repeatAt = GetTime() + 0.08
         self:Press(self.repeatName)
@@ -1078,6 +1102,7 @@ end
 function C:Open(tab, section)
     if CK:BlockedByCombat() then return end
     self:Build()
+    self:DropPlacement()
     local alias = tab and C.ALIASES[tab]
     if alias then tab, section = alias[1], section or alias[2] end
     if self.frame:IsShown() then
@@ -1093,6 +1118,7 @@ function C:Open(tab, section)
     end
     if not self.pages[key or ""] then key = "home" end
     self.tab = key
+    settings().configTab = key
     self:Disarm()
     -- What the game binds, before our own pad bindings hide it
     CK.Mapping:TakeSnapshot()
@@ -1104,9 +1130,17 @@ function C:Open(tab, section)
     self:Render()
 end
 
+-- A placement on the HUD ended without going back to the panel (closed,
+-- combat, the panel's key)
+function C:DropPlacement()
+    if not self.placing then return end
+    if self.placer then self.placer:StopPlacement() end
+    self.placing, self.placer = false, nil
+end
+
 function C:Close()
     if not self:IsOpen() then return end
-    if self.placing then self.placer:StopPlacement() end
+    self:DropPlacement()
     CK.Paddles:StopCapture(nil)
     self:StopChordCapture(nil)
     self:Disarm()
@@ -1120,7 +1154,7 @@ function C:Close()
 end
 
 function C:Toggle(tab)
-    if self.frame and self.frame:IsShown() then self:Close() else self:Open(tab) end
+    if self:IsOpen() then self:Close() else self:Open(tab) end
 end
 
 -- Placing things on the HUD (the extra buttons, the supplies): the panel
@@ -1158,7 +1192,7 @@ function C:OpenWhenFree(tab)
         self:Open(tab)
         return
     end
-    self.openLater = tab or self.tab or "home"
+    self.openLater = tab or true
     if SettingsPanel and SettingsPanel:IsShown() then CK:Print(L.CFG_OPEN_LATER) end
     if self.laterTicker then return end
     local tries = 0
@@ -1167,7 +1201,7 @@ function C:OpenWhenFree(tab)
         local later = C.openLater
         if later and C:GameIsFree() and not InCombatLockdown() then
             C.openLater = nil
-            C:Open(later)
+            C:Open(later ~= true and later or nil)
         end
         -- Given up after two minutes
         if not C.openLater or tries > 480 then
@@ -1180,7 +1214,17 @@ end
 function C:Init()
     local events = CreateFrame("Frame")
     events:RegisterEvent("PLAYER_REGEN_DISABLED")
-    events:SetScript("OnEvent", function() C:Close() end)
+    events:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+    local redraw
+    events:SetScript("OnEvent", function(_, event)
+        if event == "PLAYER_REGEN_DISABLED" then return C:Close() end
+        if redraw or not (C.frame and C.frame:IsShown()) then return end
+        redraw = true
+        C_Timer.After(0.2, function()
+            redraw = nil
+            C:Render()
+        end)
+    end)
     -- A game window opened meanwhile (Start menu...) rebinds the pad when it
     -- closes: take the panel's keys back
     if EventRegistry and EventRegistry.RegisterCallback then
@@ -1232,7 +1276,29 @@ function C:StopChordCapture(chord)
     end
     local onDone = f.onDone
     f.onDone, f.held = nil, nil
+    -- The chord's buttons are still held: their release is not a press for
+    -- the panel (a chord with B would go back)
+    if chord then self:Swallow({ [chord.hold] = true, [chord.press] = true }) end
     if onDone then onDone(chord) end
+end
+
+-- Buttons pressed for something else (a capture): their release, should it
+-- reach the panel's keys, is no press
+function C:Swallow(keys)
+    self.swallow = keys
+    C_Timer.After(2, function()
+        if C.swallow == keys then C.swallow = nil end
+    end)
+end
+
+-- A panel button pressed while a capture frame had the pad (a paddle's key
+-- being learned: B cancels, X skips one): pressed here, as the game may keep
+-- it from the panel's keys
+function C:PressFromCapture(key)
+    local name = NAV[key]
+    if not name then return end
+    self:Swallow({ [key] = true })
+    self:Press(name)
 end
 
 function C:CaptureChord(onDone)
@@ -1247,6 +1313,7 @@ function C:CaptureChord(onDone)
             if key == "ESCAPE" then C:StopChordCapture(nil) end
         end)
         if f.EnableGamePadButton then
+            -- The buttons stop here (false: not passed on to the game)
             f:SetScript("OnGamePadButtonDown", function(self, button)
                 local held = self.held
                 if held and held ~= button and IsKeyDown(held) then
@@ -1254,6 +1321,7 @@ function C:CaptureChord(onDone)
                 else
                     self.held = button
                 end
+                return false
             end)
             -- B pressed and released alone cancels
             f:SetScript("OnGamePadButtonUp", function(self, button)
@@ -1264,12 +1332,14 @@ function C:CaptureChord(onDone)
                         self.held = nil
                     end
                 end
+                return false
             end)
         end
         f:Hide()
         self.chordFrame = f
     end
     f.onDone, f.held = onDone, nil
+    if f.timer then f.timer:Cancel() end
     f:EnableKeyboard(true)
     f:SetPropagateKeyboardInput(false)
     if f.EnableGamePadButton then f:EnableGamePadButton(true) end
