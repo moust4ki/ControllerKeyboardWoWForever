@@ -201,7 +201,7 @@ local E = {}
 MW.Editor = E
 
 local SLOT_SIZE, RADIUS = 48, 122
-local CX, CY = 235, -205        -- the wheel's middle, in its area
+local CX, CY = 235, -222        -- the wheel's middle, in its area (its name above)
 local ROWS, ROW_H = 15, 24
 local GREY, GOLD = { 0.62, 0.6, 0.55 }, { 1, 0.82, 0 }
 local kit
@@ -234,13 +234,15 @@ function E:Build(parent)
         bg:SetVertexColor(0, 0, 0, 0.7)
     end
     f.bg = bg
-    f.name = kit.text(area, 15)
-    f.name:SetPoint("CENTER", bg, "CENTER", 0, 10)
-    f.name:SetWidth(150)
+    -- Its name above it, its count in the middle
+    f.name = kit.text(area, 18)
+    f.name:SetPoint("TOP", area, "TOPLEFT", CX, -2)
+    f.name:SetWidth(440)
+    f.name:SetWordWrap(false)
     f.name:SetTextColor(unpack(kit.C.gold))
-    f.count = kit.text(area, 11)
-    f.count:SetPoint("TOP", f.name, "BOTTOM", 0, -4)
-    f.count:SetTextColor(unpack(GREY))
+    f.count = kit.text(area, 13)
+    f.count:SetPoint("CENTER", bg, "CENTER", 0, 0)
+    f.count:SetTextColor(unpack(kit.C.btn))
 
     f.slots = {}
     for i = 1, SLOTS do
@@ -558,7 +560,7 @@ end
 function E:Render()
     local f, w = self.frame, self:Wheel()
     if not (f and w) then return end
-    f.name:SetText(w.name)
+    f.name:SetText(w.name .. "  |cff9d9a8c(" .. CK:GlyphMarkup("Y", 16) .. " " .. L.MYWHEEL_RENAME .. ")|r")
     f.count:SetText(format("%d / %d", MW:Count(w), SLOTS))
     local pos = positions()
     for i, b in ipairs(f.slots) do

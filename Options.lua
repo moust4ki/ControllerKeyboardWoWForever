@@ -378,13 +378,15 @@ end
 
 CK.Config.pages.supplies = CK.Config.NewListPage(suppliesRows)
 
--- Wheels: the consumables wheel (on / off, its kinds, the variants), then
--- the player's own (MyWheels.lua)
+-- Wheels: the player's own (MyWheels.lua), then the consumables wheel (on /
+-- off, its kinds, the variants) and where every wheel shows
 local function wheelRows()
     local W = CK.ConsumableWheel
     local s = CK.db.settings.wheel
     local rows, b = list()
 
+    -- The player's own first: one can be made right away
+    CK.MyWheels:AddRows(b)
     b.header(L.WHEEL_NAME)
     b.check(L.WHEEL_ENABLE, function() return s.enabled end, function(v)
         s.enabled = v
@@ -414,7 +416,6 @@ local function wheelRows()
             end, true)
         end
     end
-    CK.MyWheels:AddRows(b)
     return rows
 end
 
