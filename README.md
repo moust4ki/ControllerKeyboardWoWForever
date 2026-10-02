@@ -198,7 +198,7 @@ off), X puts a button back. Places follow the compact layout.
 
 The controller vibrates on the game events you choose (Vibrations tab): one switch and one intensity
 for all, then each event with its own box and its own pattern (micro tick, tick, double tick, pulse,
-long, heartbeat, crescendo); A or the Test button plays it, X turns it on or off.
+long, heartbeat, crescendo) or Off, all with the D-pad; A or the Test button plays it.
 
 - **Combat**: low health (a heartbeat, faster below 20 %), big hit taken, death, your spell
   interrupted (by someone, not by moving), loss of control, aggro, entering combat, spell proc,

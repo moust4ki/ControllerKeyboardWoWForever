@@ -301,9 +301,12 @@ local function vibrationRows()
                     cfg.on = v
                     if v then V:Play(cfg.pattern) end
                     if e.key == "lowHealth" then V:UpdateHeart() end
-                end, function() return L["VIB_P_" .. cfg.pattern:upper()] end, function(d)
-                    cfg.pattern = V:NextPattern(cfg.pattern, d)
-                    V:Play(cfg.pattern)
+                end, function()
+                    return cfg.on and L["VIB_P_" .. cfg.pattern:upper()] or L.VIB_OFF
+                end, function(d)
+                    -- "Off" is one of the values: the D-pad does it all
+                    if V:StepEvent(cfg, d) then V:Play(cfg.pattern) end
+                    if e.key == "lowHealth" then V:UpdateHeart() end
                 end, function() V:Play(cfg.pattern) end, tip)
             end
         end

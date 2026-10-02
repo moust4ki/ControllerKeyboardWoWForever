@@ -227,11 +227,12 @@ end
 
 function ListPage:Help(g)
     local row = self.list and self.list[self.index or 0]
-    local help = { g("DPAD_UP") .. " " .. L.MAP_P_MOVE, g("DPAD_LEFT") .. " " .. L.CFG_P_CHANGE }
+    local help = { g("DPAD_UP") .. " " .. L.MAP_P_MOVE }
     if row and row.test then
+        help[#help + 1] = g("DPAD_LEFT") .. " " .. L.CFG_P_PATTERN
         help[#help + 1] = g("A") .. " " .. L.CFG_TEST
-        help[#help + 1] = g("X") .. " " .. L.CFG_P_TOGGLE
     else
+        help[#help + 1] = g("DPAD_LEFT") .. " " .. L.CFG_P_CHANGE
         help[#help + 1] = g("A") .. " " .. L.MAP_P_CHOOSE
     end
     help[#help + 1] = g("LB") .. g("RB") .. " " .. L.MAP_P_TAB

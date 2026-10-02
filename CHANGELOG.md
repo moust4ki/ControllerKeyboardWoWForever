@@ -4,7 +4,7 @@
 
 - **Vibrations.** The controller vibrates on the game events you choose, in a new Vibrations tab:
   one switch and one intensity, then each event with its own box and pattern (micro tick, tick,
-  double tick, pulse, long, heartbeat, crescendo): A tests it, X turns it on or off. Combat (low health heartbeat, big
+  double tick, pulse, long, heartbeat, crescendo) or Off, all with the D-pad; A tests it. Combat (low health heartbeat, big
   hit, death, interrupted, loss of control, aggro, entering combat, proc, action impossible), social
   (whisper, invite, ready check, resurrection or summon, trade or duel), progress (level up, quest
   objective, rare loot, bags full, gear almost broken) and the chat keyboard's keys. `/ec vibe` tests
