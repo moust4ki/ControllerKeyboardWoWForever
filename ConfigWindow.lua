@@ -25,8 +25,8 @@ end
 
 ---------------------------------------------------------------------------
 -- Option lists (General, Keyboard...): rows from Options.lua. Kinds:
--- header, info, check, choice (< value >), button, toggle (on / off and a
--- choice, shown in the value; an optional test: A or its button; X switches)
+-- header, info, check, choice (< value >), button, toggle (a box and a
+-- choice; an optional test: A or its button; X switches the box)
 ---------------------------------------------------------------------------
 local ListPage = {}
 ListPage.__index = ListPage
@@ -173,16 +173,15 @@ function ListPage:Render()
         if row then
             local indent = row.indent and 30 or 0
             local enabled = not row.disabled or not row.disabled()
-            -- A toggle shows its state in its value ("Off" greyed): no box,
-            -- its text where a box's would be
-            local boxed = row.kind == "check"
+            -- A toggle's box follows its value ("Off": unticked)
+            local boxed = row.kind == "check" or row.kind == "toggle"
             r.select:SetShown(index == self.index)
             r.box:SetShown(boxed)
             r.tick:SetShown(boxed and row.get() and true or false)
             r.box:ClearAllPoints()
             r.box:SetPoint("LEFT", 8 + indent, 0)
             r.label:ClearAllPoints()
-            r.label:SetPoint("LEFT", ((boxed or row.kind == "toggle") and 36 or 10) + indent, 0)
+            r.label:SetPoint("LEFT", (boxed and 36 or 10) + indent, 0)
             r.label:SetPoint("RIGHT", (row.kind == "toggle" and -400) or (row.kind == "choice" and -300) or -10, 0)
             r.label:SetText(row.kind == "button" and ("|cffffd100" .. row.text .. "|r") or row.text)
             if row.kind == "header" then
