@@ -12,7 +12,7 @@ CK.Config = C
 local WIDTH, HEIGHT = 820, 580
 local kit
 
-C.TABS = { "general", "keyboard", "gamepad", "vibration", "supplies" }
+C.TABS = { "general", "keyboard", "gamepad", "vibration", "supplies", "wheel" }
 C.pages = {}
 
 function C:IsOpen()

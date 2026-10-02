@@ -147,6 +147,7 @@ tabs, D-pad: move and change values, A: choose, B: close) or the mouse.
 - **Gamepad**: the mapping below.
 - **Vibrations**: the controller vibrations below.
 - **Supplies**: the supplies buttons below.
+- **Wheel**: the consumables wheel below.
 
 ## Gamepad mapping
 
@@ -226,6 +227,22 @@ One round button per resource, in the gamepad bar's style (Supplies tab):
   ("Move with the D-pad"), growing right, left, down or up, in 3 sizes; a click opens the bags
   (through the game's own backpack button);
 - low supplies and little room left can vibrate (Vibrations tab).
+
+## Consumables wheel
+
+A key of its own opens a wheel of up to 12 consumables from your bags: food, drink, healing and
+mana potions, healthstone, mana gem, bandages (used on yourself), buff food, elixirs and flasks,
+scrolls. The best of each kind comes first, then the other variants you carry (an option); each
+kind can be left out (Wheel tab).
+
+- Give it a key in the Gamepad tab (Items list: any free button, or a back paddle in any layer) or
+  in *Escape > Key Bindings > AddOns*.
+- Open: the **right stick** aims (or the D-pad turns the selection), **A** uses, **B** closes; the
+  mouse clicks a slot. The aimed item's name shows in the middle.
+- It works **in combat**: the wheel and the keys it takes are secure, run by the game. Food and drink
+  are greyed there (the game forbids them in combat). Its content is updated out of combat only (a
+  rule of the game).
+- Moving from slot to slot can vibrate (Vibrations tab).
 
 ## Quest items
 

@@ -8,4 +8,5 @@
     <Binding name="CONTROLLERKEYBOARD_CONFIG" category="ADDONS">
         ControllerKeyboard_OpenConfig()
     </Binding>
+    <Binding name="CLICK ControllerKeyboardWheelToggle:LeftButton" category="ADDONS"/>
 </Bindings>

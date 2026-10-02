@@ -386,6 +386,36 @@ end
 
 CK.Config.pages.supplies = CK.Config.NewListPage(suppliesRows)
 
+-- Consumables wheel: on / off, its kinds, the variants
+local function wheelRows()
+    local W = CK.ConsumableWheel
+    local s = CK.db.settings.wheel
+    local rows, b = list()
+
+    b.header(L.WHEEL_NAME)
+    b.check(L.WHEEL_ENABLE, function() return s.enabled end, function(v)
+        s.enabled = v
+        W:Fill()
+    end)
+    b.info(L.WHEEL_INFO)
+    b.info(L.WHEEL_INFO2)
+    if not s.enabled then return rows end
+    b.check(L.WHEEL_VARIANTS, function() return s.variants end, function(v)
+        s.variants = v
+        W:Fill()
+    end)
+    b.header(L.WHEEL_H_CATEGORIES)
+    for _, cat in ipairs(W.CATEGORIES) do
+        b.check(L["WHEEL_CAT_" .. cat:upper()], function() return s.categories[cat] end, function(v)
+            s.categories[cat] = v
+            W:Fill()
+        end, true)
+    end
+    return rows
+end
+
+CK.Config.pages.wheel = CK.Config.NewListPage(wheelRows)
+
 ---------------------------------------------------------------------------
 -- The game's settings panel (Escape > Options > AddOns > Controller
 -- Keyboard) only points to the addon's own panel. Plain buttons: no

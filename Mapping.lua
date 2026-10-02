@@ -317,7 +317,7 @@ end
 
 ---------------------------------------------------------------------------
 -- Assignments: settings.mapping["L3:LT"] = "cmd:TOGGLERUN" | "spell:133" |
--- "item:5512" | "macro:Name" | "bar:bottom:a"
+-- "item:5512" | "macro:Name" | "bar:bottom:a" | "wheel:consumables"
 ---------------------------------------------------------------------------
 function M:Get(inputId, layer)
     return settings().mapping[inputId .. ":" .. layer]
@@ -338,7 +338,7 @@ end
 -- gamepad), and runs that layer's spell, item or macro. A game function is
 -- a key binding: it needs the key to itself, all its layers.
 ---------------------------------------------------------------------------
-local ROUTABLE = { spell = true, item = true, macro = true }
+local ROUTABLE = { spell = true, item = true, macro = true, wheel = true }
 
 function M.Routable(action)
     return type(action) == "string" and ROUTABLE[action:match("^(%a+):") or ""] or false
@@ -456,6 +456,8 @@ function M:ActionName(action)
         return value
     elseif kind == "bar" then
         return CK.Paddles:ActionLabel(action)
+    elseif kind == "wheel" then
+        return L.WHEEL_NAME
     end
 end
 
@@ -473,6 +475,8 @@ function M:ActionIcon(action)
         return icon
     elseif kind == "bar" then
         return CK.Paddles:ActionIcon(action)
+    elseif kind == "wheel" then
+        return M.WHEEL_ICON
     end
 end
 
@@ -489,7 +493,10 @@ local function commandEntry(command)
         icon = COMMAND_ICONS[command] or COMMAND_ICON }
 end
 
-function M:Catalog(tab)
+M.WHEEL_ICON = "Interface\\Icons\\INV_Potion_54"
+
+-- forSlot: for one of the game's bar slots (spells, items, macros only)
+function M:Catalog(tab, forSlot)
     local list = {}
     if tab == "game" then
         local known, cats, byCategory = {}, {}, {}
@@ -536,6 +543,12 @@ function M:Catalog(tab)
             end
         end
     elseif tab == "items" and C_Container then
+        -- Ours first: the consumables wheel (not for the game's bar slots)
+        if not forSlot and CK.ConsumableWheel then
+            list[#list + 1] = { header = "Easy Controller" }
+            list[#list + 1] = { action = "wheel:consumables", name = L.WHEEL_NAME, icon = M.WHEEL_ICON }
+            list[#list + 1] = { header = L.MAP_TAB_ITEMS }
+        end
         local seen = {}
         for bag = 0, NUM_BAG_SLOTS or 4 do
             for slot = 1, C_Container.GetContainerNumSlots(bag) or 0 do
@@ -621,6 +634,11 @@ local function bindAction(combo, comboId, action)
             SetOverrideBindingClick(owner, false, combo, name, "LeftButton")
             M.bound[combo] = "CLICK " .. name .. ":LeftButton"
         end
+    elseif kind == "wheel" then
+        -- Its key opens the consumables wheel
+        local toggle = CK.ConsumableWheel:Toggle()
+        SetOverrideBindingClick(owner, false, combo, toggle:GetName(), "LeftButton")
+        M.bound[combo] = "CLICK " .. toggle:GetName() .. ":LeftButton"
     elseif M.Routable(action) then
         local b = actionButton(comboId, action)
         -- Pressed by its key: acts on the press
@@ -696,7 +714,8 @@ local function routeKey(combo, input, shared)
         local from = M:Get(input.id, layer) and layer or base
         local action = M:Get(input.id, from)
         if M.Routable(action) then
-            local b = actionButton(input.id .. ":" .. from, action)
+            local b = action:find("^wheel:") and CK.ConsumableWheel:Toggle()
+                or actionButton(input.id .. ":" .. from, action)
             -- Clicked by the key's button, once per press
             b:SetAttribute("useOnKeyDown", false)
             r:SetAttribute("*clickbutton-ck" .. layer, b)

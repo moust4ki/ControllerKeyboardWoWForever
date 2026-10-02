@@ -15,6 +15,8 @@ without changing it:
   level up, bags full...), each with its own pattern.
 - **Supplies**: a button per resource (bag space, ammo, soul shards, reagents, any item) that glows
   when you run low.
+- **Consumables wheel**: one key opens a wheel of your food, drinks, potions, healthstone, bandages,
+  elixirs...; aim with the right stick, A uses. Works in combat.
 
 Everything is driven with the gamepad (RB + D-pad down opens the configuration), every function can
 be turned off, and the look matches WoW Forever's gamepad UI.
@@ -68,7 +70,14 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
 
 **Configuration panel**
 RB + D-pad down (or `/ec config`) opens the addon's own panel, driven with the gamepad or the mouse:
-General (every function can be turned on or off), Keyboard, Gamepad, Vibrations and Supplies tabs.
+General (every function can be turned on or off), Keyboard, Gamepad, Vibrations, Supplies and Wheel
+tabs.
+
+**Consumables wheel**
+A key of its own (any free button, or a back paddle in any trigger layer) opens a wheel of up to 12
+consumables from your bags: food, drink, healing and mana potions, healthstone, mana gem, bandages,
+buff food, elixirs and flasks, scrolls, the best first. The right stick aims (or the D-pad), A uses,
+B closes, the mouse works too. It works in combat (food and drink greyed there).
 
 **Supplies**
 A round button per resource: free bag slots, your ammunition, your class reagents (soul shards,

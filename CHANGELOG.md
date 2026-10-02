@@ -16,7 +16,13 @@
   threshold, stronger and redder down to the critical one; thresholds set with the D-pad. The bar
   is placed freely (mouse drag while unlocked, or the D-pad), growing right, left, down or up, in 3 sizes; a
   click opens the bags. Low supplies and little room can vibrate.
-- The configuration panel's tabs share the room, for the new ones.
+- **Consumables wheel.** A key of its own (Gamepad tab, Items list: any free button or a back paddle
+  in any layer; or the game's key bindings) opens a wheel of up to 12 consumables from the bags:
+  food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
+  elixirs and flasks, scrolls, the best of each kind first and the other variants after. The right
+  stick aims or the D-pad turns, A uses, B closes, the mouse clicks. It works in combat (secure
+  frames and snippets; food and drink greyed there). Wheel tab: each kind on or off, the variants.
+- The configuration panel's tabs share the room, for the new ones; it can be dragged with the mouse.
 - The addon list shows Easy Controller's icon.
 
 ## 1.1.1

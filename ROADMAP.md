@@ -3,7 +3,7 @@
 Everything planned for Easy Controller - Forever, so nothing gets lost. Each feature is built, tested
 in game, then released on GitHub and CurseForge. Done items move to the [CHANGELOG](CHANGELOG.md).
 
-## 1.2.0: vibrations and supplies (built, testing in game)
+## 1.2.0: vibrations, supplies, consumables wheel (built, testing in game)
 
 - [x] **Vibrations** tab: one switch and one intensity, then each event with its box and its pattern
   (Off or micro tick, tick, double tick, pulse, long, heartbeat, crescendo). The D-pad picks the
@@ -19,25 +19,18 @@ in game, then released on GitHub and CurseForge. Done items move to the [CHANGEL
   bar is placed freely (mouse drag while unlocked, or the D-pad), growing in 4 directions, 3 sizes;
   a click opens the bags. Low supplies and little room vibrate.
   - [ ] In-game check: detection (reagent item IDs of WoW Forever), the glow, the placement.
+- [x] **Consumables wheel** (Wheel tab): a key of its own (Gamepad tab, Items list, any free button
+  or back paddle in any layer; or the game's key bindings) opens a wheel of up to 12 consumables:
+  food, drink, healing and mana potions, healthstone, mana gem, bandages (on yourself), buff food,
+  elixirs and flasks, scrolls; the best of each kind first, the variants after (an option). The
+  right stick aims or the D-pad turns, A uses, B closes, the mouse clicks. Secure: works in combat
+  (food and drink greyed there); its content changes out of combat only. "Wheel ticks" vibrate.
+  - [ ] In-game check: opening, aiming, A in and out of combat, the kinds found in the bags.
+
 - [x] The addon list shows the addon's icon.
 - [ ] Release 1.2.0.
 
-## 1.3.0: consumables wheel
-
-Decided with the player:
-
-- A key of its own, set in the Gamepad tab (a paddle, L3, a free combination...), **opens a wheel**
-  drawn with the game's own radial art.
-- The **right stick aims** (like the game's spell wheel), **A uses**, **B closes**; the mouse can
-  click a slot.
-- **Up to 12 slots**: food, drink, health and mana potions, healthstone, mana gem, bandages (used on
-  yourself), elixirs and flasks, buff food, scrolls. Every variant carried while there is room, the
-  best of each kind first, with counts and cooldowns.
-- Works **in combat** (secure code): food and drink are greyed there, as the game forbids them.
-  The wheel's content is updated out of combat only (a rule of the game).
-- The "wheel: moving from slot to slot" vibration.
-
-## 1.4.0: remap the game's own buttons
+## 1.3.0: remap the game's own buttons
 
 - Remap the buttons WoW Forever uses itself (jump, interact, back / cancel, inspect, targeting,
   Start and Select menus...): give their functions to other buttons, and other functions to them.

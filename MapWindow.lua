@@ -532,7 +532,7 @@ end
 
 function W:LoadTab()
     local picker = self.picker
-    picker.list = M:Catalog(picker.tabs[picker.tab])
+    picker.list = M:Catalog(picker.tabs[picker.tab], picker.slot ~= nil)
     picker.offset, picker.index = 0, nil
     -- Start on the current function when it is in this list
     local current = picker.slot and M:SlotAction(picker.slot) or M:Get(self.selected, picker.layer)
