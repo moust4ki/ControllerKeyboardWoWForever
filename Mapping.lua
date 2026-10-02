@@ -712,17 +712,28 @@ local takeOwner         -- the game's buttons replaced: priority bindings
 
 -- Every key set on an owner taken away, then the owner cleared. A binding
 -- to one of the game's gamepad commands (ping, Start menu...) outlives
--- both ClearOverrideBindings and a nil binding, but not another binding of
--- the key: each key first goes to a button that does nothing.
+-- both ClearOverrideBindings and a nil binding: each key bound to a command
+-- (this session) first goes to one that does nothing, and to a button that
+-- does nothing, then to none.
 local noop
+local commanded = {}    -- owner -> keys it bound to a command, this session
 local function unbindAll(o, record, priority)
     noop = noop or CK.NewFrame("Button", "ControllerKeyboardNoopButton")
-    for combo in pairs(record) do
+    local keys = commanded[o] or {}
+    for combo in pairs(record) do keys[combo] = true end
+    for combo in pairs(keys) do
+        SetOverrideBinding(o, priority, combo, "CONTROLLERKEYBOARD_NOOP")
         SetOverrideBindingClick(o, priority, combo, noop:GetName(), "LeftButton")
         SetOverrideBinding(o, priority, combo, nil)
     end
     ClearOverrideBindings(o)
     wipe(record)
+end
+
+local function bindCommand(o, priority, combo, command)
+    commanded[o] = commanded[o] or {}
+    commanded[o][combo] = true
+    SetOverrideBinding(o, priority, combo, command)
 end
 local buttons = {}      -- comboId -> secure button (spells, items, macros)
 
@@ -763,7 +774,7 @@ local function bindAction(combo, comboId, action, replace)
     if replace then o, record = takeOwner, M.taken end
     local click
     if kind == "cmd" then
-        SetOverrideBinding(o, replace or false, combo, value)
+        bindCommand(o, replace or false, combo, value)
         record[combo] = value
     elseif kind == "bar" then
         local native = CK.Paddles:NativeButton(action)
@@ -979,7 +990,7 @@ function M:KeepNative(input, layer, combo)
     if input.id == "L3" or input.id == "R3" then return end
     local command = self:NativeBinding(combo) or self:NativeBinding(self:InputKey(input))
     if command then
-        SetOverrideBinding(takeOwner, true, combo, command)
+        bindCommand(takeOwner, true, combo, command)
         self.taken[combo] = command
     end
 end
@@ -988,10 +999,17 @@ end
 -- panel) has the focus. Set again when it closes.
 function M:Release()
     if InCombatLockdown() or not (takeOwner and next(self.taken)) then return end
+    local keys = {}
+    for combo in pairs(self.taken) do keys[#keys + 1] = combo end
     self.applying = true
     unbindAll(takeOwner, self.taken, true)
     self.applying = false
     self.pending = true
+    -- For /ec binds: what each key runs once ours are away
+    local after = {}
+    table.sort(keys)
+    for _, combo in ipairs(keys) do after[#after + 1] = combo .. " = " .. tostring(GetBindingAction(combo, true)) end
+    self.lastRelease = date("%H:%M:%S") .. "  " .. table.concat(after, ", ")
 end
 
 -- Our function's picture over the game's bar button it replaces (what the
@@ -1077,6 +1095,10 @@ function M:BindingTest()
     SetOverrideBindingClick(f, true, key, "ControllerKeyboardNoopButton", "LeftButton") show("10 set a click")
     SetOverrideBinding(f, true, key, nil) show("11 set nil")
     ClearOverrideBindings(f) show("12 ClearOverrideBindings")
+    SetOverrideBinding(f, true, key, "TOGGLEPINGSYSTEM") show("13 set TOGGLEPINGSYSTEM")
+    SetOverrideBinding(f, true, key, "CONTROLLERKEYBOARD_NOOP") show("14 set NOOP")
+    SetOverrideBinding(f, true, key, nil) show("15 set nil")
+    ClearOverrideBindings(f) show("16 ClearOverrideBindings")
     self.applying = false
 end
 
@@ -1094,6 +1116,9 @@ function M:Diagnose()
         DEFAULT_CHAT_FRAME:AddMessage(format("  %s = %s: %s, replaceable %s, key %s", comboId, action,
             input and self:State(input, layer) or "?", tostring(input and self:Replaceable(input, layer)),
             tostring(input and self:Combo(input, layer))))
+    end
+    if self.lastRelease then
+        DEFAULT_CHAT_FRAME:AddMessage("  released " .. self.lastRelease)
     end
     -- Each key bound: ours, what runs now, the game's own (its gamepad context)
     local keys = {}

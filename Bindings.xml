@@ -9,4 +9,7 @@
         ControllerKeyboard_OpenConfig()
     </Binding>
     <Binding name="CLICK ControllerKeyboardWheelToggle:LeftButton" category="ADDONS"/>
+    <Binding name="CONTROLLERKEYBOARD_NOOP" category="ADDONS" hidden="true">
+        -- Does nothing: a key bound to it lets go of the game's gamepad command it had
+    </Binding>
 </Bindings>
