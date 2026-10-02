@@ -15,9 +15,9 @@
   buttons; LT and RT become modifiers so that each layer has a key of its own. Turned off again,
   every replaced button gets the game's default binding back (the game's slots, free buttons and
   paddles keep theirs). `/ec binds` shows the replaced keys.
-  A gamepad ping held (its wheel waiting for the key again) is let finish before any key changes,
-  and the panel waits for it: changed meanwhile, the game's ping listener stayed over the screen and
-  took every A in a menu as a ping.
+  Ping put on a button is held to open the wheel and released to send: the game's own gamepad ping
+  waits for its key to be pressed again, and a key changed meanwhile left its listener over the
+  screen, every A in a menu becoming a ping.
 - **Consumables wheel**: after a reload, the banner under the wheel was empty on its first opening.
 
 ## 1.2.0

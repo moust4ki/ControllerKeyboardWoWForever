@@ -767,9 +767,17 @@ local function actionButton(comboId, action)
     return b
 end
 
+-- The game's gamepad ping, held then released, opens its wheel and waits
+-- for the same key to be pressed again, a full-screen listener shown until
+-- then: a key of ours changed meanwhile left it up for good, every A in a
+-- menu landing on it as a ping. Ours is the game's other ping binding: hold
+-- (the wheel and the stick), release sends; it never waits.
+local BOUND_AS = { TOGGLEPINGSYSTEM = "TOGGLEPINGLISTENER" }
+
 -- replace: over a button of the game (priority, our second owner)
 local function bindAction(combo, comboId, action, replace)
     local kind, value = action:match("^(%a+):(.+)$")
+    if kind == "cmd" then value = BOUND_AS[value] or value end
     local o, record = owner, M.bound
     if replace then o, record = takeOwner, M.taken end
     local click
@@ -923,28 +931,7 @@ function M:CoreActive()
     return not (CK.Config and CK.Config:IsOpen())
 end
 
--- The game's gamepad ping held: its wheel waits for the same key to be
--- pressed again, a full-screen listener of the game shown meanwhile. Our
--- keys stay as they are until it is done: without that key the listener
--- would stay, and take every click (A in a menu) as a ping.
-function M:PingPending()
-    return PingListenerFrame and PingListenerFrame:IsShown() or false
-end
-
-function M:WaitPing()
-    self.pending = true
-    if self.pingWait then return end
-    self.pingWait = true
-    local function check()
-        if self:PingPending() then return C_Timer.After(0.25, check) end
-        self.pingWait = false
-        if not InCombatLockdown() then self:Apply() end
-    end
-    C_Timer.After(0.25, check)
-end
-
 function M:Apply()
-    if self:PingPending() then return self:WaitPing() end
     if InCombatLockdown() or not self:CoreActive() then
         self.pending = true
         -- A menu of the game, or our panel: its buttons back to it
@@ -1020,7 +1007,6 @@ end
 -- panel) has the focus. Set again when it closes.
 function M:Release()
     if InCombatLockdown() or not (takeOwner and next(self.taken)) then return end
-    if self:PingPending() then return self:WaitPing() end
     local keys = {}
     for combo in pairs(self.taken) do keys[#keys + 1] = combo end
     self.applying = true
