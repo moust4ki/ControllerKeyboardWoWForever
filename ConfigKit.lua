@@ -624,7 +624,7 @@ function K.Picker(parent, width)
             r.label:Hide()
             r.icon:Hide()
             r.mark:Hide()
-            r.sel:Hide()
+            r.sel:SetShown(false)
         end
     end
     return p
