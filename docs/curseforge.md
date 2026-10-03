@@ -90,8 +90,7 @@ Up to 8 wheels of your own, shown as cards (their 8 slots, their name, the butto
 opens an editor: the wheel with its slots around it and the lists beside it (spells, items, macros);
 a choice fills the slot and goes on to the next one. Name it with the gamepad keyboard, give it a
 button straight from the editor ("Assign a button"). Each wheel shows its filled slots only, in as many
-sections, and works like the consumables wheel, in
-combat too.
+sections, and works like the consumables wheel, in combat too.
 
 **Consumables wheel**
 A key of its own (any free button, or a back paddle in any trigger layer) opens a wheel drawn like
