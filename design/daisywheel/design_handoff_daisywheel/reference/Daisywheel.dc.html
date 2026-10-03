@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&display=swap" rel="stylesheet">
+<style>html{background:#101113}body{margin:0;background:#101113;color:#d9d4cb;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}a{color:#d6b47a}a:hover{color:#f0d29a}</style>
+</helmet>
+<div style="padding:56px 64px 96px;display:flex;flex-direction:column;gap:56px;width:max-content;min-height:100vh;box-sizing:border-box;background:#101113;color:#d9d4cb">
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:900px">
+    <h1 style="margin:0;font-size:30px;font-weight:600">Daisywheel : clavier de chat manette</h1>
+    <p style="margin:0;font-size:15px;line-height:1.5;color:#9a948a;text-wrap:pretty">Fenêtre 340 × 484, roue affichée à 304 px (échelle 0,594 de la texture 512). Même langage que la roue radiale : couronne sombre, bronze, surbrillance cuivrée. Les caractères sont écrits par le code ; la croix gauche / haut / droite / bas reste toujours alignée sur l'écran.</p>
+  </div>
+
+  <sc-for list="{{ rows }}" as="row" hint-placeholder-count="2">
+  <div id="{{ row.id }}" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;align-items:baseline;gap:12px">
+    <span style="font-size:13px;font-family:ui-monospace,Menlo,monospace;padding:2px 8px;border-radius:3px;background:#2a2219;color:#e6bb77">{{ row.badge }}</span>
+    <span style="font-size:18px;font-weight:600;color:#ece6da">{{ row.title }}</span>
+    <span style="font-size:13px;color:#9a948a">{{ row.sub }}</span>
+  </div>
+  <div style="display:flex;gap:40px;align-items:flex-start">
+    <sc-for list="{{ row.states }}" as="st" hint-placeholder-count="5">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;gap:0;align-items:flex-start">
+          <sc-if value="{{ st.annotate }}" hint-placeholder-val="{{ false }}">
+            <div style="position:relative;width:150px;height:484px;margin-top:22px;flex-shrink:0;font-size:11px;font-family:ui-monospace,Menlo,monospace;color:#b9a27a">
+              <sc-for list="{{ rail }}" as="rw" hint-placeholder-count="5">
+                <div style="position:absolute;right:10px;top:{{ rw.top }}px;height:{{ rw.h }}px;display:flex;align-items:center;gap:8px">
+                  <span style="white-space:nowrap">{{ rw.label }}</span>
+                  <div style="width:6px;height:100%;border:1px solid #6d5c40;border-left:none;box-sizing:border-box"></div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="height:14px;display:flex;align-items:center;gap:6px;font-size:11px;font-family:ui-monospace,Menlo,monospace;color:#b9a27a;opacity:{{ st.rulerOp }}">
+              <div style="flex:1;height:6px;border:1px solid #6d5c40;border-bottom:none"></div><span>340</span><div style="flex:1;height:6px;border:1px solid #6d5c40;border-bottom:none"></div>
+            </div>
+            <div data-screen-label="{{ st.label }}" style="width:340px;height:484px;box-sizing:border-box;padding:10px 8px;border:2px solid #5a4d38;border-radius:4px;background:linear-gradient(180deg,#19160f 0%,#0f0d0a 100%);box-shadow:0 0 0 1px #050403,inset 0 0 0 1px #241d15,inset 0 1px 0 1px rgba(143,130,111,0.25),0 14px 40px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:6px;font-family:Marcellus,serif">
+              <div style="height:40px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 6px 0 10px;background:#080706;border:1px solid #3d3326;border-radius:3px;box-shadow:inset 0 1px 4px rgba(0,0,0,0.9),0 1px 0 rgba(143,130,111,0.18)">
+                <span style="font-size:14px;color:#ffffff">Say:</span>
+                <span style="font-size:14px;color:#ffffff">{{ st.input }}</span>
+                <div style="width:1px;height:16px;background:#ffd100;margin-left:-3px"></div>
+                <div style="flex:1"></div>
+                <div style="height:18px;padding:0 7px;display:flex;align-items:center;border-radius:9px;font-size:11px;letter-spacing:0.04em;border:1px solid {{ st.modeBorder }};background:{{ st.modeBg }};color:{{ st.modeColor }}">{{ st.mode }}</div>
+                <div style="width:8px;height:16px;display:grid;grid-template-columns:2px 2px;grid-auto-rows:2px;gap:3px 3px;align-content:center;justify-content:center;opacity:0.7">
+                  <div style="background:#8f826f"></div><div style="background:#8f826f"></div><div style="background:#8f826f"></div><div style="background:#8f826f"></div><div style="background:#8f826f"></div><div style="background:#8f826f"></div>
+                </div>
+              </div>
+              <div style="height:26px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;gap:4px;padding:0 4px;background:#080706;border:1px solid #3d3326;border-radius:3px;box-shadow:inset 0 1px 4px rgba(0,0,0,0.9),0 1px 0 rgba(143,130,111,0.18)">
+                <div style="height:14px;min-width:20px;padding:0 3px;box-sizing:border-box;border-radius:3px;background:#cfc9bf;color:#15130f;font:700 8px/14px Helvetica,Arial,sans-serif;text-align:center">LB</div>
+                <div style="flex:1;display:flex;justify-content:space-around;align-items:center;font-size:13px;color:#c9b37e">
+                  <span style="padding:1px 8px;border-radius:3px;border:1px solid #d8b27a;background:linear-gradient(180deg,#8a6239,#5a402a);color:#fff0c8">hey</span><span>ty</span><span>test</span><span>lfm</span><span>il</span>
+                </div>
+                <div style="height:14px;min-width:20px;padding:0 3px;box-sizing:border-box;border-radius:3px;background:#cfc9bf;color:#15130f;font:700 8px/14px Helvetica,Arial,sans-serif;text-align:center">RB</div>
+              </div>
+              <div style="position:relative;width:304px;height:304px;flex-shrink:0;margin:2px auto">
+                <img src="daisywheel/textures/dw_wheel_bg.png" alt="" style="position:absolute;inset:0;width:100%;height:100%"></img>
+                <sc-for list="{{ st.dims }}" as="d" hint-placeholder-count="0">
+                  <img src="daisywheel/textures/dw_section_dim.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;transform:rotate({{ d }}deg)"></img>
+                </sc-for>
+                <sc-if value="{{ st.hasSel }}" hint-placeholder-val="{{ false }}">
+                  <img src="daisywheel/textures/dw_section_sel.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;transform:rotate({{ st.selRot }}deg)"></img>
+                </sc-if>
+                <sc-for list="{{ st.rings }}" as="rg" hint-placeholder-count="0">
+                  <img src="{{ rg.src }}" alt="" style="position:absolute;left:{{ rg.x }}px;top:{{ rg.y }}px;width:64.1px;height:64.1px;margin:-32.05px 0 0 -32.05px;opacity:{{ rg.op }}"></img>
+                </sc-for>
+                <img src="{{ st.hubSrc }}" alt="" style="position:absolute;left:116.4px;top:116.4px;width:71.25px;height:71.25px"></img>
+                <sc-if value="{{ st.hasHover }}" hint-placeholder-val="{{ false }}">
+                  <img src="daisywheel/textures/dw_key_hover.png" alt="" style="position:absolute;left:{{ st.hover.x }}px;top:{{ st.hover.y }}px;width:32px;height:32px;margin:-16px 0 0 -16px"></img>
+                </sc-if>
+                <sc-if value="{{ st.hasTarget }}" hint-placeholder-val="{{ false }}">
+                  <img src="daisywheel/textures/dw_key_target.png" alt="" style="position:absolute;left:{{ st.target.x }}px;top:{{ st.target.y }}px;width:32px;height:32px;margin:-16px 0 0 -16px"></img>
+                </sc-if>
+                <sc-for list="{{ st.guides }}" as="g" hint-placeholder-count="0">
+                  <div style="position:absolute;left:{{ g.x }}px;top:{{ g.y }}px;width:61.8px;height:61.8px;margin:-30.9px 0 0 -30.9px;border:1px dashed rgba(120,220,255,0.7);border-radius:50%;box-sizing:border-box"></div>
+                </sc-for>
+                <sc-for list="{{ st.chars }}" as="c" hint-placeholder-count="32">
+                  <div style="position:absolute;left:{{ c.x }}px;top:{{ c.y }}px;transform:translate(-50%,-55%);font-size:16px;line-height:1;color:{{ c.color }};opacity:{{ c.op }};text-shadow:{{ c.sh }}">{{ c.ch }}</div>
+                </sc-for>
+                <div style="position:absolute;left:152px;top:152px;transform:translate(-50%,-56%);font-size:38px;line-height:1;color:#ffd100;opacity:{{ st.hubOp }};text-shadow:0 2px 3px #000">{{ st.hubChar }}</div>
+                <div style="position:absolute;left:152px;top:176px;transform:translateX(-50%);font-size:10px;letter-spacing:0.08em;color:#c9a44a">{{ st.hubLabel }}</div>
+              </div>
+              <div style="height:26px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;padding:0 4px;background:#080706;border:1px solid #3d3326;border-radius:3px;box-shadow:inset 0 1px 4px rgba(0,0,0,0.9),0 1px 0 rgba(143,130,111,0.18);font-size:13px">
+                <span style="padding:0 6px;border-radius:3px;border:1px solid #d8b27a;background:linear-gradient(180deg,#8a6239,#5a402a);color:#ffffff;line-height:18px">/s</span>
+                <span style="color:#ff4040">/y</span><span style="color:#aaaaff;opacity:0.4">/p</span><span style="color:#ff7f00;opacity:0.4">/ra</span><span style="color:#40ff40;opacity:0.4">/g</span><span style="color:#ffc0c0">/1</span><span style="color:#ff80ff">/w</span><span style="color:#ff80ff;opacity:0.4">/r</span>
+                <span style="width:20px;height:18px;display:flex;align-items:center;justify-content:center;border:1px solid #5a4d38;border-radius:3px;background:#15120d;color:#ffd100;font-size:14px">!</span>
+              </div>
+              <div style="height:36px;flex-shrink:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:18px 18px;column-gap:4px;padding:0 2px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;color:#d9d4cb">
+                <sc-for list="{{ st.help }}" as="h" hint-placeholder-count="8">
+                  <div style="display:flex;align-items:center;gap:5px;min-width:0">
+                    <div style="height:13px;min-width:{{ h.w }}px;padding:0 2px;box-sizing:border-box;border-radius:{{ h.r }};background:{{ h.bg }};color:#15130f;font:700 8px/13px Helvetica,Arial,sans-serif;text-align:center;flex-shrink:0">{{ h.g }}</div>
+                    <span style="white-space:nowrap;overflow:hidden;color:{{ h.color }}">{{ h.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;width:340px;margin-left:{{ st.capOffset }}px">
+          <span style="font-size:16px;font-weight:600;color:#ece6da">{{ st.title }}</span>
+          <span style="font-size:13px;line-height:1.5;color:#9a948a;text-wrap:pretty">{{ st.desc }}</span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  </div>
+  </sc-for>
+
+  <div style="display:flex;gap:64px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <span style="font-size:18px;font-weight:600;color:#ece6da">Géométrie, espace texture 512</span>
+      <div style="position:relative;width:512px;height:512px;background:repeating-conic-gradient(#24262a 0% 25%,#1b1c1f 0% 50%);background-size:32px 32px;font-family:Marcellus,serif">
+        <img src="daisywheel/textures/dw_wheel_bg.png" alt="" style="position:absolute;inset:0;width:512px;height:512px"></img>
+        <img src="daisywheel/textures/dw_hub.png" alt="" style="position:absolute;left:196px;top:196px;width:120px;height:120px"></img>
+        <img src="daisywheel/textures/dw_key_target.png" alt="" style="position:absolute;left:417px;top:229px;width:54px;height:54px"></img>
+        <div style="position:absolute;left:97.7px;top:97.7px;width:316.6px;height:316.6px;border:1px dashed rgba(120,220,255,0.55);border-radius:50%;box-sizing:border-box"></div>
+        <div style="position:absolute;left:197.7px;top:197.7px;width:116.6px;height:116.6px;border:1px dashed rgba(255,140,120,0.7);border-radius:50%;box-sizing:border-box"></div>
+        <div style="position:absolute;left:204px;top:44px;width:104px;height:104px;border:1px solid rgba(120,220,255,0.8);border-radius:50%;box-sizing:border-box"></div>
+        <div style="position:absolute;left:228px;top:95.5px;width:56px;height:1px;background:rgba(120,220,255,0.8)"></div>
+        <div style="position:absolute;left:255.5px;top:68px;width:1px;height:56px;background:rgba(120,220,255,0.8)"></div>
+        <sc-for list="{{ geoChars }}" as="c" hint-placeholder-count="32">
+          <div style="position:absolute;left:{{ c.x }}px;top:{{ c.y }}px;transform:translate(-50%,-55%);font-size:27px;line-height:1;color:{{ c.color }};text-shadow:{{ c.sh }}">{{ c.ch }}</div>
+        </sc-for>
+        <div style="position:absolute;left:256px;top:256px;transform:translate(-50%,-56%);font-size:64px;line-height:1;color:#ffd100;text-shadow:0 2px 3px #000">k</div>
+        <div style="position:absolute;left:256px;top:256px;width:4px;height:4px;margin:-2px 0 0 -2px;background:#78dcff;border-radius:50%"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;width:380px;padding-top:40px">
+      <sc-for list="{{ legend }}" as="l" hint-placeholder-count="10">
+        <div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;font-size:13px;line-height:1.45;border-bottom:1px solid #26231e;padding-bottom:10px">
+          <span style="color:#9a948a">{{ l.k }}</span>
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#e6dccb">{{ l.v }}</span>
+        </div>
+      </sc-for>
+      <span style="font-size:12px;line-height:1.5;color:#7d776d;text-wrap:pretty">Valeurs entre parenthèses : roue affichée à 304 px. Tout est dans daisywheel/geometry.json. Bleu : cercle des centres de pétales (r 160) et cercle inscrit du pétale 1 (r 52). Rouge : bord intérieur de l'anneau central.</span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <span style="font-size:18px;font-weight:600;color:#ece6da">Textures, daisywheel/textures</span>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+      <sc-for list="{{ textures }}" as="t" hint-placeholder-count="7">
+        <div style="width:200px;display:flex;flex-direction:column;gap:8px">
+          <div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#24262a 0% 25%,#1b1c1f 0% 50%);background-size:16px 16px;border-radius:4px">
+            <img src="{{ t.src }}" alt="" style="width:{{ t.view }}px;height:{{ t.view }}px;image-rendering:auto"></img>
+          </div>
+          <span style="font-size:13px;font-family:ui-monospace,Menlo,monospace;color:#e6dccb">{{ t.name }}</span>
+          <span style="font-size:12px;line-height:1.45;color:#9a948a;text-wrap:pretty">{{ t.desc }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;dimStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Voile + texte&quot;,&quot;Texte seul&quot;],&quot;default&quot;:&quot;Voile + texte&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;showGuides&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dimStyle = this.props.dimStyle ?? 'Voile + texte';
+    const showGuides = this.props.showGuides ?? false;
+    const LET = [['a','b','c','d'],['e','f','g','h'],['i','j','k','l'],['m','n','o','p'],['q','r','s','t'],['u','v','w','x'],['y','z',"'",'-'],['.',',','?','!']];
+    const NUM = [['1','2','3','4'],['5','6','7','8'],['9','0','é','è'],['à','ç','ù','ê'],['@','#','&','*'],['(',')','"','+'],['/','=',':',';'],['€','%','_','~']];
+    const OFF = [[-1,0],[0,-1],[1,0],[0,1]];
+    const SH = '0 1px 1px #000, 0 0 4px rgba(0,0,0,0.85)';
+    const pos = (s, p, d) => {
+      const a = p * Math.PI / 4, R = 160 * s, o = 28 * s, c = 256 * s;
+      const x = c + R * Math.sin(a), y = c - R * Math.cos(a);
+      return d == null ? { x, y } : { x: x + OFF[d][0] * o, y: y + OFF[d][1] * o };
+    };
+    const wheel = (s, cfg) => {
+      const layer = cfg.layer === 'num' ? NUM : LET;
+      const chars = [];
+      layer.forEach((pet, p) => pet.forEach((ch, d) => {
+        const q = pos(s, p, d);
+        let color = '#ffd100', op = 1, sh = SH;
+        if (cfg.sel != null && cfg.sel !== p) op = 0.4;
+        if (cfg.sel === p) color = '#ffe8a8';
+        if (cfg.hover && cfg.hover.p === p && cfg.hover.d === d) color = '#fff5d9';
+        if (cfg.sel === p && cfg.target === d) { color = '#000000'; sh = 'none'; }
+        chars.push({ x: +q.x.toFixed(2), y: +q.y.toFixed(2), ch, color, op, sh });
+      }));
+      return chars;
+    };
+    const s = 304 / 512;
+    const helpBase = [
+      { g: 'L', label: 'Petal', w: 13, r: '50%' }, { g: 'R', label: 'Letter', w: 13, r: '50%' },
+      { g: 'LB', label: 'Delete', w: 20, r: '3px' }, { g: 'RB', label: 'Space', w: 20, r: '3px' },
+      { g: 'LT', label: 'Shift', w: 20, r: '3px' }, { g: 'RT', label: '123', w: 20, r: '3px' },
+      { g: '✚', label: 'Channel', w: 13, r: '3px' }, { g: '✚', label: 'Select', w: 13, r: '3px' }
+    ];
+    const help = (lit) => helpBase.map(h => ({ ...h, bg: lit && h.g === 'RT' ? '#e6bb77' : '#cfc9bf', color: lit && h.g === 'RT' ? '#ffe8a8' : '#d9d4cb' }));
+    const defs = [
+      { title: '1 · Repos', desc: 'Aucun pétale choisi. Les 8 pétales sont lisibles, caractères dorés. Badge du mode : abc, Abc (LT) ou ABC (double LT).', cfg: { layer: 'let' }, annotate: true },
+      { title: '2 · Pétale choisi', desc: 'Stick gauche vers la droite : pétale 3. Section en surbrillance (dw_section_sel tourné de 90°), caractères éclaircis ; les 7 autres sections sont voilées (dw_section_dim) et leur texte passe à 40 %.', cfg: { layer: 'let', sel: 2 } },
+      { title: '3 · Caractère visé', desc: 'Stick droit vers la droite : « k ». Pastille dw_key_target sous le caractère, texte noir. Moyeu allumé (dw_hub_lit) avec « k » en grand.', cfg: { layer: 'let', sel: 2, target: 2 }, hub: 'k', lit: true },
+      { title: '4 · Survol souris', desc: 'Survol de « f » : anneau fin dw_key_hover, caractère éclairci, aperçu à 55 % dans le moyeu. Clic pour taper. Plus discret que l\u2019état 3.', cfg: { layer: 'let', hover: { p: 1, d: 1 } }, hub: 'f', hubOp: 0.55 },
+      { title: '5 · Couche 123', desc: 'RT : chiffres, accents et symboles aux mêmes emplacements. Badge 123 allumé, étiquette 123 dans le moyeu, RT allumé dans l\u2019aide. Fond inchangé.', cfg: { layer: 'num' }, num: true }
+    ];
+    const build = (withRings, prefix) => defs.map((d, i) => {
+      const c = d.cfg;
+      const hasSel = c.sel != null;
+      const dims = hasSel && dimStyle === 'Voile + texte' ? [0,1,2,3,4,5,6,7].filter(k => k !== c.sel).map(k => k * 45) : [];
+      const t = hasSel && c.target != null ? pos(s, c.sel, c.target) : null;
+      const hv = c.hover ? pos(s, c.hover.p, c.hover.d) : null;
+      return {
+        label: prefix + String(i + 1) + ' ' + d.title.split('· ')[1],
+        title: prefix + d.title, desc: d.desc,
+        rings: withRings ? [0,1,2,3,4,5,6,7].map(p => {
+          const q = pos(s, p);
+          const on = hasSel && c.sel === p;
+          return { x: +q.x.toFixed(2), y: +q.y.toFixed(2), src: 'daisywheel/textures/' + (on ? 'dw_petal_ring_sel.png' : 'dw_petal_ring.png'), op: hasSel && !on ? 0.55 : 1 };
+        }) : [],
+        annotate: !!d.annotate && !withRings, rulerOp: d.annotate && !withRings ? 1 : 0, capOffset: d.annotate && !withRings ? 150 : 0,
+        input: 'on y va',
+        mode: d.num ? '123' : 'abc',
+        modeBg: d.num ? 'linear-gradient(180deg,#8a6239,#5a402a)' : '#16130f',
+        modeBorder: d.num ? '#e6bb77' : '#4a3f2f',
+        modeColor: d.num ? '#fff0c8' : '#a8946c',
+        chars: wheel(s, c), dims, hasSel, selRot: hasSel ? c.sel * 45 : 0,
+        hasTarget: !!t, target: t || { x: 0, y: 0 }, hasHover: !!hv, hover: hv || { x: 0, y: 0 },
+        hubSrc: d.lit ? 'daisywheel/textures/dw_hub_lit.png' : 'daisywheel/textures/dw_hub.png',
+        hubChar: d.hub || '', hubOp: d.hubOp ?? 1, hubLabel: d.num ? '123' : '',
+        guides: showGuides ? [0,1,2,3,4,5,6,7].map(p => pos(s, p)) : [],
+        help: help(!!d.num)
+      };
+    });
+    const rows = [
+      { id: 'B', badge: 'B', title: 'Variante : groupes entourés', sub: 'un anneau bronze par pétale (dw_petal_ring, 128 affiché à 108), doré sur le pétale choisi', states: build(true, 'B') },
+      { id: 'A', badge: 'A', title: 'Version de base', sub: 'caractères seuls dans chaque section', states: build(false, '') }
+    ];
+    const rail = [
+      { top: 12, h: 40, label: '40 · saisie' }, { top: 58, h: 26, label: '26 · suggestions' },
+      { top: 92, h: 304, label: '304 · roue (Ø 304)' }, { top: 404, h: 26, label: '26 · canaux' },
+      { top: 436, h: 36, label: '36 · aide' }
+    ];
+    const geoChars = wheel(1, { layer: 'let', sel: 2, target: 2 }).map(c => ({ ...c, color: c.color === '#000000' ? '#000000' : '#ffd100' }));
+    const legend = [
+      { k: 'Centre', v: '(256, 256)' },
+      { k: 'Anneau central', v: 'r 58,3 → 75,9' },
+      { k: 'Couronne', v: 'r 75,4 → 213,1' },
+      { k: 'Centre des pétales', v: 'r 160 (95), pétale k à (k−1) × 45°' },
+      { k: 'Cercle inscrit du pétale', v: 'r 52 (30,9)' },
+      { k: 'Décalage des caractères', v: '±28 (16,6) : gauche, haut, droite, bas' },
+      { k: 'Texte des pétales', v: '27 (16 px), FRIZQT, doré 1 / 0,82 / 0' },
+      { k: 'Pastille et survol', v: 'texture 64, affichée 54 (32) ; disque Ø 40,5 (24)' },
+      { k: 'Moyeu', v: 'texture 128, affichée 120 (71,25) ; disque r 58,1' },
+      { k: 'Texte du moyeu', v: '64 (38 px) ; étiquette 123 : 17 (10 px)' },
+      { k: 'Marges, fenêtre 340 × 484', v: 'padding 12 / 10 ; écarts 6 · 8 · 8 · 6' }
+    ];
+    const T = 'daisywheel/textures/';
+    const textures = [
+      { name: 'dw_wheel_bg.png', src: T + 'dw_wheel_bg.png', view: 180, desc: '512 × 512. wheel_bg_8 inchangé : la place suffit pour 4 caractères par pétale.' },
+      { name: 'dw_section_sel.png', src: T + 'dw_section_sel.png', view: 180, desc: '512 × 512. Section 1 cuivrée (= wheel_sel_8). Rotation −(k−1) × 45° rad.' },
+      { name: 'dw_section_dim.png', src: T + 'dw_section_dim.png', view: 180, desc: '512 × 512. Voile noir à 50 % pour les sections non choisies, même forme.' },
+      { name: 'dw_key_target.png', src: T + 'dw_key_target.png', view: 128, desc: '64 × 64, aperçu ×2. Pastille or, disque Ø 48 dans la texture. Ne tourne pas.' },
+      { name: 'dw_key_hover.png', src: T + 'dw_key_hover.png', view: 128, desc: '64 × 64, aperçu ×2. Anneau fin et voile cuivre léger.' },
+      { name: 'dw_hub.png', src: T + 'dw_hub.png', view: 128, desc: '128 × 128. Moyeu au repos, disque r 62.' },
+      { name: 'dw_hub_lit.png', src: T + 'dw_hub_lit.png', view: 128, desc: '128 × 128. Moyeu allumé quand un caractère est visé.' }
+    ];
+    textures.push(
+      { name: 'dw_petal_ring.png', src: T + 'dw_petal_ring.png', view: 128, desc: 'Variante B. 128 × 128, affiché à 108 (64 à 304 px). Anneau bronze r 48,5 → 51, centré sur le pétale.' },
+      { name: 'dw_petal_ring_sel.png', src: T + 'dw_petal_ring_sel.png', view: 128, desc: 'Variante B. Anneau doré du pétale choisi.' }
+    );
+    return { rows, rail, geoChars, legend, textures };
+  }
+}
+</script>
+</body>
+</html>

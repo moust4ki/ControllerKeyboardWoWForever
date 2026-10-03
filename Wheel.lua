@@ -4,7 +4,7 @@ local L = CK.L
 -- Input method "daisywheel": the left stick picks one of 8 petals, the right
 -- stick flicks toward one of its 4 characters (left, top, right, bottom).
 CK.Methods = CK.Methods or {}
-local M = { key = "wheel", width = 340, areaWidth = 280, height = 280 }
+local M = { key = "wheel", width = 340, areaWidth = 304, height = 304 }
 CK.Methods.wheel = M
 
 local LAYOUTS = {
@@ -64,10 +64,26 @@ function M:Help()
     }
 end
 
-local PETAL_R, PETAL_SIZE, PETAL_SEL = 96, 76, 81
-local HUB_SIZE = 92
--- Character offsets in a petal: left, top, right, bottom (y down)
-local CHAR_OFF = { { -20, 0 }, { 0, -20 }, { 20, 0 }, { 0, 20 } }
+-- The look (Claude Design, design/daisywheel/): the radial wheel's 8
+-- sections (ck_wheel_bg_8), each petal's 4 characters in a cross that always
+-- stays upright (left, up, right, down: the right stick's directions), the
+-- chosen section lit in copper and the others veiled, a gold pastille under
+-- the aimed character, the hub showing it in large. Variant "rings": a bronze
+-- ring around each group of 4 (gold on the chosen one). All sizes are the
+-- 512 art's, scaled to the wheel's 304.
+local SIZE = 304
+local S = SIZE / 512
+local PETAL_R, CHAR_D = 160 * S, 28 * S
+local HUB_SIZE, KEY_SIZE, RING_SIZE = 120 * S, 54 * S, 108 * S
+local SECTION = { 256 * S, 143 * S }    -- the section overlays: their size, their centre's distance
+local CHAR_FONT, HUB_FONT, LAYER_FONT = 16, 38, 10
+-- Character offsets in a petal (WoW axes, y up): left, up, right, down
+local CHAR_OFF = { { -CHAR_D, 0 }, { 0, CHAR_D }, { CHAR_D, 0 }, { 0, -CHAR_D } }
+local COLORS = {
+    normal = { 1, 0.82, 0 }, chosen = { 1, 0.91, 0.66 }, target = { 0, 0, 0 }, hover = { 1, 0.96, 0.85 },
+    layer = { 0.79, 0.64, 0.29 },
+}
+local DIM_ALPHA = 0.4
 local LEFT_IN, LEFT_OUT = 0.5, 0.35      -- petal selection deadzone (with hysteresis)
 
 local function sector(x, y, count)
@@ -76,41 +92,71 @@ local function sector(x, y, count)
     return math.floor((fromNorth + size / 2) / size) % count
 end
 
+-- Petal i's angle (radians, clockwise from 12 o'clock) and centre (y up)
+local function petalAngle(i) return (i - 1) * math.pi / 4 end
+local function petalCenter(i)
+    local a = petalAngle(i)
+    return PETAL_R * math.sin(a), PETAL_R * math.cos(a)
+end
+
+-- A section overlay (ck_wheel_sel_8, ck_dw_dim: cut to section 1) on petal i
+local function placeSection(tex, area, i)
+    local a = petalAngle(i)
+    tex:ClearAllPoints()
+    tex:SetPoint("CENTER", area, "CENTER", SECTION[2] * math.sin(a), SECTION[2] * math.cos(a))
+    tex:SetRotation(-a)
+end
+
 function M:Build(area)
     local K = CK.UIKit
-    local disc = K.texture(area, "ck_disc", "BACKGROUND")
+    local function tex(parent, name, layer, sub, size)
+        local t = parent:CreateTexture(nil, layer, nil, sub)
+        t:SetTexture(K.TEX .. name)
+        if size then t:SetSize(size, size) end
+        return t
+    end
+    local bg = area:CreateTexture(nil, "BACKGROUND")
     -- New texture files are only seen after restarting the game (not /reload)
-    if disc:SetTexture(K.TEX .. "ck_disc") == false then
+    if bg:SetTexture(K.TEX .. "ck_wheel_bg_8") == false then
         C_Timer.After(2, function() CK:Print(L.TEXTURES_MISSING) end)
     end
-    disc:SetAllPoints()
+    bg:SetAllPoints()
+
+    -- The other sections veiled, the chosen one lit
+    self.dims = {}
+    for i = 1, 8 do
+        local d = tex(area, "ck_dw_dim", "ARTWORK", 1, SECTION[1])
+        placeSection(d, area, i)
+        d:Hide()
+        self.dims[i] = d
+    end
+    self.section = tex(area, "ck_wheel_sel_8", "ARTWORK", 2, SECTION[1])
+    self.section:Hide()
 
     self.petals = {}
     for i = 1, 8 do
-        local a = (i - 1) * math.pi / 4
-        local px, py = 140 + PETAL_R * math.sin(a), 140 - PETAL_R * math.cos(a)
+        local px, py = petalCenter(i)
         local p = CK.NewFrame("Frame", nil, area)
-        p:SetPoint("CENTER", area, "TOPLEFT", px, -py)
-        p:SetSize(PETAL_SIZE, PETAL_SIZE)
-        p.slot = K.texture(p, "ck_slot", "BORDER")
-        p.slot:SetAllPoints()
-        p.glow = K.texture(p, "ck_slot_glow", "ARTWORK")
-        p.glow:SetAllPoints()
-        p.glow:Hide()
+        p:SetPoint("CENTER", area, "CENTER", px, py)
+        p:SetSize(RING_SIZE, RING_SIZE)
+        -- Variant "rings": the group's ring
+        p.ring = tex(p, "ck_dw_ring", "BORDER", 0, RING_SIZE)
+        p.ring:SetPoint("CENTER")
         p.keys = {}
         for j = 1, 4 do
             local k = CK.NewFrame("Button", nil, p)
-            k:SetSize(26, 26)
-            k.hl = K.texture(k, "ck_hl", "ARTWORK")
-            k.hl:SetSize(32, 32)
-            k.hl:SetPoint("CENTER")
-            k.hl:Hide()
-            k.hover = K.texture(k, "ck_hl_hover", "ARTWORK")
-            k.hover:SetSize(32, 32)
+            k:SetSize(KEY_SIZE * 0.8, KEY_SIZE * 0.8)
+            k:SetPoint("CENTER", p, "CENTER", CHAR_OFF[j][1], CHAR_OFF[j][2])
+            k.hover = tex(k, "ck_dw_hover", "ARTWORK", 5, KEY_SIZE)
             k.hover:SetPoint("CENTER")
             k.hover:Hide()
-            k.label = K.text(k, 16)
+            k.target = tex(k, "ck_dw_target", "ARTWORK", 6, KEY_SIZE)
+            k.target:SetPoint("CENTER")
+            k.target:Hide()
+            k.label = k:CreateFontString(nil, "OVERLAY")
+            k.label:SetFont(CK:GetFontPath(), CHAR_FONT, "")
             k.label:SetPoint("CENTER", 0, 1)
+            k.label:SetShadowOffset(1, -1)
             k:SetScript("OnClick", function() CK:TypeSlot(i, j) end)
             k:SetScript("OnEnter", function()
                 M.hoverPetal, M.hoverChar = i, j
@@ -125,17 +171,24 @@ function M:Build(area)
         self.petals[i] = p
     end
 
-    -- Hub: shows the letter aimed with the right stick
+    -- Hub: the aimed character in large, "123" under it on that layer
     local hub = CK.NewFrame("Frame", nil, area)
     hub:SetSize(HUB_SIZE, HUB_SIZE)
-    hub:SetPoint("CENTER", area, "TOPLEFT", 140, -140)
+    hub:SetPoint("CENTER", area, "CENTER", 0, 0)
     hub:SetFrameLevel(area:GetFrameLevel() + 20)
-    local hubTex = K.texture(hub, "ck_hub", "BORDER")
-    hubTex:SetAllPoints()
-    self.aimed = K.text(hub, 32)
-    self.aimed:SetPoint("CENTER")
-    self.aimed:SetTextColor(unpack(K.C.gold))
+    self.hubTex = tex(hub, "ck_dw_hub", "ARTWORK", 3)
+    self.hubTex:SetAllPoints()
+    self.aimed = hub:CreateFontString(nil, "OVERLAY")
+    self.aimed:SetFont(CK:GetFontPath(), HUB_FONT, "")
+    self.aimed:SetPoint("CENTER", 0, 2)
+    self.aimed:SetTextColor(unpack(COLORS.normal))
+    self.aimed:SetShadowOffset(1, -1)
     self.aimed:SetShadowColor(0, 0, 0, 1)
+    self.layerLabel = hub:CreateFontString(nil, "OVERLAY")
+    self.layerLabel:SetFont(CK:GetFontPath(), LAYER_FONT, "")
+    self.layerLabel:SetPoint("CENTER", 0, -22)
+    self.layerLabel:SetTextColor(unpack(COLORS.layer))
+    self.layerLabel:SetText("123")
 end
 
 function M:Reset()
@@ -168,51 +221,49 @@ end
 
 function M:Update()
     if not self.petals then return end
-    local K = CK.UIKit
     local state = CK.state
     local layout = layoutFor(state.layer)
-    local baseLevel = self.area:GetFrameLevel() + 1
+    local rings = CK.db.settings.petalRings ~= false
+    local chosen = self.petal
+    local font = CK:GetFontPath()
+
+    -- The chosen section lit, the others veiled
+    for i, d in ipairs(self.dims) do d:SetShown(chosen ~= nil and i ~= chosen) end
+    self.section:SetShown(chosen ~= nil)
+    if chosen then placeSection(self.section, self.area, chosen) end
 
     for i, p in ipairs(self.petals) do
-        local selected = self.petal == i
-        local hovered = self.hoverPetal == i
-        local dimmed = self.petal and not selected
-        local size = selected and PETAL_SEL or PETAL_SIZE
-        local scale = selected and 1.06 or 1
-        p:SetSize(size, size)
-        p:SetFrameLevel(baseLevel + (selected and 10 or (hovered and 5 or 0)))
-        local shade = dimmed and 0.45 or 1
-        p.slot:SetVertexColor(shade, shade, shade, 1)
-        p.glow:SetShown(selected or hovered)
-        p.glow:SetAlpha(selected and 1 or 0.5)
-
+        local selected = chosen == i
+        local dimmed = chosen ~= nil and not selected
+        p.ring:SetShown(rings)
+        if rings then
+            p.ring:SetTexture(CK.UIKit.TEX .. (selected and "ck_dw_ring_sel" or "ck_dw_ring"))
+            p.ring:SetAlpha(dimmed and 0.55 or 1)
+        end
         for j, k in ipairs(p.keys) do
-            k:ClearAllPoints()
-            k:SetPoint("CENTER", p, "CENTER", CHAR_OFF[j][1] * scale, -CHAR_OFF[j][2] * scale)
-            k:SetAlpha(dimmed and 0.45 or 1)
             local aimed = selected and state.aim == j
-            local mouse = hovered and self.hoverChar == j
-            k.hl:SetShown(aimed)
+            local mouse = self.hoverPetal == i and self.hoverChar == j
+            k.target:SetShown(aimed)
             k.hover:SetShown(mouse and not aimed)
-            k.label:SetFont(CK:GetFontPath(), selected and 17 or 16, "")
+            k.label:SetFont(font, CHAR_FONT, "")
             k.label:SetText(CK:DisplayChar(layout[i][j]))
-            if aimed then
-                k.label:SetTextColor(unpack(K.C.dark))
-                k.label:SetShadowColor(0, 0, 0, 0)
-            else
-                k.label:SetShadowColor(0, 0, 0, 0.9)
-                if mouse then
-                    k.label:SetTextColor(1, 1, 1)
-                elseif selected then
-                    k.label:SetTextColor(unpack(K.C.goldActive))
-                else
-                    k.label:SetTextColor(unpack(K.C.gold))
-                end
-            end
+            local color = aimed and COLORS.target or (mouse and COLORS.hover) or (selected and COLORS.chosen) or COLORS.normal
+            k.label:SetTextColor(unpack(color))
+            k.label:SetShadowColor(0, 0, 0, aimed and 0 or 1)
+            k:SetAlpha((dimmed and not mouse) and DIM_ALPHA or 1)
         end
     end
 
-    local aimedChar = self.petal and state.aim and layout[self.petal][state.aim]
-    self.aimed:SetShown(aimedChar ~= nil)
-    if aimedChar then self.aimed:SetText(CK:DisplayChar(aimedChar)) end
+    -- The hub: the aimed character, lit; the one under the mouse, faint
+    local aimedChar = chosen and state.aim and layout[chosen][state.aim]
+    local hoverChar = not aimedChar and self.hoverPetal and layout[self.hoverPetal][self.hoverChar]
+    local shown = aimedChar or hoverChar
+    self.hubTex:SetTexture(CK.UIKit.TEX .. (aimedChar and "ck_dw_hub_lit" or "ck_dw_hub"))
+    self.aimed:SetFont(font, HUB_FONT, "")
+    self.aimed:SetShown(shown ~= nil)
+    if shown then
+        self.aimed:SetText(CK:DisplayChar(shown))
+        self.aimed:SetAlpha(aimedChar and 1 or 0.55)
+    end
+    self.layerLabel:SetShown(state.layer == "symbols" and not shown)
 end

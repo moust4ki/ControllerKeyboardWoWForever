@@ -1,0 +1,229 @@
+{
+  "units": "pixels in the 512 x 512 texture space; multiply by displaySize/512 (304 in the mockup => 0.59375)",
+  "canvas": 512,
+  "center": [
+    256,
+    256
+  ],
+  "hubRing": {
+    "innerRadius": 58.3,
+    "outerRadius": 75.9
+  },
+  "crown": {
+    "innerRadius": 75.4,
+    "outerRadius": 213.1
+  },
+  "separatorWidth": 19.2,
+  "petalRadius": 160,
+  "petalInscribedRadius": 52,
+  "petalOrder": "petal 1 at 12 o'clock, clockwise, angle = (k-1)*45 deg",
+  "petals": [
+    {
+      "petal": 1,
+      "angleDeg": 0,
+      "center": [
+        256,
+        96
+      ],
+      "wowOffset": [
+        0,
+        160
+      ]
+    },
+    {
+      "petal": 2,
+      "angleDeg": 45,
+      "center": [
+        369.1,
+        142.9
+      ],
+      "wowOffset": [
+        113.1,
+        113.1
+      ]
+    },
+    {
+      "petal": 3,
+      "angleDeg": 90,
+      "center": [
+        416,
+        256
+      ],
+      "wowOffset": [
+        160,
+        0
+      ]
+    },
+    {
+      "petal": 4,
+      "angleDeg": 135,
+      "center": [
+        369.1,
+        369.1
+      ],
+      "wowOffset": [
+        113.1,
+        -113.1
+      ]
+    },
+    {
+      "petal": 5,
+      "angleDeg": 180,
+      "center": [
+        256,
+        416
+      ],
+      "wowOffset": [
+        0,
+        -160
+      ]
+    },
+    {
+      "petal": 6,
+      "angleDeg": 225,
+      "center": [
+        142.9,
+        369.1
+      ],
+      "wowOffset": [
+        -113.1,
+        -113.1
+      ]
+    },
+    {
+      "petal": 7,
+      "angleDeg": 270,
+      "center": [
+        96,
+        256
+      ],
+      "wowOffset": [
+        -160,
+        0
+      ]
+    },
+    {
+      "petal": 8,
+      "angleDeg": 315,
+      "center": [
+        142.9,
+        142.9
+      ],
+      "wowOffset": [
+        -113.1,
+        113.1
+      ]
+    }
+  ],
+  "charOffset": {
+    "distance": 28,
+    "left": [
+      -28,
+      0
+    ],
+    "up": [
+      0,
+      -28
+    ],
+    "right": [
+      28,
+      0
+    ],
+    "down": [
+      0,
+      28
+    ],
+    "note": "image axes (y down). WoW SetPoint offsets: up = (0,+28), down = (0,-28). Never rotated with the petal."
+  },
+  "charFont": {
+    "size512": 27,
+    "sizeAt304": 16,
+    "font": "FRIZQT__.TTF",
+    "colors": {
+      "normal": [
+        1,
+        0.82,
+        0
+      ],
+      "dimmedAlpha": 0.4,
+      "selectedPetal": [
+        1,
+        0.91,
+        0.66
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "hover": [
+        1,
+        0.96,
+        0.85
+      ]
+    }
+  },
+  "target": {
+    "texture": "dw_key_target.png",
+    "textureSize": 64,
+    "visibleDiscDiameterInTexture": 48,
+    "displaySize512": 54,
+    "visibleDiscDiameter512": 40.5
+  },
+  "hover": {
+    "texture": "dw_key_hover.png",
+    "textureSize": 64,
+    "displaySize512": 54
+  },
+  "hub": {
+    "texture": "dw_hub.png",
+    "textureLit": "dw_hub_lit.png",
+    "textureSize": 128,
+    "discRadiusInTexture": 62,
+    "displaySize512": 120,
+    "discRadius512": 58.1,
+    "fontSize512": 64,
+    "fontSizeAt304": 38,
+    "layerLabelFontSize512": 17
+  },
+  "sections": {
+    "selected": "dw_section_sel.png",
+    "dimmed": "dw_section_dim.png",
+    "size": 512,
+    "note": "drawn on petal 1; rotate by -(k-1)*45 deg with SetRotation (clockwise)"
+  },
+  "background": "dw_wheel_bg.png (= wheel_bg_8, unchanged)",
+  "window": {
+    "size": [
+      340,
+      484
+    ],
+    "padding": [
+      12,
+      10
+    ],
+    "rows": {
+      "input": 40,
+      "gap1": 6,
+      "suggestions": 26,
+      "gap2": 8,
+      "wheel": 304,
+      "gap3": 8,
+      "channels": 26,
+      "gap4": 6,
+      "help": 36
+    }
+  },
+  "petalRing": {
+    "variant": "B (groupes entourés)",
+    "texture": "dw_petal_ring.png",
+    "textureSelected": "dw_petal_ring_sel.png",
+    "textureSize": 128,
+    "displaySize512": 108,
+    "ringRadius512": [
+      48.5,
+      51
+    ],
+    "centeredOn": "petal center, not rotated"
+  }
+}

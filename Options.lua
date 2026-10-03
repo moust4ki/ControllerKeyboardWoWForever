@@ -277,6 +277,14 @@ local function inputRows(b)
     local text, step = pick(LAYOUTS, s, "kbLayout", function() CK:UpdateMethod() end)
     b.choice({ id = "k_layout", label = L.LBL_LAYOUT, indent = true, disabled = s.inputMethod ~= "stick",
         tip = L.TIP_LAYOUT, text = text, step = step })
+    -- The daisywheel's look: each group of 4 in a ring, or the characters alone
+    b.choice({ id = "k_dwlook", label = L.LBL_DW_LOOK, indent = true, disabled = s.inputMethod ~= "wheel",
+        tip = L.TIP_DW_LOOK,
+        text = function() return s.petalRings and L.DW_LOOK_RINGS or L.DW_LOOK_PLAIN end,
+        step = function()
+            s.petalRings = not s.petalRings
+            CK:UpdateMethod()
+        end })
     -- 4 preset sizes (/ec scale still sets any value)
     local function sizeIndex()
         local best, bestD = 2, math.huge
