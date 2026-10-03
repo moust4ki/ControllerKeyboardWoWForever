@@ -15,8 +15,13 @@ end
 local C = {
     gold = { rgb("FFD100") },
     goldActive = { rgb("FFF1B8") },
-    suggSel = { rgb("FFF4C2") },
-    sugg = { rgb("C8B88A") },
+    suggSel = { rgb("FFF0C8") },
+    sugg = { rgb("C9B37E") },
+    help = { rgb("D9D4CB") },
+    winTop = { rgb("19160F") }, winBottom = { rgb("0F0D0A") },
+    edge = { rgb("5A4D38") }, edgeOut = { rgb("050403") }, edgeIn = { rgb("241D15") },
+    well = { rgb("080706") }, wellLine = { rgb("3D3326") },
+    pill = { rgb("714E31") }, pillLine = { rgb("D8B27A") }, pillText = { rgb("FFF0C8") },
     btn = { rgb("E8D7A8") },
     btnHover = { rgb("FFE45C") },
     dark = { rgb("1A1206") },
@@ -106,6 +111,28 @@ local function solid(parent, layer, r, g, b, a)
     return t
 end
 
+-- A row's well: a dark fill, a 1 px edge; dimmed with SetVertexColor
+local function well(frame)
+    local box = CK.ConfigKit.Box(frame, 4, 1, "BORDER")
+    box:SetPoints(frame)
+    local w = { box = box }
+    function w:SetVertexColor(r)
+        local k = r or 1
+        box:SetColors(C.well, 0.95, { C.wellLine[1] * (0.6 + 0.4 * k), C.wellLine[2] * (0.6 + 0.4 * k),
+            C.wellLine[3] * (0.6 + 0.4 * k) }, 1)
+    end
+    w:SetVertexColor(1)
+    return w
+end
+
+-- The copper pill of what is chosen (a word, a channel)
+local function pill(frame)
+    local box = CK.ConfigKit.Box(frame, 4, 1, "ARTWORK")
+    box:SetPoints(frame)
+    box:SetColors(C.pill, 1, C.pillLine, 1)
+    return box
+end
+
 CK.UIKit = {
     TEX = TEX, C = C,
     texture = texture, place = place, text = text, nineSlice = nineSlice, solid = solid,
@@ -152,20 +179,20 @@ local ACTIONS = {
 
 local function buildButton(parent, label, onClick)
     local b = CK.NewFrame("Button", nil, parent)
-    b.slice = nineSlice(b, "ck_btn_normal", 128, 32, 6, 6, "ARTWORK")
+    b.slice = nineSlice(b, "ck_sk_key_normal", 128, 64, 12, 8, "ARTWORK")
     b.label = text(b, 11)
     b.label:SetPoint("CENTER", 0, 0)
     b.label:SetText(label)
     b:SetScript("OnClick", onClick)
     function b:Render()
-        if self.hover then
-            self.slice:SetFile("ck_btn_hover")
+        if self.active then
+            self.slice:SetFile("ck_sk_key_active")
+            self.label:SetTextColor(unpack(C.pillText))
+        elseif self.hover then
+            self.slice:SetFile("ck_sk_key_hover")
             self.label:SetTextColor(unpack(C.btnHover))
-        elseif self.active then
-            self.slice:SetFile("ck_btn_active")
-            self.label:SetTextColor(unpack(C.gold))
         else
-            self.slice:SetFile("ck_btn_normal")
+            self.slice:SetFile("ck_sk_key_normal")
             self.label:SetTextColor(unpack(C.btn))
         end
     end
@@ -193,27 +220,36 @@ function CK:BuildUI()
     self.frame = f
     self:MakeDragHandle(f)
 
-    -- Background: tiled stone/leather, 1 px bronze outline
-    local bg = f:CreateTexture(nil, "BACKGROUND", nil, -8)
-    bg:SetTexture(TEX .. "ck_panel_bg", "REPEAT", "REPEAT")
-    bg:SetHorizTile(true)
-    bg:SetVertTile(true)
+    -- Background: a dark vertical gradient; the edge: 1 px dark, 2 px
+    -- bronze, 1 px dark inside
+    local bg = solid(f, "BACKGROUND", C.winBottom[1], C.winBottom[2], C.winBottom[3], 0.96)
     bg:SetAllPoints()
-    bg:SetVertexColor(1, 1, 1, 0.82)
-    local br, bgc, bb = unpack(C.border)
-    local edges = {
-        { "TOPLEFT", "TOPRIGHT", nil, 1 }, { "BOTTOMLEFT", "BOTTOMRIGHT", nil, 1 },
-        { "TOPLEFT", "BOTTOMLEFT", 1, nil }, { "TOPRIGHT", "BOTTOMRIGHT", 1, nil },
-    }
-    for _, e in ipairs(edges) do
-        local t = solid(f, "BORDER", br, bgc, bb, 0.55)
-        t:SetPoint(e[1]); t:SetPoint(e[2])
-        if e[3] then t:SetWidth(e[3]) else t:SetHeight(e[4]) end
+    if CreateColor and bg.SetGradient then
+        pcall(bg.SetColorTexture, bg, 1, 1, 1, 1)
+        local ok = pcall(bg.SetGradient, bg, "VERTICAL", CreateColor(C.winBottom[1], C.winBottom[2], C.winBottom[3], 0.96),
+            CreateColor(C.winTop[1], C.winTop[2], C.winTop[3], 0.96))
+        if not ok then bg:SetColorTexture(C.winBottom[1], C.winBottom[2], C.winBottom[3], 0.96) end
     end
+    local function frameEdge(color, inset, size)
+        for _, e in ipairs({ { "TOPLEFT", "TOPRIGHT", nil }, { "BOTTOMLEFT", "BOTTOMRIGHT", nil },
+            { "TOPLEFT", "BOTTOMLEFT", true }, { "TOPRIGHT", "BOTTOMRIGHT", true } }) do
+            local t = solid(f, "BORDER", color[1], color[2], color[3], 1)
+            local dx = (e[1]:find("LEFT") and inset) or -inset
+            local dy = (e[1]:find("TOP") and -inset) or inset
+            local dx2 = (e[2]:find("LEFT") and inset) or -inset
+            local dy2 = (e[2]:find("TOP") and -inset) or inset
+            t:SetPoint(e[1], f, e[1], dx, dy)
+            t:SetPoint(e[2], f, e[2], dx2, dy2)
+            if e[3] then t:SetWidth(size) else t:SetHeight(size) end
+        end
+    end
+    frameEdge(C.edgeOut, 0, 1)
+    frameEdge(C.edge, 1, 2)
+    frameEdge(C.edgeIn, 3, 1)
 
     -- Input bar: channel + text + blinking cursor, mode badge, move grip
     local bar = CK.NewFrame("Frame", nil, f)
-    nineSlice(bar, "ck_bar", 256, 64, 8, 8, "BORDER")
+    well(bar)
     f.bar = bar
 
     -- Children of the bars so they draw above the bar textures
@@ -225,9 +261,10 @@ function CK:BuildUI()
 
     local badge = CK.NewFrame("Frame", nil, f)
     badge:SetFrameLevel(bar:GetFrameLevel() + 2)
-    badge.outline = nineSlice(badge, "ck_btn_normal", 128, 32, 6, 5, "ARTWORK")
+    badge.outline = pill(badge)
     badge.fill = solid(badge, "ARTWORK", C.capsFill[1], C.capsFill[2], C.capsFill[3], 1)
-    badge.fill:SetAllPoints()
+    badge.fill:SetPoint("TOPLEFT", 1, -1)
+    badge.fill:SetPoint("BOTTOMRIGHT", -1, 1)
     badge.label = text(badge, 10)
     badge.label:SetPoint("CENTER")
     badge:Hide()
@@ -246,15 +283,15 @@ function CK:BuildUI()
     -- Suggestions bar
     local sbar = CK.NewFrame("Frame", nil, f)
     f.sbar = sbar
-    f.sbarSlice = nineSlice(sbar, "ck_bar", 256, 64, 8, 8, "BORDER")
+    f.sbarSlice = well(sbar)
     f.lbGlyph = texture(sbar, nil, "OVERLAY")
     f.rbGlyph = texture(sbar, nil, "OVERLAY")
     f.sugg = {}
     for n = 1, 5 do
         local b = CK.NewFrame("Button", nil, f)
         b:SetFrameLevel(sbar:GetFrameLevel() + 2)
-        b.select = nineSlice(b, "ck_select", 128, 32, 10, 10, "ARTWORK")
-        b.label = text(b, 12)
+        b.select = pill(b)
+        b.label = text(b, 13)
         b.label:SetPoint("LEFT", 2, 0)
         b.label:SetPoint("RIGHT", -2, 0)
         b.label:SetWordWrap(false)
@@ -275,14 +312,14 @@ function CK:BuildUI()
     -- or hover with the mouse (no click, the game would close the chat)
     local cbar = CK.NewFrame("Frame", nil, f)
     f.cbar = cbar
-    f.cbarSlice = nineSlice(cbar, "ck_bar", 256, 64, 8, 8, "BORDER")
+    f.cbarSlice = well(cbar)
     f.chanLeft = texture(cbar, nil, "OVERLAY")
     f.chanRight = texture(cbar, nil, "OVERLAY")
     f.channels = {}
     for i, ch in ipairs(CK.CHANNEL_LIST) do
         local b = CK.NewFrame("Button", nil, f)
         b:SetFrameLevel(cbar:GetFrameLevel() + 2)
-        b.select = nineSlice(b, "ck_select", 128, 32, 10, 8, "ARTWORK")
+        b.select = pill(b)
         b.label = text(b, 12)
         b.label:SetPoint("CENTER", 0, 0)
         b.label:SetText(ch.label)
@@ -302,7 +339,7 @@ function CK:BuildUI()
     -- "Quests" chip at the end of the channel row (quest links module)
     local chip = CK.NewFrame("Button", nil, f)
     chip:SetFrameLevel(cbar:GetFrameLevel() + 2)
-    chip.select = nineSlice(chip, "ck_select", 128, 32, 10, 8, "ARTWORK")
+    chip.select = pill(chip)
     chip.icon = texture(chip, nil, "OVERLAY")
     chip.icon:SetSize(18, 18)
     chip.icon:SetPoint("CENTER")
@@ -339,7 +376,7 @@ function CK:BuildUI()
         local g = texture(helpFrame, nil, "ARTWORK")
         local label = text(helpFrame, 11)
         label:SetPoint("LEFT", g, "RIGHT", 3, 0)
-        label:SetTextColor(unpack(C.gold))
+        label:SetTextColor(unpack(C.help))
         f.helpEntries[n] = { tex = g, label = label }
     end
 

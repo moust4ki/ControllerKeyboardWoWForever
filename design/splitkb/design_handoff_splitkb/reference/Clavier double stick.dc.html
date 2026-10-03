@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&display=swap" rel="stylesheet">
+<style>html{background:#101113}body{margin:0;background:#101113;color:#d9d4cb;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}a{color:#d6b47a}a:hover{color:#f0d29a}</style>
+</helmet>
+<div style="padding:56px 64px 96px;display:flex;flex-direction:column;gap:56px;width:max-content;min-height:100vh;box-sizing:border-box;background:#101113;color:#d9d4cb">
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:960px">
+    <h1 style="margin:0;font-size:30px;font-weight:600">Clavier double stick : split keyboard</h1>
+    <p style="margin:0;font-size:15px;line-height:1.5;color:#9a948a;text-wrap:pretty">Fenêtre 600 × 400, même habillage que la daisywheel. Zone des touches 584 × 220 : deux moitiés de 286 séparées par une gouttière de 12, touches de 54 × 50 au pas de 58, colonnes alignées sur toutes les rangées. Les touches sont des nine-slices 128 × 64 à coins de 12.</p>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:48px 40px;width:2340px;align-items:flex-start">
+    <sc-for list="{{ states }}" as="st" hint-placeholder-count="6">
+      <div style="display:flex;flex-direction:column;gap:16px;width:750px">
+        <div style="display:flex;align-items:flex-start">
+          <div style="position:relative;width:150px;height:400px;margin-top:22px;flex-shrink:0;font-size:11px;font-family:ui-monospace,Menlo,monospace;color:#b9a27a;opacity:{{ st.annOp }}">
+            <sc-for list="{{ rail }}" as="rw" hint-placeholder-count="5">
+              <div style="position:absolute;right:10px;top:{{ rw.top }}px;height:{{ rw.h }}px;display:flex;align-items:center;gap:8px">
+                <span style="white-space:nowrap">{{ rw.label }}</span>
+                <div style="width:6px;height:100%;border:1px solid #6d5c40;border-left:none;box-sizing:border-box"></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="height:14px;display:flex;align-items:center;gap:6px;font-size:11px;font-family:ui-monospace,Menlo,monospace;color:#b9a27a;opacity:{{ st.annOp }}">
+              <div style="flex:1;height:6px;border:1px solid #6d5c40;border-bottom:none"></div><span>600</span><div style="flex:1;height:6px;border:1px solid #6d5c40;border-bottom:none"></div>
+            </div>
+            <div data-screen-label="{{ st.label }}" style="width:600px;height:400px;box-sizing:border-box;padding:10px 6px;border:2px solid #5a4d38;border-radius:4px;background:linear-gradient(180deg,#19160f 0%,#0f0d0a 100%);box-shadow:0 0 0 1px #050403,inset 0 0 0 1px #241d15,inset 0 1px 0 1px rgba(143,130,111,0.25),0 14px 40px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:6px;font-family:Marcellus,serif">
+              <div style="height:40px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 6px 0 10px;background:#080706;border:1px solid #3d3326;border-radius:3px;box-shadow:inset 0 1px 4px rgba(0,0,0,0.9),0 1px 0 rgba(143,130,111,0.18)">
+                <span style="font-size:14px;color:#ffffff">Dire :</span>
+                <span style="font-size:14px;color:#ffffff">{{ st.input }}</span>
+                <div style="width:1px;height:16px;background:#ffd100;margin-left:-3px"></div>
+                <div style="flex:1"></div>
+                <div style="height:18px;padding:0 7px;display:flex;align-items:center;border-radius:9px;font-size:11px;letter-spacing:0.04em;border:1px solid {{ st.modeBorder }};background:{{ st.modeBg }};color:{{ st.modeColor }}">{{ st.mode }}</div>
+                <div style="width:8px;height:16px;display:grid;grid-template-columns:2px 2px;grid-auto-rows:2px;gap:3px 3px;align-content:center;justify-content:center;opacity:0.7">
+                  <div style="background:#8f826f"></div><div style="background:#8f826f"></div><div style="background:#8f826f"></div><div style="background:#8f826f"></div><div style="background:#8f826f"></div><div style="background:#8f826f"></div>
+                </div>
+              </div>
+              <div style="height:26px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;gap:4px;padding:0 4px;background:#080706;border:1px solid #3d3326;border-radius:3px;box-shadow:inset 0 1px 4px rgba(0,0,0,0.9),0 1px 0 rgba(143,130,111,0.18)">
+                <div style="height:14px;min-width:20px;padding:0 3px;box-sizing:border-box;border-radius:3px;background:#cfc9bf;color:#15130f;font:700 8px/14px Helvetica,Arial,sans-serif;text-align:center">LB</div>
+                <div style="flex:1;display:flex;justify-content:space-around;align-items:center;font-size:13px;color:#c9b37e">
+                  <span style="padding:1px 10px;border-radius:3px;border:1px solid #d8b27a;background:linear-gradient(180deg,#8a6239,#5a402a);color:#fff0c8">lfm</span><span>hey</span><span>salut</span><span>tu</span><span>slt</span>
+                </div>
+                <div style="height:14px;min-width:20px;padding:0 3px;box-sizing:border-box;border-radius:3px;background:#cfc9bf;color:#15130f;font:700 8px/14px Helvetica,Arial,sans-serif;text-align:center">RB</div>
+              </div>
+              <div style="position:relative;width:584px;height:220px;flex-shrink:0;margin:2px 0">
+                <img src="splitkb/textures/sk_divider.png" alt="" style="position:absolute;left:284px;top:4px;width:16px;height:158px"></img>
+                <sc-for list="{{ st.keys }}" as="k" hint-placeholder-count="36">
+                  <div style="position:absolute;left:{{ k.x }}px;top:{{ k.y }}px;width:{{ k.w }}px;height:50px;display:flex;align-items:center;justify-content:center;font-size:{{ k.fs }}px;line-height:1;color:{{ k.color }};text-shadow:{{ k.sh }}">
+                    <img src="{{ k.img }}" alt="" style="position:absolute;inset:0;width:100%;height:100%"></img>
+                    <span style="position:relative;padding-bottom:1px">{{ k.label }}</span>
+                  </div>
+                </sc-for>
+                <sc-for list="{{ st.lines }}" as="ln" hint-placeholder-count="0">
+                  <div style="position:absolute;left:{{ ln.x }}px;top:{{ ln.y }}px;width:{{ ln.len }}px;height:2px;margin-top:-1px;background:rgba(230,187,119,0.6);transform-origin:0 50%;transform:rotate({{ ln.a }}deg)"></div>
+                </sc-for>
+                <img src="splitkb/textures/sk_center.png" alt="" style="position:absolute;left:127px;top:94px;width:32px;height:32px"></img>
+                <img src="splitkb/textures/sk_center.png" alt="" style="position:absolute;left:425px;top:94px;width:32px;height:32px"></img>
+                <sc-for list="{{ st.cursors }}" as="c" hint-placeholder-count="2">
+                  <img src="splitkb/textures/sk_cursor.png" alt="" style="position:absolute;left:{{ c.x }}px;top:{{ c.y }}px;width:32px;height:32px;margin:-16px 0 0 -16px"></img>
+                </sc-for>
+              </div>
+              <div style="height:26px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 4px;background:#080706;border:1px solid #3d3326;border-radius:3px;box-shadow:inset 0 1px 4px rgba(0,0,0,0.9),0 1px 0 rgba(143,130,111,0.18);font-size:13px">
+                <span style="padding:0 10px;border-radius:3px;border:1px solid #d8b27a;background:linear-gradient(180deg,#8a6239,#5a402a);color:#ffffff;line-height:18px">/s</span>
+                <span style="color:#ff4040">/y</span><span style="color:#aaaaff;opacity:0.4">/p</span><span style="color:#ff7f00;opacity:0.4">/ra</span><span style="color:#40ff40;opacity:0.4">/g</span><span style="color:#ffc0c0">/1</span><span style="color:#ff80ff">/w</span><span style="color:#ff80ff;opacity:0.4">/r</span>
+                <span style="width:20px;height:18px;display:flex;align-items:center;justify-content:center;border:1px solid #5a4d38;border-radius:3px;background:#15120d;color:#ffd100;font-size:14px">!</span>
+              </div>
+              <div style="height:36px;flex-shrink:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:18px 18px;column-gap:6px;padding:0 4px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px">
+                <sc-for list="{{ st.help }}" as="h" hint-placeholder-count="9">
+                  <div style="display:flex;align-items:center;gap:5px;min-width:0">
+                    <div style="height:13px;min-width:{{ h.w }}px;padding:0 2px;box-sizing:border-box;border-radius:{{ h.r }};background:{{ h.bg }};color:#15130f;font:700 8px/13px Helvetica,Arial,sans-serif;text-align:center;flex-shrink:0">{{ h.g }}</div>
+                    <span style="white-space:nowrap;overflow:hidden;color:{{ h.color }}">{{ h.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;width:600px;margin-left:150px">
+          <span style="font-size:16px;font-weight:600;color:#ece6da">{{ st.title }}</span>
+          <span style="font-size:13px;line-height:1.5;color:#9a948a;text-wrap:pretty">{{ st.desc }}</span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;gap:64px;align-items:flex-start;flex-wrap:wrap;width:2340px">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <span style="font-size:18px;font-weight:600;color:#ece6da">Géométrie de la zone des touches (largeurs en px)</span>
+      <div style="position:relative;width:584px;height:220px;padding:24px 0 0 40px;font-family:ui-monospace,Menlo,monospace">
+        <div style="position:absolute;left:40px;top:0;width:286px;height:16px;display:flex;align-items:center;gap:6px;font-size:11px;color:#78dcff"><div style="flex:1;height:5px;border:1px solid rgba(120,220,255,0.6);border-bottom:none"></div><span>moitié G · 286</span><div style="flex:1;height:5px;border:1px solid rgba(120,220,255,0.6);border-bottom:none"></div></div>
+        <div style="position:absolute;left:326px;top:0;width:12px;height:16px;display:flex;justify-content:center;font-size:11px;color:#ff9c88">12</div>
+        <div style="position:absolute;left:338px;top:0;width:286px;height:16px;display:flex;align-items:center;gap:6px;font-size:11px;color:#78dcff"><div style="flex:1;height:5px;border:1px solid rgba(120,220,255,0.6);border-bottom:none"></div><span>moitié D · 286</span><div style="flex:1;height:5px;border:1px solid rgba(120,220,255,0.6);border-bottom:none"></div></div>
+        <sc-for list="{{ geoRows }}" as="gr" hint-placeholder-count="4">
+          <div style="position:absolute;left:0;top:{{ gr.y }}px;width:34px;height:50px;display:flex;align-items:center;font-size:11px;color:#b9a27a">{{ gr.label }}</div>
+        </sc-for>
+        <div style="position:relative;width:584px;height:220px">
+          <div style="position:absolute;left:0;top:0;width:286px;height:220px;border:1px dashed rgba(120,220,255,0.45);box-sizing:border-box"></div>
+          <div style="position:absolute;left:298px;top:0;width:286px;height:220px;border:1px dashed rgba(120,220,255,0.45);box-sizing:border-box"></div>
+          <div style="position:absolute;left:286px;top:0;width:12px;height:220px;background:rgba(255,140,120,0.12)"></div>
+          <sc-for list="{{ geoKeys }}" as="k" hint-placeholder-count="36">
+            <div style="position:absolute;left:{{ k.x }}px;top:{{ k.y }}px;width:{{ k.w }}px;height:50px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bfb8ac">
+              <img src="{{ k.img }}" alt="" style="position:absolute;inset:0;width:100%;height:100%"></img>
+              <span style="position:relative">{{ k.label }}</span>
+            </div>
+          </sc-for>
+          <div style="position:absolute;left:143px;top:110px;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#78dcff"></div>
+          <div style="position:absolute;left:441px;top:110px;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#78dcff"></div>
+        </div>
+      </div>
+      <span style="font-size:12px;line-height:1.5;color:#7d776d;max-width:620px;text-wrap:pretty;margin-top:8px">Rangées à y = 4, 58, 112, 166 ; hauteur 50 ; pas horizontal 58. Points bleus : centres des moitiés (143, 110) et (441, 110), position du curseur stick relâché. Maj = 1 unité et Retour = 2 unités pour garder les colonnes alignées (la demande de 1,5 + 4 touches dépasse les 286 d'une moitié).</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;width:420px;padding-top:40px">
+      <sc-for list="{{ legend }}" as="l" hint-placeholder-count="10">
+        <div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;font-size:13px;line-height:1.45;border-bottom:1px solid #26231e;padding-bottom:10px">
+          <span style="color:#9a948a">{{ l.k }}</span>
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#e6dccb">{{ l.v }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <span style="font-size:18px;font-weight:600;color:#ece6da">Textures, splitkb/textures</span>
+    <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;width:2340px">
+      <sc-for list="{{ textures }}" as="t" hint-placeholder-count="9">
+        <div style="width:300px;display:flex;flex-direction:column;gap:8px">
+          <div style="position:relative;width:300px;height:170px;display:flex;align-items:center;justify-content:center;gap:16px;background:repeating-conic-gradient(#24262a 0% 25%,#1b1c1f 0% 50%);background-size:16px 16px;border-radius:4px">
+            <div style="position:relative;width:{{ t.vw }}px;height:{{ t.vh }}px">
+              <img src="{{ t.src }}" alt="" style="width:100%;height:100%"></img>
+              <sc-if value="{{ t.nine }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;pointer-events:none">
+                  <div style="position:absolute;left:24px;top:0;bottom:0;border-left:1px dashed rgba(120,220,255,0.8)"></div>
+                  <div style="position:absolute;right:24px;top:0;bottom:0;border-left:1px dashed rgba(120,220,255,0.8)"></div>
+                  <div style="position:absolute;top:24px;left:0;right:0;border-top:1px dashed rgba(120,220,255,0.8)"></div>
+                  <div style="position:absolute;bottom:24px;left:0;right:0;border-top:1px dashed rgba(120,220,255,0.8)"></div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+          <span style="font-size:13px;font-family:ui-monospace,Menlo,monospace;color:#e6dccb">{{ t.name }}</span>
+          <span style="font-size:12px;line-height:1.45;color:#9a948a;text-wrap:pretty">{{ t.desc }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showLines&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">class Component extends DCLogic {
+  renderVals() {
+    const showLines = this.props.showLines ?? true;
+    const Y = [4, 58, 112, 166];
+    const K = [];
+    const std = (r, x0) => { for (let i = 0; i < 5; i++) K.push({ x: x0 + i * 58, y: Y[r], w: 54 }); };
+    std(0, 0); std(0, 298); std(1, 0); std(1, 298);
+    [[0,54,1],[58,54],[116,54],[174,54],[232,54],[298,54],[356,54],[414,54],[472,112,1]].forEach(([x,w,s]) => K.push({ x, y: Y[2], w, special: !!s }));
+    [[0,54,1],[58,54],[116,54],[174,236,1],[414,54],[472,54],[530,54]].forEach(([x,w,s]) => K.push({ x, y: Y[3], w, special: !!s }));
+    const LET = 'a z e r t y u i o p q s d f g h j k l m Maj w x c v b n \' Retour 123 , - Espace . ? !'.split(' ');
+    const NUM = '1 2 3 4 5 6 7 8 9 0 é è à ç ù â ê î ô û Maj @ # € % & * " Retour abc ; / Espace : + ='.split(' ');
+    const T = 'splitkb/textures/';
+    const SH = '0 1px 1px #000, 0 0 3px rgba(0,0,0,0.8)';
+    const CL = [143, 110], CR = [441, 110];
+    const build = (c) => K.map((k, i) => {
+      let label = (c.layer === 'num' ? NUM : LET)[i];
+      if (c.upper && !k.special) label = label.toUpperCase();
+      let tex = 'sk_key_normal', color = k.special ? '#d9c9a0' : '#ffd100', sh = SH;
+      if (c.hover === i) { tex = 'sk_key_hover'; color = '#fff5d9'; }
+      if ((i === 20 && c.shift) || (i === 29 && c.layer === 'num')) { tex = 'sk_key_active'; color = '#fff0c8'; }
+      if (c.tL === i) { tex = 'sk_key_target_l'; color = '#fff0c8'; }
+      if (c.tR === i) { tex = 'sk_key_target_r'; color = '#fff0c8'; }
+      if (c.press === i) { tex = 'sk_key_pressed'; color = '#000000'; sh = 'none'; }
+      return { x: k.x, y: k.y, w: k.w, label, img: 'splitkb/_mock/' + tex + '_' + k.w + '.png', color, sh, fs: k.special ? 13 : 20 };
+    });
+    const line = (a, b) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
+      return len < 2 ? null : { x: a[0], y: a[1], len: +len.toFixed(1), a: +(Math.atan2(dy, dx) * 180 / Math.PI).toFixed(2) };
+    };
+    const helpBase = [
+      { g: 'L', label: 'Curseur G', w: 13, r: '50%' }, { g: 'R', label: 'Curseur D', w: 13, r: '50%' },
+      { g: 'LT', label: 'Taper G', w: 20, r: '3px' }, { g: 'RT', label: 'Taper D', w: 20, r: '3px' },
+      { g: 'L3', label: '123', w: 18, r: '50%' },
+      { g: 'LB', label: 'Effacer', w: 20, r: '3px' }, { g: 'RB', label: 'Espace', w: 20, r: '3px' },
+      { g: '✚', label: 'Canal', w: 13, r: '3px' }, { g: '✚', label: 'Choisir', w: 13, r: '3px' }
+    ];
+    const help = (lit) => helpBase.map(h => {
+      const on = !!lit && lit.includes(h.g);
+      return { ...h, bg: on ? '#e6bb77' : '#cfc9bf', color: on ? '#ffe8a8' : '#d9d4cb' };
+    });
+    const defs = [
+      { title: '1 · Repos', desc: 'Sticks relâchés : les deux curseurs sont au centre de leur moitié (repère bronze), l\u2019aimant vise les touches centrales « d » et « k ». Visée gauche cuivre, visée droite ambre ; un petit triangle doré marque le côté (coin bas gauche ou bas droit).', c: { tL: 12, tR: 17, curL: CL, curR: CR }, ann: true },
+      { title: '2 · En jeu', desc: 'Stick gauche en haut à gauche : « z » visé (LT le tapera). Stick droit en bas à gauche : « n » visé (RT). Ligne optionnelle du centre de chaque moitié jusqu\u2019à son curseur : #E6BB77 à 60 %, 2 px.', c: { tL: 1, tR: 26, curL: [80, 34], curR: [378, 140] } },
+      { title: '3 · Touche tapée', desc: 'RT appuyé : « n » passe ~120 ms sur sk_key_pressed (or, texte noir), puis revient à la visée. « n » est ajouté à la saisie, RT s\u2019allume dans l\u2019aide.', c: { tL: 1, tR: 26, press: 26, curL: [80, 34], curR: [378, 140] }, input: 'salut n', lit: ['RT'] },
+      { title: '4 · Survol souris', desc: 'Souris sur « o » : sk_key_hover, bronze plus clair et léger voile cuivre, texte éclairci. Plus discret qu\u2019une visée. Clic pour taper. Les curseurs des sticks restent au centre.', c: { tL: 12, tR: 17, hover: 8, curL: CL, curR: CR } },
+      { title: '5a · Maj active', desc: 'LT sur Maj (ou double appui pour verrouiller) : Maj sur sk_key_active, lettres en capitales, badge « Abc » (ou « ABC » si verrouillé).', c: { tL: 12, tR: 17, shift: true, upper: true, curL: CL, curR: CR }, mode: 'Abc', modeLit: true },
+      { title: '5b · Couche 123', desc: 'Clic du stick gauche : chiffres, accents et symboles aux mêmes emplacements. La touche de couche affiche « abc » sur sk_key_active, badge « 123 » allumé, L3 allumé dans l\u2019aide.', c: { layer: 'num', tL: 12, tR: 17, curL: CL, curR: CR }, mode: '123', modeLit: true, lit: ['L3'] }
+    ];
+    const states = defs.map((d, i) => {
+      const c = d.c;
+      const lines = showLines ? [line(CL, c.curL), line(CR, c.curR)].filter(Boolean) : [];
+      return {
+        label: String(i + 1).padStart(2, '0') + ' ' + d.title.split('· ')[1],
+        title: d.title, desc: d.desc, annOp: d.ann ? 1 : 0,
+        input: d.input || 'salut',
+        mode: d.mode || 'abc',
+        modeBg: d.modeLit ? 'linear-gradient(180deg,#8a6239,#5a402a)' : '#16130f',
+        modeBorder: d.modeLit ? '#e6bb77' : '#4a3f2f',
+        modeColor: d.modeLit ? '#fff0c8' : '#a8946c',
+        keys: build(c), lines,
+        cursors: [{ x: c.curL[0], y: c.curL[1] }, { x: c.curR[0], y: c.curR[1] }],
+        help: help(d.lit)
+      };
+    });
+    const rail = [
+      { top: 12, h: 40, label: '40 · saisie' }, { top: 58, h: 26, label: '26 · suggestions' },
+      { top: 92, h: 220, label: '220 · touches' }, { top: 320, h: 26, label: '26 · canaux' },
+      { top: 352, h: 36, label: '36 · aide' }
+    ];
+    const geoKeys = K.map(k => ({ x: k.x, y: k.y, w: k.w, label: String(k.w), img: 'splitkb/_mock/sk_key_normal_' + k.w + '.png' }));
+    const geoRows = Y.map(y => ({ y: y + 24, label: 'y ' + y }));
+    const legend = [
+      { k: 'Fenêtre', v: '600 × 400 ; bord 2 ; padding 10 / 6' },
+      { k: 'Zone des touches', v: '584 × 220' },
+      { k: 'Moitiés', v: 'G x 0–286, D x 298–584 ; gouttière 12' },
+      { k: 'Touche', v: '54 × 50, écart 4, pas 58' },
+      { k: 'Spéciales', v: 'Maj 54 · 123 54 · Retour 112 · Espace 236' },
+      { k: 'Nine-slice', v: 'texture 128 × 64, coins 12 × 12 (marges 12 partout)' },
+      { k: 'Centre des moitiés', v: '(143, 110) et (441, 110)' },
+      { k: 'Repère central', v: 'sk_center 32 × 32 affiché 32' },
+      { k: 'Curseur', v: 'sk_cursor 32 × 32 affiché 32, disque Ø 20' },
+      { k: 'Ligne', v: '#E6BB77 alpha 0,6, épaisseur 2' },
+      { k: 'Texte', v: 'FRIZQT 20 (lettres), 13 (spéciales)' },
+      { k: 'Couleurs du texte', v: 'normal #FFD100 · spéciale #D9C9A0 · visée #FFF0C8 · survol #FFF5D9 · active #FFF0C8 · appuyée #000000' }
+    ];
+    const nine = (n, d) => ({ name: n + '.png', src: T + n + '.png', vw: 256, vh: 128, nine: true, desc: d });
+    const textures = [
+      nine('sk_key_normal', '128 × 64, coins 12 (aperçu ×2). Touche au repos : cadre bronze, fond sombre.'),
+      nine('sk_key_hover', 'Survol souris : bronze plus clair, voile cuivre léger.'),
+      nine('sk_key_active', 'Maj active, ou touche de couche en 123 : cuivre, liseré doré.'),
+      nine('sk_key_target_l', 'Visée du curseur gauche (LT) : cuivre, liseré doré, triangle dans le coin bas gauche.'),
+      nine('sk_key_target_r', 'Visée du curseur droit (RT) : ambre, liseré doré, triangle dans le coin bas droit.'),
+      nine('sk_key_pressed', 'Retour de frappe (~120 ms) : or, texte noir.'),
+      { name: 'sk_center.png', src: T + 'sk_center.png', vw: 96, vh: 96, nine: false, desc: '32 × 32 (aperçu ×3). Repère au centre de chaque moitié.' },
+      { name: 'sk_cursor.png', src: T + 'sk_cursor.png', vw: 96, vh: 96, nine: false, desc: '32 × 32 (aperçu ×3). Point du curseur, disque or Ø 20.' },
+      { name: 'sk_divider.png', src: T + 'sk_divider.png', vw: 16, vh: 158, nine: false, desc: '16 × 256, affiché 16 × 158 à x 284, y 4. Séparateur des moitiés, rangées 1 à 3.' }
+    ];
+    return { states, rail, geoKeys, geoRows, legend, textures };
+  }
+}</script>
+</body>
+</html>

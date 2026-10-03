@@ -70,23 +70,36 @@ local LAYOUTS = {
     },
 }
 
-local PAD, GAP = 4, 4
-local UNIT = (M.areaWidth - 2 * PAD + GAP) / 10   -- one key + one gap
-local KEY_H, ROW_STEP = 50, 54
-M.height = 2 * PAD + 4 * KEY_H + 3 * GAP
-
-local GRID_W, GRID_H = 10 * UNIT - GAP, 4 * KEY_H + 3 * GAP
-local MID_X = PAD + GRID_W / 2                     -- border between the halves
-local CENTER_Y = PAD + GRID_H / 2
+-- The look (Claude Design, design/splitkb/): the key area 584 x 220, its two
+-- halves (0-286, 298-584) with a gutter between, 4 rows of 50 at y 4, 58,
+-- 112, 166, keys 54 wide on a 58 pitch, columns aligned in every row. Shift
+-- and 123 are one key wide, Backspace two, Space 236 across the gutter.
+local KEY_H = 50
+local ROW_Y = { 4, 58, 112, 166 }
+local ROW_X = {
+    { { 0, 54 }, { 58, 54 }, { 116, 54 }, { 174, 54 }, { 232, 54 }, { 298, 54 }, { 356, 54 }, { 414, 54 }, { 472, 54 }, { 530, 54 } },
+    { { 0, 54 }, { 58, 54 }, { 116, 54 }, { 174, 54 }, { 232, 54 }, { 298, 54 }, { 356, 54 }, { 414, 54 }, { 472, 54 }, { 530, 54 } },
+    { { 0, 54 }, { 58, 54 }, { 116, 54 }, { 174, 54 }, { 232, 54 }, { 298, 54 }, { 356, 54 }, { 414, 54 }, { 472, 112 } },
+    { { 0, 54 }, { 58, 54 }, { 116, 54 }, { 174, 236 }, { 414, 54 }, { 472, 54 }, { 530, 54 } },
+}
+M.height = 220
+local HALF_L, HALF_R = 286, 298       -- the left half ends, the right one starts
+local CENTER_Y = 110
 -- Each half's center, and the cursor's reach around it. Full tilt puts the
 -- cursor EDGE_IN px inside the half's edge keys, so an imperfect push still
 -- reaches them.
 local EDGE_IN = 6
 local HALVES = {
-    left = { cx = PAD + GRID_W / 4 },
-    right = { cx = MID_X + GRID_W / 4 },
+    left = { cx = 143 },
+    right = { cx = 441 },
 }
-local REACH_X, REACH_Y = GRID_W / 4 - EDGE_IN, GRID_H / 2 - EDGE_IN
+local REACH_X, REACH_Y = 143 - EDGE_IN, 106 - EDGE_IN
+-- Text colours by state
+local COLOR = {
+    char = { 1, 0.82, 0 }, special = { 0.85, 0.79, 0.63 }, lit = { 1, 0.94, 0.78 },
+    hover = { 1, 0.96, 0.85 }, pressed = { 0, 0, 0 },
+}
+local PRESSED_TIME = 0.12
 -- Per axis, from this tilt on the stick counts as pushed all the way: sticks
 -- rarely report a full 1.0, and a round stick pushed diagonally only reaches
 -- about 0.71 on each axis, which must still land on the corner keys
@@ -104,19 +117,19 @@ local function buildKey(parent, def, x, y, w)
     local K = CK.UIKit
     local b = CK.NewFrame("Button", nil, parent)
     K.place(b, parent, x, y, w, KEY_H)
-    b.base = K.nineSlice(b, "ck_btn_normal", 128, 32, 6, 6, "BORDER")
-    b.select = K.nineSlice(b, "ck_select", 128, 32, 10, 10, "ARTWORK")
-    b.select:SetShown(false)
+    b.base = K.nineSlice(b, "ck_sk_key_normal", 128, 64, 12, 12, "BORDER")
+    b.file = "ck_sk_key_normal"
     local isChar = type(def) == "string"
     b.accent = type(def) == "table" and def.acc or nil
     b.label = K.text(b, (isChar or b.accent) and 20 or 13)
     b.label:SetPoint("CENTER", 0, 1)
+    b.label:SetShadowOffset(1, -1)
     b.char = isChar and def or nil
     b.special = type(def) == "table" and def.k or nil
     -- Center and size in area coordinates (y down), for the nearest-key search
     b.cx, b.cy, b.w, b.h = x + w / 2, y + KEY_H / 2, w, KEY_H
     -- Halves the key belongs to: a key straddling the middle (Space) is in both
-    b.inHalf = { left = x < MID_X - 1, right = x + w > MID_X + 1 }
+    b.inHalf = { left = x < HALF_L, right = x + w > HALF_R }
     b:SetScript("OnClick", function() M:Press(b) end)
     b:SetScript("OnEnter", function() M.hover = b; M:Update() end)
     b:SetScript("OnLeave", function() M.hover = nil; M:Update() end)
@@ -131,17 +144,18 @@ function M:Build(area)
         set:SetAllPoints()
         set.keys = {}
         for r, row in ipairs(rows) do
-            local x = PAD
-            for _, def in ipairs(row) do
-                local units = type(def) == "table" and def.w or 1
-                local w = units * UNIT - GAP
-                set.keys[#set.keys + 1] = buildKey(set, def, x, PAD + (r - 1) * ROW_STEP, w)
-                x = x + units * UNIT
+            for n, def in ipairs(row) do
+                local place = ROW_X[r][n]
+                set.keys[#set.keys + 1] = buildKey(set, def, place[1], ROW_Y[r], place[2])
             end
         end
         set:Hide()
         self.sets[name] = set
     end
+
+    local divider = area:CreateTexture(nil, "ARTWORK")
+    divider:SetTexture(K.TEX .. "ck_sk_divider")
+    K.place(divider, area, 284, 4, 16, 158)
 
     -- One cursor per half, with a line from the half's center, above the keys
     local over = CK.NewFrame("Frame", nil, area)
@@ -154,16 +168,16 @@ function M:Build(area)
         -- The line is optional: the keyboard works without it on a client lacking lines
         local line = over.CreateLine and over:CreateLine(nil, "OVERLAY")
         if line then
-            line:SetThickness(3)
-            line:SetColorTexture(K.C.gold[1], K.C.gold[2], K.C.gold[3], 0.55)
+            line:SetThickness(2)
+            line:SetColorTexture(0.902, 0.733, 0.467, 0.6)
             c.line = line
         end
-        c.hub = K.texture(over, "ck_hl_hover", "OVERLAY")
-        c.hub:SetSize(14, 14)
+        -- The half's centre (it never moves) and the cursor's dot
+        c.hub = K.texture(over, "ck_sk_center", "OVERLAY")
+        c.hub:SetSize(32, 32)
         c.hub:SetPoint("CENTER", over, "TOPLEFT", half.cx, -CENTER_Y)
-        c.hub:SetAlpha(0.6)
-        c.dot = K.texture(over, "ck_hl", "OVERLAY", 1)
-        c.dot:SetSize(22, 22)
+        c.dot = K.texture(over, "ck_sk_cursor", "OVERLAY", 1)
+        c.dot:SetSize(32, 32)
         self.cursors[side] = c
     end
     self:Reset()
@@ -261,12 +275,28 @@ function M:Press(key)
 end
 
 -- LT / RT: the binding gives one press per pull of the trigger, so one letter
+function M:Flash(key)
+    if not key then return end
+    key.pressedUntil = GetTime() + PRESSED_TIME
+    C_Timer.After(PRESSED_TIME, function()
+        if M.sets then M:Update() end
+    end)
+end
+
 function CK:TypeLeft()
-    if self:GetMethod() == M and M.cursors then M:Press(M.cursors.left.selected) end
+    if self:GetMethod() == M and M.cursors then
+        local key = M.cursors.left.selected
+        M:Flash(key)
+        M:Press(key)
+    end
 end
 
 function CK:TypeRight()
-    if self:GetMethod() == M and M.cursors then M:Press(M.cursors.right.selected) end
+    if self:GetMethod() == M and M.cursors then
+        local key = M.cursors.right.selected
+        M:Flash(key)
+        M:Press(key)
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -287,17 +317,21 @@ function M:Update()
     local shiftOn = state.shift or state.caps
     local accents = CK:Accents()
 
+    local now = GetTime()
     for _, key in ipairs(set.keys) do
         local selected = key == left.selected or key == right.selected
-        local active = key.special == "SHIFT" and shiftOn
-        if key == self.hover then
-            key.base:SetFile("ck_btn_hover")
-        elseif active then
-            key.base:SetFile("ck_btn_active")
-        else
-            key.base:SetFile("ck_btn_normal")
+        local active = (key.special == "SHIFT" and shiftOn) or (key.special == "LAYER" and state.layer == "symbols")
+        local pressed = key.pressedUntil and now < key.pressedUntil
+        local file = pressed and "ck_sk_key_pressed"
+            or (key == left.selected and "ck_sk_key_target_l")
+            or (key == right.selected and "ck_sk_key_target_r")
+            or (active and "ck_sk_key_active")
+            or (key == self.hover and "ck_sk_key_hover")
+            or "ck_sk_key_normal"
+        if file ~= key.file then
+            key.base:SetFile(file)
+            key.file = file
         end
-        key.select:SetShown(selected)
 
         if key.accent then key.char = accents[key.accent] end
         if key.char then
@@ -307,15 +341,10 @@ function M:Update()
         else
             key.label:SetText(L[SPECIAL_LABEL[key.special]])
         end
-        if selected then
-            key.label:SetTextColor(unpack(K.C.goldActive))
-        elseif key == self.hover then
-            key.label:SetTextColor(unpack(K.C.btnHover))
-        elseif key.char then
-            key.label:SetTextColor(unpack(K.C.gold))
-        else
-            key.label:SetTextColor(unpack(active and K.C.gold or K.C.btn))
-        end
+        local color = pressed and COLOR.pressed or ((selected or active) and COLOR.lit)
+            or (key == self.hover and COLOR.hover) or ((key.char or key.accent) and COLOR.char) or COLOR.special
+        key.label:SetTextColor(unpack(color))
+        key.label:SetShadowColor(0, 0, 0, pressed and 0 or 1)
     end
 
     local showLine = CK.db.settings.showLine
@@ -323,10 +352,11 @@ function M:Update()
         c.dot:ClearAllPoints()
         c.dot:SetPoint("CENTER", self.over, "TOPLEFT", c.cx, -c.cy)
         if c.line then
-            c.line:SetShown(showLine)
+            -- Not when the cursor rests on the centre
+            local moved = math.abs(c.cx - c.homeX) > 1 or math.abs(c.cy - CENTER_Y) > 1
+            c.line:SetShown(showLine and moved)
             c.line:SetStartPoint("TOPLEFT", self.over, c.homeX, -CENTER_Y)
             c.line:SetEndPoint("TOPLEFT", self.over, c.cx, -c.cy)
         end
-        c.hub:SetShown(showLine)
     end
 end

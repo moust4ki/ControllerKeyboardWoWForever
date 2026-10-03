@@ -1,0 +1,521 @@
+{
+  "units": "pixels, 1:1 on screen (key area 584 x 220, origin = top-left of the key area)",
+  "window": {
+    "size": [
+      600,
+      400
+    ],
+    "border": 2,
+    "padding": [
+      10,
+      6
+    ],
+    "rows": {
+      "input": 40,
+      "gap1": 6,
+      "suggestions": 26,
+      "gap2": 8,
+      "keys": 220,
+      "gap3": 8,
+      "channels": 26,
+      "gap4": 6,
+      "help": 36
+    }
+  },
+  "keyArea": {
+    "size": [
+      584,
+      220
+    ],
+    "halves": {
+      "L": {
+        "x": 0,
+        "w": 286,
+        "center": [
+          143,
+          110
+        ]
+      },
+      "R": {
+        "x": 298,
+        "w": 286,
+        "center": [
+          441,
+          110
+        ]
+      }
+    },
+    "gutter": {
+      "x": 286,
+      "w": 12
+    },
+    "rowY": [
+      4,
+      58,
+      112,
+      166
+    ],
+    "keyHeight": 50,
+    "unit": 54,
+    "gap": 4,
+    "pitch": 58
+  },
+  "layoutNote": "Columns aligned on a 58 px pitch in all rows (predictable absolute cursor). Shift = 1 unit, Enter = 2 units (112), Space = 236 straddling both halves.",
+  "keys": [
+    {
+      "row": 1,
+      "id": "c1",
+      "x": 0,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 1,
+      "id": "c2",
+      "x": 58,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 1,
+      "id": "c3",
+      "x": 116,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 1,
+      "id": "c4",
+      "x": 174,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 1,
+      "id": "c5",
+      "x": 232,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 1,
+      "id": "c6",
+      "x": 298,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 1,
+      "id": "c7",
+      "x": 356,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 1,
+      "id": "c8",
+      "x": 414,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 1,
+      "id": "c9",
+      "x": 472,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 1,
+      "id": "c10",
+      "x": 530,
+      "y": 4,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c1",
+      "x": 0,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c2",
+      "x": 58,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c3",
+      "x": 116,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c4",
+      "x": 174,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c5",
+      "x": 232,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c6",
+      "x": 298,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c7",
+      "x": 356,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c8",
+      "x": 414,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c9",
+      "x": 472,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 2,
+      "id": "c10",
+      "x": 530,
+      "y": 58,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 3,
+      "id": "shift",
+      "x": 0,
+      "y": 112,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": true
+    },
+    {
+      "row": 3,
+      "id": "c2",
+      "x": 58,
+      "y": 112,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 3,
+      "id": "c3",
+      "x": 116,
+      "y": 112,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 3,
+      "id": "c4",
+      "x": 174,
+      "y": 112,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 3,
+      "id": "c5",
+      "x": 232,
+      "y": 112,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 3,
+      "id": "c6",
+      "x": 298,
+      "y": 112,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 3,
+      "id": "c7",
+      "x": 356,
+      "y": 112,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 3,
+      "id": "c8",
+      "x": 414,
+      "y": 112,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 3,
+      "id": "enter",
+      "x": 472,
+      "y": 112,
+      "w": 112,
+      "h": 50,
+      "half": "R",
+      "special": true
+    },
+    {
+      "row": 4,
+      "id": "layer",
+      "x": 0,
+      "y": 166,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": true
+    },
+    {
+      "row": 4,
+      "id": "c2",
+      "x": 58,
+      "y": 166,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 4,
+      "id": "c3",
+      "x": 116,
+      "y": 166,
+      "w": 54,
+      "h": 50,
+      "half": "L",
+      "special": false
+    },
+    {
+      "row": 4,
+      "id": "space",
+      "x": 174,
+      "y": 166,
+      "w": 236,
+      "h": 50,
+      "half": "LR",
+      "special": true
+    },
+    {
+      "row": 4,
+      "id": "c8",
+      "x": 414,
+      "y": 166,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 4,
+      "id": "c9",
+      "x": 472,
+      "y": 166,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    },
+    {
+      "row": 4,
+      "id": "c10",
+      "x": 530,
+      "y": 166,
+      "w": 54,
+      "h": 50,
+      "half": "R",
+      "special": false
+    }
+  ],
+  "nineSlice": {
+    "textureSize": [
+      128,
+      64
+    ],
+    "margins": {
+      "left": 12,
+      "top": 12,
+      "right": 12,
+      "bottom": 12
+    },
+    "note": "corners 12x12 fixed, edges and center stretched. Keys are 50 tall so the vertical center shrinks from 40 to 26.",
+    "textures": {
+      "normal": "sk_key_normal.png",
+      "hover": "sk_key_hover.png",
+      "active": "sk_key_active.png",
+      "targetLeft": "sk_key_target_l.png",
+      "targetRight": "sk_key_target_r.png",
+      "pressed": "sk_key_pressed.png"
+    },
+    "visibleInset": 1,
+    "leftRightCue": "target_l has a small gold triangle in the bottom-left corner, target_r in the bottom-right; R fill is amber, L fill is copper"
+  },
+  "cursor": {
+    "center": {
+      "texture": "sk_center.png",
+      "textureSize": 32,
+      "displaySize": 32,
+      "ringRadius": 7
+    },
+    "dot": {
+      "texture": "sk_cursor.png",
+      "textureSize": 32,
+      "displaySize": 32,
+      "discDiameter": 20
+    },
+    "line": {
+      "color": [
+        0.902,
+        0.733,
+        0.467,
+        0.6
+      ],
+      "hex": "#E6BB77",
+      "alpha": 0.6,
+      "thickness": 2,
+      "from": "half center",
+      "to": "cursor dot center",
+      "drawOrder": "below the dot, above the keys"
+    }
+  },
+  "divider": {
+    "texture": "sk_divider.png",
+    "textureSize": [
+      16,
+      256
+    ],
+    "display": {
+      "x": 284,
+      "y": 4,
+      "w": 16,
+      "h": 158
+    },
+    "note": "rows 1-3 only, Space straddles row 4"
+  },
+  "text": {
+    "font": "Fonts\\FRIZQT__.TTF",
+    "letterSize": 20,
+    "specialSize": 13,
+    "shadow": {
+      "offset": [
+        1,
+        -1
+      ],
+      "color": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "colors": {
+      "normal": "#FFD100",
+      "special": "#D9C9A0",
+      "target": "#FFF0C8",
+      "pressed": "#000000",
+      "hover": "#FFF5D9",
+      "active": "#FFF0C8"
+    }
+  },
+  "pressedFlash": {
+    "duration": 0.12,
+    "fadeOut": 0.08,
+    "note": "swap to sk_key_pressed for ~120 ms then back to target"
+  }
+}
