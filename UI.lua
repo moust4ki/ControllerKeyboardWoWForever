@@ -324,6 +324,11 @@ function CK:BuildUI()
         b.label:SetPoint("CENTER", 0, 0)
         b.label:SetText(ch.label)
         b:SetScript("OnEnter", function(s)
+            if not CK.mouseOnChannels then
+                CK.mouseOnChannels = true
+                CK:NoteChannelsFrom()
+            end
+            CK.channelsLeft = nil
             CK:SetChannel(i)
             GameTooltip:SetOwner(s, "ANCHOR_BOTTOM")
             local name = L.CHANNEL_NAMES[i]
@@ -331,7 +336,15 @@ function CK:BuildUI()
             GameTooltip:SetText(name, 1, 1, 1)
             GameTooltip:Show()
         end)
-        b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        b:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+            -- Off the row (not onto a neighbour): the next visit notes again
+            local token = {}
+            CK.channelsLeft = token
+            C_Timer.After(0.3, function()
+                if CK.channelsLeft == token then CK.mouseOnChannels = nil end
+            end)
+        end)
         b:SetScript("OnClick", function() CK:SetChannel(i) end)
         f.channels[i] = b
     end
@@ -350,12 +363,16 @@ function CK:BuildUI()
         chip.icon:SetTexture("Interface\\GossipFrame\\AvailableQuestIcon")
     end
     chip:SetScript("OnEnter", function(s)
+        if CK.mouseOnChannels then CK:RestoreChannelsFrom() end
         GameTooltip:SetOwner(s, "ANCHOR_BOTTOM")
         GameTooltip:SetText(L.QUESTS_TIP, 1, 1, 1)
         GameTooltip:Show()
     end)
     chip:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    chip:SetScript("OnClick", function() CK:OpenQuestList() end)
+    chip:SetScript("OnClick", function()
+        if CK.mouseOnChannels then CK:RestoreChannelsFrom() end
+        CK:OpenQuestList()
+    end)
     f.questChip = chip
 
     -- Mouse / Steam Controller actions

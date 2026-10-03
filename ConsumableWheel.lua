@@ -521,6 +521,13 @@ function W:Build()
     -- Closed with a stick still pushed: held until it is let go, so the
     -- character doesn't walk off (or stand up from eating)
     view:SetScript("OnHide", function() W:HoldSticks() end)
+    -- Closed (its keys let go in its secure code, which our binding hooks
+    -- don't see): the replaced buttons it held back are bound again
+    wheel:HookScript("OnHide", function()
+        C_Timer.After(0, function()
+            if not InCombatLockdown() and CK.Mapping then CK.Mapping:Repair() end
+        end)
+    end)
     self:BuildHold()
 
     self.segments, self.buttons = {}, {}
@@ -616,14 +623,20 @@ end
 function W:ApplyPage()
     local wheel = self.frame
     local key = "ck-" .. (wheel:GetAttribute("wheel") or "c") .. "-" .. (wheel:GetAttribute("page") or 1) .. "-"
+    local n = wheel:GetAttribute(key .. "n") or 0
     for i, b in ipairs(self.buttons) do
+        if i <= n then
+            local x, y = slotDir(i, n)
+            b:ClearAllPoints()
+            b:SetPoint("CENTER", wheel, "CENTER", ICON_RADIUS * x, ICON_RADIUS * y)
+        end
         local kind, value = wheel:GetAttribute(key .. i .. "-t"), wheel:GetAttribute(key .. i)
         b:SetAttribute("type", kind)
         b:SetAttribute("item", kind == "item" and value or nil)
         b:SetAttribute("spell", kind == "spell" and value or nil)
         b:SetAttribute("macro", kind == "macro" and value or nil)
         b:SetAttribute("unit", wheel:GetAttribute(key .. i .. "-u"))
-        b:SetShown(kind ~= nil)
+        b:SetShown(kind ~= nil and i <= n)
     end
 end
 
@@ -663,7 +676,7 @@ function W:Fill()
                 e.cat = ok and cat or nil
             end
         end
-        store(wheel, tostring(n), own)
+        store(wheel, tostring(n), own, function(e) return e.cat == "bandage" and "player" or nil end)
         self.lists[tostring(n)] = own
     end
     wheel:SetAttribute("ck-stick", stickIndex("Movement", 1))
@@ -851,6 +864,7 @@ function W:Track()
     -- A page turned (LB / RB, secure), another wheel's key: draw it
     if (self.frame:GetAttribute("page") or 1) ~= self.painted
         or (self.frame:GetAttribute("wheel") or "c") ~= self.paintedWheel then
+        self.ticked = nil
         return self:Paint()
     end
     local i = self:Aimed()

@@ -283,7 +283,8 @@ kind can be left out (Wheels › Consumables).
 ### Your own wheels
 
 Up to 8 wheels of your own, made in Wheels › My wheels with the gamepad: a card per wheel (its 8
-slots, its name, the button it is on), **New wheel** first. A on a card opens its editor: the wheel,
+slots, its name, the button it is on), **New wheel** first. In play, a wheel shows its filled slots
+only, in their order, in as many sections. A on a card opens its editor: the wheel,
 its name and count in the middle, its 8 slots around it, and the lists on the right (Spells, Items,
 Macros; LB / RB change list). The D-pad (or LB / RB) goes from slot to slot; A aims the lists at a
 slot, and a choice fills it and goes on to the next one, the lists still open (a cyan diamond marks
@@ -353,8 +354,9 @@ Home › Automation (both off until you turn them on):
 In the configuration panel (RB + D-pad down, `/ec config`):
 
 - every module on or off (Home › Modules), each one's settings in its own tab;
-- input method (daisywheel / split keyboard), keyboard layout (AZERTY / QWERTY), stick dead
-  zone, stick response (linear, gentle, fast), magnet, cursor lines;
+- input method (daisywheel / split keyboard), daisywheel look (groups circled / characters only),
+  keyboard layout (AZERTY, QWERTY, QWERTZ, Spanish, Italian), stick dead zone, stick response
+  (linear, gentle, fast), magnet, cursor lines;
 - lock position, open automatically, only when the gamepad is active;
 - keyboard size: small (80 %), normal, large (125 %), extra large (150 %) — `/ec scale` for any
   other value; invert the sticks vertical axis, show / hide the mouse buttons row;

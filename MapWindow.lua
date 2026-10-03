@@ -599,8 +599,10 @@ function W:Help()
     local hints = { H({ "DPAD" }, L.V_MOVE) }
     local layer = self:ViewLayer()
     local state = input and M:State(input, layer)
-    if cell.pick or (cell.state ~= "off" and input
-        and (state == "slot" or state == "free" or M:Replaceable(input, layer))) then
+    local replace = input and M:Replaceable(input, layer) and M:CanOwnKeys()
+    local canA = state == "free" or replace
+        or (state == "slot" and not M:SlotKept(M:NativeSlot(input, layer)))
+    if cell.pick or (cell.state ~= "off" and input and canA) then
         hints[#hints + 1] = H({ "A" }, cell.state == "free" and L.V_ASSIGN or L.V_CHANGE, "A")
     end
     if cell.replaced then

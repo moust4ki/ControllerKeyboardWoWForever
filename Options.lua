@@ -79,6 +79,10 @@ local function moduleRows(b)
         get = function() return mods.questItems end,
         set = function(v)
             mods.questItems = v
+            if v then
+                CK.QuestItems:ScanBags()
+                CK.QuestItems:ScanQuests()
+            end
             CK.QuestItems:RefreshBorders()
         end,
         onY = function() Config:SetTab("alerts", 3) end, yVerb = L.V_SETTINGS })
@@ -305,8 +309,8 @@ local function inputRows(b)
             if exact then
                 i = math.min(#SIZES, math.max(1, i + d))
             else
-                -- From a custom value: the next preset that way
-                i = d > 0 and #SIZES or 1
+                -- From a custom value: the next preset that way (none: as it is)
+                i = nil
                 for n = 1, #SIZES do
                     local preset = SIZES[d > 0 and n or (#SIZES + 1 - n)].scale
                     if (d > 0 and preset > s.scale) or (d < 0 and preset < s.scale) then
@@ -315,6 +319,7 @@ local function inputRows(b)
                     end
                 end
             end
+            if not i then return end
             s.scale = SIZES[i].scale
             if CK.frame then
                 CK.frame:SetScale(s.scale)
@@ -547,6 +552,10 @@ local function questRows(b)
         get = function() return mods.questItems end,
         set = function(v)
             mods.questItems = v
+            if v then
+                CK.QuestItems:ScanBags()
+                CK.QuestItems:ScanQuests()
+            end
             CK.QuestItems:RefreshBorders()
         end })
     if not mods.questItems then return end

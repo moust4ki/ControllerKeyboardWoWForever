@@ -266,6 +266,8 @@ function QI:Init()
     f:RegisterEvent("MERCHANT_CLOSED")
     f:RegisterEvent("MERCHANT_UPDATE")
     f:SetScript("OnEvent", function(_, event)
+        -- Left the merchant: so, whatever the module's state
+        if event == "MERCHANT_CLOSED" then QI.atMerchant = false end
         if not enabled() then return end
         if event == "MERCHANT_SHOW" then
             QI:ScanBags()

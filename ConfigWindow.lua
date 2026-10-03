@@ -910,7 +910,11 @@ function C:SetTab(key, section)
     self:StopChordCapture(nil)
     if key == self.tab and not section and self.frame and self.frame:IsShown() then
         local page = self:Page()
-        if page.def and page.zone == "rail" then page.zone = "list" end
+        if page.def and page.zone == "rail" then
+            page.zone = "list"
+        elseif not page.def and page.SetZone and page.rail and page.rail.zone == "rail" then
+            page:SetZone("list")
+        end
         return self:Render()
     end
     self:Disarm()
@@ -1042,10 +1046,10 @@ function C:CreateInput()
                 if C.repeatName == name then C.repeatName = nil end
                 return
             end
-            C:Press(name)
             if REPEAT[name] then
                 C.repeatName, C.repeatKey, C.repeatAt = name, key, GetTime() + 0.35
             end
+            C:Press(name)
         end)
     end
 end
@@ -1301,9 +1305,14 @@ end
 -- reach the panel's keys, is no press
 function C:Swallow(keys)
     self.swallow = keys
-    C_Timer.After(2, function()
-        if C.swallow == keys then C.swallow = nil end
-    end)
+    local function check()
+        if C.swallow ~= keys then return end
+        for key in pairs(keys) do
+            if IsKeyDown and IsKeyDown(key) then return C_Timer.After(0.5, check) end
+        end
+        C.swallow = nil
+    end
+    C_Timer.After(2, check)
 end
 
 -- A panel button pressed while a capture frame had the pad (a paddle's key

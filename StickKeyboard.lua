@@ -25,7 +25,7 @@ function M:Help()
     }
 end
 
--- Keys: a character, or { k = special key, w = width in key units }
+-- Keys: a character, or { k = special key } (their places: ROW_X below)
 local function special(k, w) return { k = k, w = w } end
 local SHIFT, BACK, LAYER, SPACE = special("SHIFT", 1.5), special("BACK", 1.5), special("LAYER", 1), special("SPACE", 4)
 -- A key of the 123 layer showing the language's n-th accent (CK:Accents())
@@ -166,7 +166,7 @@ function M:Build(area)
     for side, half in pairs(HALVES) do
         local c = { side = side, homeX = half.cx }
         -- The line is optional: the keyboard works without it on a client lacking lines
-        local line = over.CreateLine and over:CreateLine(nil, "OVERLAY")
+        local line = over.CreateLine and over:CreateLine(nil, "OVERLAY", nil, -1)
         if line then
             line:SetThickness(2)
             line:SetColorTexture(0.902, 0.733, 0.467, 0.6)
@@ -277,8 +277,11 @@ end
 -- LT / RT: the binding gives one press per pull of the trigger, so one letter
 function M:Flash(key)
     if not key then return end
-    key.pressedUntil = GetTime() + PRESSED_TIME
+    local untilTime = GetTime() + PRESSED_TIME
+    key.pressedUntil = untilTime
+    self:Update()
     C_Timer.After(PRESSED_TIME, function()
+        if key.pressedUntil == untilTime then key.pressedUntil = nil end
         if M.sets then M:Update() end
     end)
 end

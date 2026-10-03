@@ -428,7 +428,7 @@ end
 -- Pick the /w recipient; the buffer then holds the message
 function CK:ConfirmWhisperTarget(name)
     name = (name or ""):gsub("^[ \t\r\n]+", ""):gsub("[ \t\r\n]+$", "")
-    if name == "" then return end
+    if name == "" or name:find("|", 1, true) then return end
     self.whisperTarget = name
     self:SetChatAttr("tellTarget", name)
     self:ApplyStickyChannel()
@@ -501,13 +501,7 @@ function CK:CycleChannel(delta)
         if i == n + 1 then
             -- The Quests chip only inserts links: the channel the row was
             -- entered with comes back (passing /w on the way changes nothing)
-            local from = self.channelsFrom
-            if from then
-                local attrs = {}
-                for k, v in pairs(from) do attrs[k] = v end
-                self.chatAttrs = attrs
-                self:ApplyStickyChannel()
-            end
+            self:RestoreChannelsFrom()
             self.state.questChip = true
             self:Refresh()
             return
@@ -530,13 +524,24 @@ function CK:SetActiveRow(row)
 end
 
 -- The channel row: the channel in use is noted, for the Quests chip
+function CK:NoteChannelsFrom()
+    local attrs = self.chatAttrs or snapshotAttrs(self.editBox)
+    local from = {}
+    for k, v in pairs(attrs) do from[k] = v end
+    self.channelsFrom = from
+end
+
+function CK:RestoreChannelsFrom()
+    local from = self.channelsFrom
+    if not from then return end
+    local attrs = {}
+    for k, v in pairs(from) do attrs[k] = v end
+    self.chatAttrs = attrs
+    self:ApplyStickyChannel()
+end
+
 function CK:FocusChannels()
-    if self.state.activeRow ~= "channels" then
-        local attrs = self.chatAttrs or snapshotAttrs(self.editBox)
-        local from = {}
-        for k, v in pairs(attrs) do from[k] = v end
-        self.channelsFrom = from
-    end
+    if self.state.activeRow ~= "channels" then self:NoteChannelsFrom() end
     self:SetActiveRow("channels")
 end
 function CK:FocusSuggestions() self:SetActiveRow("suggestions") end
@@ -603,8 +608,8 @@ function CK:BuildMacroText()
     return cmd and (cmd .. " " .. text)
 end
 
--- Only reached when the secure button is not over the "Send" button (the
--- keyboard was opened in combat): press Enter instead. A prompt: confirmed.
+-- Only reached when the secure button doesn't take the mouse (the mouse
+-- buttons row's option): A sends. A prompt: confirmed.
 function CK:Send()
     if self.prompt then return self:FinishPrompt(true) end
     self:Print(L.SEND_COMBAT)
@@ -672,7 +677,9 @@ function CK:TakeDraft(chatText, eb)
     local draft = self.draft
     if not draft then return chatText end
     local chatType = eb and eb:GetAttribute("chatType")
-    if (chatType == "WHISPER" or chatType == "BN_WHISPER")
+    local toWhisper = chatType == "WHISPER" or chatType == "BN_WHISPER"
+    local wasWhisper = draft.chatType == "WHISPER" or draft.chatType == "BN_WHISPER"
+    if (toWhisper or wasWhisper)
         and not (draft.chatType == chatType and draft.target == eb:GetAttribute("tellTarget")) then
         return chatText
     end
@@ -693,7 +700,18 @@ function CK:Open(eb)
     -- Keep a message typed with the mouse when the chat is reopened;
     -- otherwise start from the draft and what the chat holds (physical
     -- keyboard, a link the game opened the chat with)
-    if not (self.standalone and self.buffer and self.buffer ~= "") then
+    local keep = self.standalone and self.buffer and self.buffer ~= ""
+    if keep then
+        local before = self.chatAttrs or {}
+        local chatType = eb:GetAttribute("chatType")
+        local whisper = function(t) return t == "WHISPER" or t == "BN_WHISPER" end
+        if (whisper(chatType) or whisper(before.chatType))
+            and not (before.chatType == chatType and before.tellTarget == eb:GetAttribute("tellTarget")) then
+            self.draft = { text = self.buffer, time = GetTime(), chatType = before.chatType, target = before.tellTarget }
+            keep = false
+        end
+    end
+    if not keep then
         self.buffer = self:TakeDraft(eb:GetText() or "", eb)
     end
     self.standalone = false

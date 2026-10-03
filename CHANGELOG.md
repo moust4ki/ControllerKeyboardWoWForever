@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.6.1
+
+Fixes found by a second round of end-to-end tests.
+
+- **Wheels**: the mouse clicks the item drawn even when the bags change with the wheel open; a tick
+  when the item under a held stick changes page; bandages in your own wheels go on you; your replaced
+  buttons come back after a wheel closes.
+- **Chat keyboard**: a quest link can no longer become a whisper's recipient; a whisper's draft never
+  comes back on a public channel, nor a message typed with the mouse for someone else; the "!" chip
+  keeps your channel when reached with the mouse too; a warning when the new textures need a restart.
+- **Split keyboard**: the gold flash on the key typed always shows.
+- **Configuration panel**: holding a direction into a list no longer changes its first setting;
+  Escape cancels the paddles' wizard; a captured button held long no longer acts on its release;
+  the size steps from a custom scale no longer go the wrong way; the help bar offers A only where it
+  acts.
+- **Better items**: no arrow on an item scoring lower than yours.
+- **Supplies**: the bar no longer moves after an update or when its direction changes; the reagent
+  bag's items can be added.
+- **Quest items and merchants**: leaving a merchant is always noted; turned back on, quest items read
+  the quest log again; the repair waits for items still being sold.
+- Shorter labels ("Daisywheel look" translated, German Shift).
+
 ## 1.6.0
 
 - **A new look for the chat keyboard** (Claude Design), in the style of the wheels and the game's

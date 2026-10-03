@@ -400,6 +400,7 @@ function MW:TabPage(rail)
     function page:Help() return current():Help() end
     function page:Crumb() return current():Crumb() end
     function page:SetZone(zone) rail.zone = zone end
+    page.rail = rail
     function page:SetSection(i, zone)
         if MW.open then MW:CloseEditor() end
         rail:SetSection(i, zone)

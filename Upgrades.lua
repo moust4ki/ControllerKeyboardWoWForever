@@ -289,7 +289,10 @@ function U:IsUpgrade(bag, slot, link)
     if byScore then
         local margin = math.max(0.5, old * 0.02)
         if new <= old + margin then
-            if new < old - margin then return false end
+            -- Scores alike, never lower: the item level decides (on an empty
+            -- slot, a score of nothing only for armour, as plain white pieces)
+            if new < old - 1e-6 then return false end
+            if not worn and new == 0 and not ARMOR_SLOTS[equipLoc] then return false end
             if itemLevel(link) <= (worn and itemLevel(worn) or 0) then return false end
         end
     elseif new <= old then

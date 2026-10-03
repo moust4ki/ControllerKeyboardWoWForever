@@ -274,7 +274,7 @@ function CK:FinishSend(down)
     local text = self:GetText()
     -- /w without a recipient yet: A confirms the typed name (a command typed
     -- there is run, not taken for a name)
-    if self:WhisperNameMode() and text:sub(1, 1) ~= "/" then
+    if self:WhisperNameMode() and text:sub(1, 1) ~= "/" and not text:find("|H", 1, true) then
         if down ~= true then self:ConfirmWhisperTarget(text) end
         return
     end

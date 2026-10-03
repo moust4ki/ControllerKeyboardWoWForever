@@ -65,7 +65,21 @@ function A:SellJunk(onDone)
     if self.selling then return end
     local list = self:Junk()
     if #list == 0 then
-        if onDone then onDone() end
+        if onDone then
+            local tries = 0
+            local function settled()
+                if not self.atMerchant or InCombatLockdown() then return end
+                tries = tries + 1
+                for bag = 0, NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4 do
+                    for slot = 1, C_Container.GetContainerNumSlots(bag) or 0 do
+                        local info = C_Container.GetContainerItemInfo(bag, slot)
+                        if info and info.isLocked and tries < 20 then return C_Timer.After(0.1, settled) end
+                    end
+                end
+                onDone()
+            end
+            settled()
+        end
         return
     end
     self.selling = true

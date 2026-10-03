@@ -278,15 +278,22 @@ function S:Place()
     end
 end
 
--- The bar held by one of its edges (UIParent's same point), where it is now
+-- The bar held by the edge it grows from (UIParent's same point), where its
+-- first button is now: that button stays put whatever the count, the size or
+-- the direction
 function S:HoldEdge(point)
     local bar = self.bar
-    if bar:GetPoint(1) == point or not bar:GetLeft() then return end
-    local l, b, w, h = bar:GetLeft(), bar:GetBottom(), bar:GetWidth(), bar:GetHeight()
+    local ref = bar.buttons and bar.buttons[1]
+    if not (ref and ref:IsShown() and ref:GetLeft()) then return end
+    local l, b, w, h = ref:GetLeft(), ref:GetBottom(), ref:GetWidth(), ref:GetHeight()
     local fx = point == "LEFT" and 0 or point == "RIGHT" and 1 or 0.5
     local fy = point == "BOTTOM" and 0 or point == "TOP" and 1 or 0.5
+    local x = l + w * fx - UIParent:GetWidth() * fx
+    local y = b + h * fy - UIParent:GetHeight() * fy
+    local current, _, _, cx, cy = bar:GetPoint(1)
+    if current == point and math.abs((cx or 0) - x) < 1 and math.abs((cy or 0) - y) < 1 then return end
     bar:ClearAllPoints()
-    bar:SetPoint(point, UIParent, point, l + w * fx - UIParent:GetWidth() * fx, b + h * fy - UIParent:GetHeight() * fy)
+    bar:SetPoint(point, UIParent, point, x, y)
     self:SavePosition()
 end
 
@@ -350,6 +357,7 @@ function S:Refresh()
     self:BuildBar()
     local bar = self.bar
     local d = DIRECTION[s.layout] or DIRECTION.right
+    self:HoldEdge(d.anchor)
     for i, item in ipairs(list) do
         local b = self:Button(i)
         resize(b, size)
@@ -366,7 +374,6 @@ function S:Refresh()
         bar.buttons[i].click:Hide()
     end
     local length = math.max(1, #list * (size + 8) - 8)
-    self:HoldEdge(d.anchor)
     if d.x ~= 0 then bar:SetSize(length, size) else bar:SetSize(size, length) end
     bar:SetShown(#list > 0 or self.moving or false)
     self.layout = layout
@@ -467,7 +474,7 @@ function S:BagItems()
     for _, r in ipairs(self:Resources()) do
         if r.id then tracked[r.id] = true end
     end
-    for bag = 0, NUM_BAG_SLOTS or 4 do
+    for bag = 0, NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4 do
         for slot = 1, C_Container.GetContainerNumSlots(bag) or 0 do
             local id = C_Container.GetContainerItemID(bag, slot)
             if id and not tracked[id] and not seen[id] then

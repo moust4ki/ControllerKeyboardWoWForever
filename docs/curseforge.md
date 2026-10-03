@@ -73,7 +73,7 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
   used commands.
 - **Mouse and Steam Controller**: every key is clickable; the message is kept even when the game
   closes the chat on a click.
-- **Safe with WoW Forever's gamepad UI**: the addon never writes into the game's chat box and is
+- **Safe with WoW Forever's gamepad UI**: the addon never types text into the game's chat box and is
   disabled in combat, so it cannot cause blocked actions or freezes.
 - **Options panel**: input method, keyboard layout, stick dead zone and response, magnet, 4 window
   sizes, Blizzard fonts, Xbox / PlayStation button icons, suggestion language, and more.

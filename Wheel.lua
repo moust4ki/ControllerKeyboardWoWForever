@@ -117,9 +117,12 @@ function M:Build(area)
     end
     local bg = area:CreateTexture(nil, "BACKGROUND")
     -- New texture files are only seen after restarting the game (not /reload)
-    if bg:SetTexture(K.TEX .. "ck_wheel_bg_8") == false then
+    bg:SetTexture(K.TEX .. "ck_wheel_bg_8")
+    local probe = area:CreateTexture()
+    if probe:SetTexture(K.TEX .. "ck_dw_hub") == false then
         C_Timer.After(2, function() CK:Print(L.TEXTURES_MISSING) end)
     end
+    probe:Hide()
     bg:SetAllPoints()
 
     -- The other sections veiled, the chosen one lit
@@ -186,7 +189,7 @@ function M:Build(area)
     self.aimed:SetShadowColor(0, 0, 0, 1)
     self.layerLabel = hub:CreateFontString(nil, "OVERLAY")
     self.layerLabel:SetFont(CK:GetFontPath(), LAYER_FONT, "")
-    self.layerLabel:SetPoint("CENTER", 0, -22)
+    self.layerLabel:SetPoint("CENTER", 0, -24)
     self.layerLabel:SetTextColor(unpack(COLORS.layer))
     self.layerLabel:SetText("123")
 end

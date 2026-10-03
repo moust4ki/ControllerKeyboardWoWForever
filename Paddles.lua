@@ -220,8 +220,8 @@ function P:Capture(id, onDone)
         f:SetPoint("CENTER")
         f:SetScript("OnKeyDown", function(_, key)
             if IGNORED_KEYS[key] then return end
-            if key == "ESCAPE" then CK.Config:Swallow({ ESCAPE = true }) end
-            P:StopCapture(key ~= "ESCAPE" and key or nil)
+            if key == "ESCAPE" then return CK.Config:PressFromCapture("ESCAPE") end
+            P:StopCapture(key)
         end)
         if f.EnableGamePadButton then
             f:SetScript("OnGamePadButtonDown", function(_, button)

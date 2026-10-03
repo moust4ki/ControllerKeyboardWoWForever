@@ -217,7 +217,7 @@ local HANDLERS = {
     PLAYER_DEAD = function() V:Fire("death") end,
     UNIT_SPELLCAST_INTERRUPTED = function(unit, _, _, interruptedBy)
         -- Interrupted by someone (moving also cancels a cast: no interrupter)
-        if unit == "player" and interruptedBy ~= nil and (secret(interruptedBy) or interruptedBy ~= "") then
+        if unit == "player" and (secret(interruptedBy) or (interruptedBy ~= nil and interruptedBy ~= "")) then
             V:Fire("interrupted")
         end
     end,
