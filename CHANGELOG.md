@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.8.0 (not released yet)
+
+- **Touchpads as buttons** (Gamepad › Display › Touchpads): for the Steam Deck, the Steam Controller,
+  the Vader Pro and other controllers whose touchpads can act as buttons. Set each touchpad as 4
+  buttons in Steam Input (each sending a keyboard key, F17 to F24 for example), turn on the ones you
+  use, one by one, then Identify paddles learns their keys. Up to 8 more buttons (TL1-TL4, TR1-TR4),
+  like the back paddles: the four trigger layers, spells, items, macros, game functions, shown next to
+  the gamepad bar. The Gamepad tab lists them under the controller.
+- **Free placement** of the extra buttons (Gamepad › Display): anywhere, a few pixels at a time with
+  the D-pad or dragged with the mouse, instead of the fixed places.
+- **Red when out of range** (Gamepad › Display): the whole spell turns red on the gamepad bar and the
+  extra buttons when the target is too far (or too close for a hunter), not only the game's small dot.
+- "Place bar" is now **Move buttons**.
+
 ## 1.7.0
 
 - **OLED screens** (Home › Look › Centre dot): the gamepad UI's dot in the middle of the screen, always

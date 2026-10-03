@@ -283,6 +283,7 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
         safe(function() CK.Upgrades:Init() end)
         safe(function() CK.Automation:Init() end)
         safe(function() CK.Reticle:Init() end)
+        safe(function() CK.Range:Init() end)
         -- Build the frames now, never while the chat is open (see Input.lua)
         if InCombatLockdown() then CK.buildPending = true else safe(function() CK:BuildUI() end) end
         safe(function() CK:RegisterOptions() end)

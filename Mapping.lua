@@ -43,7 +43,15 @@ M.INPUTS = {
     { id = "L5", paddle = true, x = 160, y = 372 },
     { id = "R5", paddle = true, x = 310, y = 372 },
     { id = "R4", paddle = true, x = 390, y = 372 },
+    -- Touchpads set as buttons (Steam Deck, Steam Controller, Vader Pro...):
+    -- 4 a side (up, right, down, left), each turned on in Gamepad > Display.
+    -- They work like the back paddles (a learned key, the four layers).
+    { id = "TL1", paddle = true, touch = true }, { id = "TL2", paddle = true, touch = true },
+    { id = "TL3", paddle = true, touch = true }, { id = "TL4", paddle = true, touch = true },
+    { id = "TR1", paddle = true, touch = true }, { id = "TR2", paddle = true, touch = true },
+    { id = "TR3", paddle = true, touch = true }, { id = "TR4", paddle = true, touch = true },
 }
+M.TOUCH = { "TL1", "TL2", "TL3", "TL4", "TR1", "TR2", "TR3", "TR4" }
 M.BY_ID = {}
 for _, input in ipairs(M.INPUTS) do M.BY_ID[input.id] = input end
 
@@ -58,6 +66,20 @@ local function settings() return CK.db.settings end
 
 function M:Enabled()
     return CK.db and settings().modules.mapping
+end
+
+-- A touchpad button only once turned on (Gamepad > Display)
+function M:InputEnabled(input)
+    if not (input and input.touch) then return input ~= nil end
+    local on = settings().touchButtons
+    return type(on) == "table" and on[input.id] == true
+end
+
+function M:AnyTouch()
+    for _, id in ipairs(M.TOUCH) do
+        if self:InputEnabled(M.BY_ID[id]) then return true end
+    end
+    return false
 end
 
 function M:InputKey(input)
@@ -973,7 +995,7 @@ function M:Apply()
             end
         end
         for _, input in ipairs(M.INPUTS) do
-            if input.paddle then self:ApplyPaddle(input) end
+            if input.paddle and self:InputEnabled(input) then self:ApplyPaddle(input) end
         end
         self:ApplyReplaced()
     end
@@ -1143,7 +1165,7 @@ local function keyLabel(key)
             if k == key then return id end
         end
     end
-    for _, id in ipairs(CK.Paddles.ORDER) do
+    for _, id in ipairs(CK.Paddles.ALL) do
         if settings().paddles[id] and settings().paddles[id].key == key then return id end
     end
     return GetBindingText and GetBindingText(key) or key

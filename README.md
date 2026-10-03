@@ -223,14 +223,30 @@ you put on them. Spells are listed with their rank.
 
 The extra buttons that do something (back paddles, L3, R3) appear around the gamepad action bar, in
 its round slot style: the action's icon, count, cooldown and usability, the held trigger layer's
-action, and the game's pressed look when you press them. **Place bar** moves the game's gamepad bar by steps with the D-pad (only its
+action, and the game's pressed look when you press them. **Move buttons** moves the game's gamepad bar by steps with the D-pad (only its
 place on the screen changes, out of combat; X puts it back; the extra buttons follow it), and puts each
 extra button
 on one of the fixed places around the bar's controls (two columns on the outer side, two rows above and
 two below): the D-pad chooses the bar or a button (LB / RB too), A picks it up, then the D-pad moves it
 (a button goes from place to place, onto a taken place the two buttons swap), A puts it down and B puts
 it back; the mouse clicks a button then a place; the right side mirrors the left (Y turns it
-off), X puts a button back. Places follow the compact layout.
+off), X puts a button back. Places follow the compact layout. With **Free placement** on (Gamepad ›
+Display), the buttons go anywhere: a few pixels at a time with the D-pad, or dragged with the mouse.
+
+### Touchpads as buttons
+
+For the Steam Deck, the Steam Controller, the Vader Pro and other controllers whose touchpads can act
+as buttons: in Steam Input, set each touchpad as 4 buttons, each sending a keyboard key (F17 to F24
+for example). Turn on the ones you use in Gamepad › Display › Touchpads (TL1-TL4 for the left touchpad,
+up / right / down / left, TR1-TR4 for the right one), then **Identify paddles** asks for them after the
+back paddles. They work like the paddles (the four layers, spells, items, macros, game functions) and
+show next to the gamepad bar; the Gamepad tab lists them under the controller.
+
+### Red when out of range
+
+Gamepad › Display › Red when out of range: the whole spell turns red on the gamepad bar and on the
+extra buttons when the target is out of range (too far, or too close for a hunter's shots), instead of
+the game's small red dot only.
 
 ## Vibrations
 

@@ -29,15 +29,21 @@ local NODES = {
     { "UP", 182, 152 }, { "LEFT", 134, 200 }, { "RIGHT", 230, 200 }, { "DOWN", 182, 252 },
     { "R3", 312, 212 },
     { "L4", 34, 300 }, { "L5", 112, 300 }, { "R5", 376, 300 }, { "R4", 452, 300 },
+    -- The touchpad buttons turned on: a row under the controller (drawn
+    -- smaller then, see W:LayoutPad)
+    { "TL1", 60, 395, true }, { "TL2", 112, 395, true }, { "TL3", 164, 395, true }, { "TL4", 216, 395, true },
+    { "TR1", 264, 395, true }, { "TR2", 316, 395, true }, { "TR3", 368, 395, true }, { "TR4", 420, 395, true },
 }
+local TOUCH_SCALE = 0.8
 -- The D-pad's four sit on the drawn cross: no glyph of their own; square,
 -- like the game's gamepad bar draws them
 local NO_GLYPH = { UP = true, DOWN = true, LEFT = true, RIGHT = true }
 local SQUARE = NO_GLYPH
 -- Select and Start are close: narrower names
-local LABEL_W = { SELECT = 64, START = 64 }
+local LABEL_W = { SELECT = 64, START = 64, TL1 = 50, TL2 = 50, TL3 = 50, TL4 = 50, TR1 = 50, TR2 = 50, TR3 = 50, TR4 = 50 }
 local GLYPH_SIDE = {
     SELECT = "top", START = "top", Y = "top", B = "top", L4 = "top", L5 = "top", R4 = "top", R5 = "top",
+    TL1 = "top", TL2 = "top", TL3 = "top", TL4 = "top", TR1 = "top", TR2 = "top", TR3 = "top", TR4 = "top",
     X = "right", A = "right", RIGHT = "right",
 }
 local POS = {}
@@ -129,6 +135,24 @@ end
 
 function W:Focused()
     return M.BY_ID[self.node]
+end
+
+-- With touchpad buttons on, the controller is drawn smaller and their row
+-- fits under it
+function W:LayoutPad()
+    local area, touch = self.frame.area, M:AnyTouch()
+    if area.touch == touch then return end
+    area.touch = touch
+    area:ClearAllPoints()
+    if touch then
+        area:SetScale(TOUCH_SCALE)
+        area:SetPoint("TOP", self.frame.zone, "TOP", 0, -PAD_TOP / TOUCH_SCALE)
+    else
+        area:SetScale(1)
+        area:SetPoint("TOPLEFT", self.frame.zone, "TOPLEFT", 0, -PAD_TOP)
+    end
+    -- The focus on a button turned off: back on A
+    if not M:InputEnabled(M.BY_ID[self.node]) then self.node = "A" end
 end
 
 ---------------------------------------------------------------------------
@@ -343,21 +367,29 @@ function W:BuildWizard(f)
     w.title:SetPoint("TOPLEFT", 16, -16)
     w.title:SetWidth(PANEL_W - 32)
     w.title:SetWordWrap(true)
-    w.stepsRow = CK.NewFrame("Frame", nil, w)
-    w.stepsRow:SetPoint("TOPLEFT", w.title, "BOTTOMLEFT", 0, -14)
-    w.stepsRow:SetSize(PANEL_W - 32, 30)
     w.steps = {}
-    for i = 1, #P.ORDER do
-        local s = CK.NewFrame("Frame", nil, w.stepsRow)
-        s.box = K.Box(s, 4, 1, "ARTWORK")
-        s.box:SetPoints(s)
-        s.label = K.ChatText(s, 13, KC.cream)
-        s.label:SetPoint("CENTER", 0, 0)
-        w.steps[i] = s
+    local rows = {}
+    for r = 1, 3 do
+        local row = CK.NewFrame("Frame", nil, w)
+        row:SetPoint("TOPLEFT", w.title, "BOTTOMLEFT", 0, -14 - (r - 1) * 36)
+        row:SetSize(PANEL_W - 32, 30)
+        local list = {}
+        for c = 1, 4 do
+            local s = CK.NewFrame("Frame", nil, row)
+            s.box = K.Box(s, 4, 1, "ARTWORK")
+            s.box:SetPoints(s)
+            s.label = K.ChatText(s, 13, KC.cream)
+            s.label:SetPoint("CENTER", 0, 0)
+            list[c] = s
+            w.steps[#w.steps + 1] = s
+        end
+        K.LayoutRow(row, list, { 1, 1, 1, 1 }, 8)
+        rows[r] = row
     end
-    K.LayoutRow(w.stepsRow, w.steps, { 1, 1, 1, 1 }, 8)
+    w.stepRows = rows
+    w.stepsRow = rows[1]
     w.text = K.Text(w, 22, KC.focusText)
-    w.text:SetPoint("TOPLEFT", w.stepsRow, "BOTTOMLEFT", 0, -14)
+    w.text:SetPoint("TOPLEFT", rows[1], "BOTTOMLEFT", 0, -14)
     w.text:SetWidth(PANEL_W - 32)
     w.text:SetWordWrap(true)
     w.text:SetSpacing(8)
@@ -414,7 +446,7 @@ function W:RenderNode(node, layer)
     node.cell = cell
     local st = cell.state
     local focus = self.zone == "pad" and self.node == input.id
-    if self.wizard then focus = input.id == P.ORDER[self.wizard.step] end
+    if self.wizard then focus = input.id == P:Order()[self.wizard.step] end
     local look = { glow = focus }
     if st == "native" then
         -- No picture of its own: the button's glyph, if it has one
@@ -476,7 +508,13 @@ function W:Render()
             b.glyphs:SetPoint("CENTER", b, "CENTER", 0, 0)
         end
     end
-    for _, node in pairs(f.nodes) do self:RenderNode(node, layer) end
+    self:LayoutPad()
+    for _, node in pairs(f.nodes) do
+        local on = M:InputEnabled(node.input)
+        node:SetShown(on)
+        node.label:SetShown(on)
+        if on then self:RenderNode(node, layer) end
+    end
     local labels = self:ActionLabels()
     local none = M:ReplacedCount() == 0
     for i, b in ipairs(f.actions) do
@@ -504,15 +542,21 @@ end
 function W:RenderWizard()
     local w, step = self.wizardFrame, self.wizard.step
     w.title:SetText(L.MAP_IDENTIFY)
+    local order = P:Order()
     for i, s in ipairs(w.steps) do
         local done, now = i < step, i == step
+        s:SetShown(order[i] ~= nil)
         s.box:SetColors(done and KC.doneBg or (now and KC.nowBg or KC.controlBg), 1,
             done and KC.done or (now and KC.focus or KC.line2), 1)
-        s.label:SetText(P.ORDER[i])
+        s.label:SetText(order[i] or "")
         local c = (done or now) and KC.focusText or KC.eventOff
         s.label:SetTextColor(c[1], c[2], c[3])
     end
-    w.text:SetText(format(L.MAP_WIZARD, P.ORDER[step] or ""))
+    -- The text under the last row used
+    local rowsUsed = math.max(1, math.ceil(#order / 4))
+    w.text:ClearAllPoints()
+    w.text:SetPoint("TOPLEFT", w.stepRows[rowsUsed], "BOTTOMLEFT", 0, -14)
+    w.text:SetText(format(L.MAP_WIZARD, order[step] or ""))
     w.hint:SetText(L.MAP_IDENTIFY_HINT)
 end
 
@@ -628,7 +672,7 @@ function W:Nearest(from, dir)
     if not f then return end
     local best, bestScore
     for _, n in ipairs(NODES) do
-        if n[1] ~= from then
+        if n[1] ~= from and M:InputEnabled(M.BY_ID[n[1]]) then
             local dx, dy = n[2] - f[2], n[3] - f[3]
             local main, cross
             if dir == "UP" then
@@ -768,7 +812,7 @@ end
 function W:WizardStep()
     local wizard = self.wizard
     if not wizard then return end
-    local id = P.ORDER[wizard.step]
+    local id = P:Order()[wizard.step]
     if not id then
         self.wizard = nil
         C:Toast(L.MAP_WIZARD_DONE)
@@ -968,6 +1012,13 @@ end
 local function displayRows(b)
     local s = settings()
     local f = s.features
+    b.header(L.HDR_GAMEPAD_BAR)
+    b.check({ id = "d_range", label = L.LBL_RANGE_TINT, tip = L.TIP_RANGE_TINT,
+        get = function() return f.rangeTint == true end,
+        set = function(v)
+            f.rangeTint = v
+            CK.Range:Apply()
+        end })
     b.header(L.HDR_NEXT_TO_BAR)
     b.check({ id = "d_extra", label = L.LBL_EXTRA_BUTTONS, tip = L.FEAT_EXTRA_DISPLAY,
         get = function() return f.extraDisplay end,
@@ -979,6 +1030,14 @@ local function displayRows(b)
         get = function() return f.showSticks end,
         set = function(v)
             f.showSticks = v
+            P:Apply()
+        end })
+    b.check({ id = "d_free", label = L.LBL_FREE_PLACE, indent = true, disabled = not f.extraDisplay, tip = L.TIP_FREE_PLACE,
+        get = function() return s.extraFree end,
+        set = function(v)
+            -- Leaving it: each button on its nearest fixed place
+            s.extraFree = v
+            if not v then P:SnapAll() end
             P:Apply()
         end })
     b.choice({ id = "d_badge", label = L.LBL_BUTTON_NAMES, indent = true, disabled = not f.extraDisplay, tip = L.OPT_BADGE,
@@ -999,8 +1058,31 @@ local function displayRows(b)
     end
 end
 
+-- Touchpads set as buttons: each one turned on here
+local function touchRows(b)
+    local s = settings()
+    s.touchButtons = s.touchButtons or {}
+    b.info(L.TIP_SEC_TOUCH)
+    for _, side in ipairs({ "L", "R" }) do
+        b.header(L["HDR_TOUCH_" .. side])
+        for n = 1, 4 do
+            local id = "T" .. side .. n
+            b.check({ id = "t_" .. id, label = format("%s  %s", id, L["TOUCH_DIR_" .. n]), tip = L.TIP_SEC_TOUCH,
+                get = function() return s.touchButtons[id] == true end,
+                set = function(v)
+                    s.touchButtons[id] = v or nil
+                    M:Apply()
+                    P:Apply()
+                end })
+        end
+    end
+end
+
 W.display = C.NewRailPage({
     key = "gpdisplay", crumb = L.TAB_GAMEPAD,
     onBack = function() W:CloseDisplay() end,
-    sections = { { key = "display", label = L.SEC_DISPLAY, tip = L.TIP_SEC_DISPLAY, rows = displayRows } },
+    sections = {
+        { key = "display", label = L.SEC_DISPLAY, tip = L.TIP_SEC_DISPLAY, rows = displayRows },
+        { key = "touch", label = L.SEC_TOUCH, tip = L.TIP_SEC_TOUCH, rows = touchRows },
+    },
 })

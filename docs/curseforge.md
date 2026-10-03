@@ -14,6 +14,8 @@ Every feature you don't need can be turned off to save even more resources.
 ## Features
 - **Chat keyboard** with smartphone-style word prediction
 - **Gamepad mapping** and **back paddles** (Steam Deck, Xbox Elite, DualSense Edge…)
+- **Touchpads as buttons** (Steam Deck, Steam Controller, Vader Pro): up to 8 more buttons
+- **Red when out of range**: the whole spell, not just a dot
 - **Quest items** marked in your bags, quest links in the chat
 - **Vibrations** on the events you pick
 - **Supplies** tracker (arrows, soul shards, reagents, bag space…) that glows when you run low
@@ -129,7 +131,13 @@ example), then "Identify paddles" asks for each one in turn. Each paddle has the
 too once "RT as a modifier" is on (Gamepad › Display). The extra buttons (back
 paddles, L3, R3) are shown around the gamepad action bar, in its own round slot style, with the
 action's icon, count and cooldown, and press down like the game's buttons. Place each one where you
-want among fixed places around the bar's controls, with the D-pad or the mouse, mirrored left / right.
+want among fixed places around the bar's controls, with the D-pad or the mouse, mirrored left / right,
+or anywhere with Free placement.
+
+**Touchpads as buttons**
+Steam Deck, Steam Controller, Vader Pro: set each touchpad as 4 buttons in Steam Input (each sending a
+keyboard key), turn on the ones you use in Gamepad › Display, and "Identify paddles" learns them. Up
+to 8 more buttons, working like the back paddles.
 
 **Quest items**
 The items a quest asks to collect (cloth, ore, meat...), which the game does not mark, get the game's

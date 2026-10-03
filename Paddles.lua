@@ -18,6 +18,17 @@ CK.Paddles = P
 
 -- The back paddles, in the order they are identified
 P.ORDER = { "L4", "R4", "L5", "R5" }
+-- Every input learning a key (the paddles, the touchpad buttons)
+P.ALL = { "L4", "R4", "L5", "R5", "TL1", "TL2", "TL3", "TL4", "TR1", "TR2", "TR3", "TR4" }
+
+-- The ones to identify: the paddles, then the touchpad buttons turned on
+function P:Order()
+    local M, list = CK.Mapping, {}
+    for _, id in ipairs(P.ALL) do
+        if M:InputEnabled(M.BY_ID[id]) then list[#list + 1] = id end
+    end
+    return list
+end
 
 -- The game's gamepad bars (no trigger, LT, RT, LT+RT) and their buttons:
 -- the D-pad group ("Left") and the face group ("Right"). The face buttons
@@ -196,7 +207,7 @@ function P:StopCapture(key)
         -- this one's key in exchange
         local M = CK.Mapping
         local was = M:InputKey(M.BY_ID[id])
-        for _, other in ipairs(P.ORDER) do
+        for _, other in ipairs(P.ALL) do
             if other ~= id and M:InputKey(M.BY_ID[other]) == key then self:Config(other).key = was end
         end
         local previous = GetBindingAction and GetBindingAction(key)
@@ -259,12 +270,17 @@ local PRESSED = 4       -- the game's buttons shrink by 4 px when pressed
 
 -- Each one has its own place, relative to the game's left / right bar (both
 -- on the bottom bar in the compact layout); the right side mirrors the left
-P.EXTRA = { "L4", "L5", "L3", "R4", "R5", "R3" }
-local SIDE = { L4 = -1, L5 = -1, L3 = -1, R4 = 1, R5 = 1, R3 = 1 }
-local PARTNER = { L4 = "R4", R4 = "L4", L5 = "R5", R5 = "L5", L3 = "R3", R3 = "L3" }
+P.EXTRA = { "L4", "L5", "L3", "R4", "R5", "R3", "TL1", "TL2", "TL3", "TL4", "TR1", "TR2", "TR3", "TR4" }
+local SIDE = { L4 = -1, L5 = -1, L3 = -1, R4 = 1, R5 = 1, R3 = 1,
+    TL1 = -1, TL2 = -1, TL3 = -1, TL4 = -1, TR1 = 1, TR2 = 1, TR3 = 1, TR4 = 1 }
+local PARTNER = { L4 = "R4", R4 = "L4", L5 = "R5", R5 = "L5", L3 = "R3", R3 = "L3",
+    TL1 = "TR1", TR1 = "TL1", TL2 = "TR2", TR2 = "TL2", TL3 = "TR3", TR3 = "TL3", TL4 = "TR4", TR4 = "TL4" }
 P.DEFAULT_POS = {
     L4 = { x = -182, y = 26 }, L5 = { x = -182, y = -26 }, L3 = { x = -65, y = -78 },
     R4 = { x = 182, y = 26 }, R5 = { x = 182, y = -26 }, R3 = { x = 65, y = -78 },
+    -- The touchpad buttons: the outer column
+    TL1 = { x = -234, y = 52 }, TL2 = { x = -234, y = 26 }, TL3 = { x = -234, y = 0 }, TL4 = { x = -234, y = -26 },
+    TR1 = { x = 234, y = 52 }, TR2 = { x = 234, y = 26 }, TR3 = { x = 234, y = 0 }, TR4 = { x = 234, y = -26 },
 }
 
 local function atlasOr(tex, atlas, fallback)
@@ -563,6 +579,20 @@ function P:UpdateButton(b, cooldown, layer, state)
         local id = action and tonumber(action:match("^item:(%d+)$") or "")
         b.count:SetText(id and C_Item.GetItemCount and C_Item.GetItemCount(id) or "")
     end
+    -- Out of range: the whole spell in red (option)
+    local Range = CK.Range
+    if Range and Range.On() then
+        local out
+        if slot and hasAction(slot) then
+            out = Range.InRange(slot) == false
+        else
+            local spell = action and tonumber(action:match("^spell:(%d+)$") or "")
+            if spell and C_Spell and C_Spell.IsSpellInRange and UnitExists("target") then
+                out = C_Spell.IsSpellInRange(spell, "target") == false
+            end
+        end
+        if out then b.icon:SetVertexColor(Range.RED[1], Range.RED[2], Range.RED[3]) end
+    end
     if cooldown or action ~= b.action or slot ~= b.slot then
         b.action, b.slot = action, slot
         P.ApplyCooldown(b.cooldown, action)
@@ -574,6 +604,7 @@ function P:Position(id)
     local nearestPlace = P.NearestPlace
     local pos = settings().extraPos[id]
     if type(pos) ~= "table" or type(pos.x) ~= "number" or type(pos.y) ~= "number" then pos = P.DEFAULT_POS[id] end
+    if settings().extraFree then return pos.x, pos.y end
     return nearestPlace(SIDE[id], pos.x, pos.y)
 end
 
@@ -612,7 +643,8 @@ function P:UpdateVisibility()
         else
             show = hasAnyAction(id)
         end
-        f.buttons[id]:SetShown(self.placing or show or false)
+        local input = CK.Mapping.BY_ID[id]
+        f.buttons[id]:SetShown(CK.Mapping:InputEnabled(input) and (self.placing or show) or false)
     end
     local on = enabled() and settings().features.extraDisplay
     f:SetShown((self.placing or (on and bar ~= nil and bar:IsVisible())) and true or false)
@@ -693,12 +725,18 @@ function P:BuildFrame()
         b:EnableMouse(true)
         b:SetScript("OnEnter", tooltip)
         b:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        b:SetScript("OnMouseDown", function(self) if P.placing then P:SelectForPlacement(self.id) end end)
+        b:SetScript("OnMouseDown", function(self)
+            if not P.placing then return end
+            P:SelectForPlacement(self.id)
+            if settings().extraFree then P:StartDrag(self) end
+        end)
+        b:SetScript("OnMouseUp", function() P.drag = nil end)
         f.buttons[id] = b
     end
     local elapsed = 0
     f:SetScript("OnUpdate", function(_, dt)
         P:UpdatePressed()
+        if P.drag then P:Drag() end
         elapsed = elapsed + dt
         if elapsed < 0.1 then return end
         elapsed = 0
@@ -770,6 +808,31 @@ function P:SetPosition(id, x, y)
     end
 end
 
+-- Free placement turned off: each button on the nearest fixed place left
+-- (the shown ones first), never two on the same one
+function P:SnapAll()
+    local saved, taken, list, hidden = settings().extraPos, {}, {}, {}
+    for _, id in ipairs(P.EXTRA) do
+        local b = self.frame and self.frame.buttons[id]
+        if b and b:IsShown() then list[#list + 1] = id else hidden[#hidden + 1] = id end
+    end
+    for _, id in ipairs(hidden) do list[#list + 1] = id end
+    for _, id in ipairs(list) do
+        local pos = saved[id]
+        if type(pos) ~= "table" or type(pos.x) ~= "number" or type(pos.y) ~= "number" then pos = P.DEFAULT_POS[id] end
+        local best, bx, by
+        for _, place in ipairs(P.PLACES) do
+            local px, py = sidePlace(SIDE[id], place)
+            local d = (px - pos.x) ^ 2 + (py - pos.y) ^ 2
+            if not taken[px .. "," .. py] and (not best or d < best) then best, bx, by = d, px, py end
+        end
+        if bx then
+            taken[bx .. "," .. by] = true
+            saved[id] = { x = bx, y = by }
+        end
+    end
+end
+
 -- Onto a place: the button already there (same side) takes the old place
 function P:MoveTo(id, x, y)
     local ox, oy = self:Position(id)
@@ -783,10 +846,34 @@ function P:MoveTo(id, x, y)
 end
 
 local DIRS = { UP = { 0, 1 }, DOWN = { 0, -1 }, LEFT = { -1, 0 }, RIGHT = { 1, 0 } }
+local FREE_STEP = 4
+
+-- Free placement with the mouse: the button follows the cursor while held
+function P:StartDrag(b)
+    local x, y = self:Position(b.id)
+    local cx, cy = GetCursorPosition()
+    self.drag = { id = b.id, x = x, y = y, cx = cx, cy = cy, scale = b:GetEffectiveScale() }
+end
+
+function P:Drag()
+    local d = self.drag
+    if not (IsMouseButtonDown and IsMouseButtonDown("LeftButton")) then
+        self.drag = nil
+        return
+    end
+    local cx, cy = GetCursorPosition()
+    self:SetPosition(d.id, math.floor(d.x + (cx - d.cx) / d.scale + 0.5), math.floor(d.y + (cy - d.cy) / d.scale + 0.5))
+    self:Layout()
+end
 
 function P:Step(id, dir)
     local x, y = self:Position(id)
     local dx, dy = DIRS[dir][1], DIRS[dir][2]
+    -- Free placement: a few pixels at a time (held, the D-pad repeats)
+    if settings().extraFree then
+        self:SetPosition(id, x + dx * FREE_STEP, y + dy * FREE_STEP)
+        return
+    end
     local best, bx, by
     for _, place in ipairs(P.PLACES) do
         local px, py = sidePlace(SIDE[id], place)
@@ -849,7 +936,7 @@ function P:MoveBar(dx, dy)
 end
 
 -- What can be placed: the bar, then each extra button
-P.PLACE_ORDER = { "BAR", "L4", "L5", "L3", "R4", "R5", "R3" }
+P.PLACE_ORDER = { "BAR", "L4", "L5", "L3", "R4", "R5", "R3", "TL1", "TL2", "TL3", "TL4", "TR1", "TR2", "TR3", "TR4" }
 
 -- Placing works in two steps: the D-pad chooses an element (the bar or a
 -- button, by where it is on the screen), A picks it up; then the D-pad moves
@@ -876,7 +963,7 @@ function P:RenderPlacementRings()
         self.barRing.slice:SetVertexColor(color[1], color[2], color[3])
     end
     -- The places only matter for a button being moved
-    for _, m in ipairs(self.markers or {}) do m:SetShown(id ~= "BAR") end
+    for _, m in ipairs(self.markers or {}) do m:SetShown(id ~= "BAR" and not settings().extraFree) end
 end
 
 -- Center of an element on the screen
@@ -898,7 +985,8 @@ function P:SelectToward(dir)
     local order = GamepadMainActionBarFrame and P.PLACE_ORDER or P.EXTRA
     for _, id in ipairs(order) do
         local x, y = screenCenter(id)
-        if id ~= self.placeSelected and x then
+        local shown = id == "BAR" or (self.frame.buttons[id] and self.frame.buttons[id]:IsShown())
+        if id ~= self.placeSelected and x and shown then
             local vx, vy = x - fx, y - fy
             local along = vx * dx + vy * dy
             local across = math.abs(vx * dy - vy * dx)
@@ -1068,11 +1156,18 @@ function P:PlacementPress(name)
             self:Grab()
         elseif name == "LB" or name == "RB" then
             local order = GamepadMainActionBarFrame and P.PLACE_ORDER or P.EXTRA
+            -- The ones shown only (a touchpad button turned off is not)
+            local shown = {}
+            for _, other in ipairs(order) do
+                if other == "BAR" or (self.frame.buttons[other] and self.frame.buttons[other]:IsShown()) then
+                    shown[#shown + 1] = other
+                end
+            end
             local index = 1
-            for i, other in ipairs(order) do
+            for i, other in ipairs(shown) do
                 if other == id then index = i end
             end
-            self:SelectForPlacement(order[(index - 1 + (name == "LB" and -1 or 1)) % #order + 1])
+            self:SelectForPlacement(shown[(index - 1 + (name == "LB" and -1 or 1)) % #shown + 1])
         elseif name == "B" then
             self:StopPlacement()
             CK.Config:EndPlacement()
