@@ -61,6 +61,8 @@ function CK:ApplyFont()
     for _, entry in ipairs(fontStrings) do
         entry.fs:SetFont(path, entry.size, "")
     end
+    -- The suggestions' widths follow the font
+    if self.frame then self:UpdateSuggestions() end
 end
 
 -- 9-slice: the `texCorner` px corners of a texW x texH texture are drawn at
@@ -299,6 +301,10 @@ function CK:BuildUI()
         b:Hide()
         f.sugg[n] = b
     end
+    -- Measures a suggestion's whole width (never drawn)
+    f.suggMeasure = text(f, 13)
+    f.suggMeasure:SetWordWrap(false)
+    f.suggMeasure:SetAlpha(0)
 
     -- Input methods, each in its own area (only the active one is shown)
     for _, method in pairs(CK.Methods) do
@@ -444,10 +450,8 @@ function CK:Layout()
     place(f.sbar, f, 8, 58, w - 16, 28)
     place(f.lbGlyph, f, 12, 61, 22, 22)
     place(f.rbGlyph, f, w - 34, 61, 22, 22)
-    local step = (w - 76) / #f.sugg
-    for n, b in ipairs(f.sugg) do
-        place(b, f, 38 + step * (n - 1), 59, step - 4, 26)
-    end
+    f.suggWidth = w - 76
+    self:LayoutSuggestions()
 
     for _, m in pairs(CK.Methods) do m.area:SetShown(m == method) end
     place(method.area, f, (w - method.areaWidth) / 2, AREA_Y, method.areaWidth, mh)
@@ -667,8 +671,42 @@ function CK:UpdateChannels()
     end
 end
 
+-- Each suggestion as wide as its word (the room left shared out), so a word
+-- is never cut: the ones that don't fit whole are left out. A word too long
+-- for the whole row (a quest's name) is the only one cut.
+local SUGG_X, SUGG_PAD, SUGG_GAP = 38, 14, 4
+
+function CK:LayoutSuggestions()
+    local f = self.frame
+    if not (f and f.suggWidth and self.state) then return end
+    local list, total = self.state.suggestions, f.suggWidth
+    local quests = self.InQuestList and self:InQuestList()
+    local widths, sum, count = {}, 0, 0
+    for i = 1, math.min(#list, #f.sugg) do
+        f.suggMeasure:SetText(list[i])
+        local textWidth = f.suggMeasure:GetStringWidth()
+        local need = math.ceil(type(textWidth) == "number" and textWidth or 0) + SUGG_PAD
+        -- The quests' list pages through every quest: never shortened
+        if count > 0 and not quests and sum + need + SUGG_GAP * count > total then break end
+        widths[i], sum, count = need, sum + need, i
+    end
+    if not quests then
+        for i = #list, count + 1, -1 do list[i] = nil end
+        if (self.state.selected or 1) > math.max(count, 1) then self.state.selected = 1 end
+    end
+    if count == 0 then return end
+    local room = total - SUGG_GAP * (count - 1)
+    local x = SUGG_X
+    for i = 1, count do
+        local width = sum <= room and widths[i] + (room - sum) / count or widths[i] * room / sum
+        place(f.sugg[i], f, x, 59, width, 26)
+        x = x + width + SUGG_GAP
+    end
+end
+
 function CK:UpdateSuggestions()
     local f = self.frame
+    self:LayoutSuggestions()
     local list = self.state.suggestions
     for i, b in ipairs(f.sugg) do
         local word = list[i]
