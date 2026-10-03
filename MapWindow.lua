@@ -31,8 +31,8 @@ local NODES = {
     { "L4", 34, 300 }, { "L5", 112, 300 }, { "R5", 376, 300 }, { "R4", 452, 300 },
     -- The touchpad buttons turned on: a row under the controller (drawn
     -- smaller then, see W:LayoutPad)
-    { "TL1", 60, 395, true }, { "TL2", 112, 395, true }, { "TL3", 164, 395, true }, { "TL4", 216, 395, true },
-    { "TR1", 264, 395, true }, { "TR2", 316, 395, true }, { "TR3", 368, 395, true }, { "TR4", 420, 395, true },
+    { "TL1", 30, 385, true }, { "TL2", 86, 385, true }, { "TL3", 142, 385, true }, { "TL4", 198, 385, true },
+    { "TR1", 282, 385, true }, { "TR2", 338, 385, true }, { "TR3", 394, 385, true }, { "TR4", 450, 385, true },
 }
 local TOUCH_SCALE = 0.8
 -- The D-pad's four sit on the drawn cross: no glyph of their own; square,
@@ -40,7 +40,7 @@ local TOUCH_SCALE = 0.8
 local NO_GLYPH = { UP = true, DOWN = true, LEFT = true, RIGHT = true }
 local SQUARE = NO_GLYPH
 -- Select and Start are close: narrower names
-local LABEL_W = { SELECT = 64, START = 64, TL1 = 50, TL2 = 50, TL3 = 50, TL4 = 50, TR1 = 50, TR2 = 50, TR3 = 50, TR4 = 50 }
+local LABEL_W = { SELECT = 64, START = 64, TL1 = 54, TL2 = 54, TL3 = 54, TL4 = 54, TR1 = 54, TR2 = 54, TR3 = 54, TR4 = 54 }
 local GLYPH_SIDE = {
     SELECT = "top", START = "top", Y = "top", B = "top", L4 = "top", L5 = "top", R4 = "top", R5 = "top",
     TL1 = "top", TL2 = "top", TL3 = "top", TL4 = "top", TR1 = "top", TR2 = "top", TR3 = "top", TR4 = "top",
@@ -243,7 +243,9 @@ function W:BuildNode(area, n)
     node.label:SetPoint("TOP", node, "BOTTOM", 0, -2)
     node.label:SetWidth(LABEL_W[id] or 76)
     node.label:SetJustifyH("CENTER")
-    if node.label.SetMaxLines then node.label:SetMaxLines(1) end
+    -- The extra buttons' row is narrow: their names on two lines
+    if node.label.SetMaxLines then node.label:SetMaxLines(n[4] and 2 or 1) end
+    if n[4] then node.label:SetWordWrap(true) end
     node.slot:SetScript("OnClick", function(_, button)
         if W.wizard or P:IsCapturing() then return end
         C:Disarm()
