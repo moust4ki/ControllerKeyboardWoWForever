@@ -87,12 +87,14 @@ right, and a help bar showing only the buttons that work there.
 Up to 8 wheels of your own, shown as cards (their 8 slots, their name, the button they're on). Each
 opens an editor: the wheel with its slots around it and the lists beside it (spells, items, macros);
 a choice fills the slot and goes on to the next one. Name it with the gamepad keyboard, give it a
-button straight from the editor ("Assign a button"). Each wheel works like the consumables wheel, in
+button straight from the editor ("Assign a button"). Each wheel shows its filled slots only, in as many
+sections, and works like the consumables wheel, in
 combat too.
 
 **Consumables wheel**
 A key of its own (any free button, or a back paddle in any trigger layer) opens a wheel drawn like
-the game's own radial menu, 8 consumables a page (LB / RB for more), from your bags: food, drink,
+the game's own radial menu, cut in as many sections as it holds (two items: two halves; five: five
+sections), up to 8 consumables a page (LB / RB for more), from your bags: food, drink,
 healing and mana potions, healthstone, mana gem, bandages, buff food, elixirs and flasks, scrolls,
 the best first. Point with the left stick and press A to use; B cancels; the mouse works too. While
 it is open, and until you let the stick go, your character doesn't move, so eating isn't cut short.

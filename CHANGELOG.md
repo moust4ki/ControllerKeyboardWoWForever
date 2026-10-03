@@ -4,9 +4,9 @@
 
 - **Wheels that fit what they hold** (Claude Design): the consumables wheel and your own wheels are cut
   in as many sections as the page holds, from 1 to 8: two items, two halves; five items, five
-  sections. Same look as the game's radial menu; the aimed section lights up, what can't be used now
-  is veiled; the names sit just outside the wheel. Your own wheels show their filled slots only, in
-  their order. Works in combat as before.
+  sections. Same look as the game's radial menu: the aimed section lights up, what can't be used now
+  is veiled, each name sits beside its icon in the game's font, the banner right under the wheel.
+  Your own wheels show their filled slots only, in their order. Works in combat as before.
 
 ## 1.4.2
 
