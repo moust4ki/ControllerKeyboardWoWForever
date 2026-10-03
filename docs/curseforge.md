@@ -1,5 +1,7 @@
 # Easy Controller - Forever
 
+**Built to be as light as possible, for handhelds and the Steam Deck: about 0.1 % CPU and 5 MB of memory.**
+
 > **To open the settings: hold RB and press D-pad down** (or type `/ec config` in the chat).
 
 **WoW Forever's gamepad play, made easy. No keyboard needed.**
