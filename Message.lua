@@ -499,6 +499,15 @@ function CK:CycleChannel(delta)
     for step = 1, count do
         local i = (index - 1 + step * delta) % count + 1
         if i == n + 1 then
+            -- The Quests chip only inserts links: the channel the row was
+            -- entered with comes back (passing /w on the way changes nothing)
+            local from = self.channelsFrom
+            if from then
+                local attrs = {}
+                for k, v in pairs(from) do attrs[k] = v end
+                self.chatAttrs = attrs
+                self:ApplyStickyChannel()
+            end
             self.state.questChip = true
             self:Refresh()
             return
@@ -520,7 +529,16 @@ function CK:SetActiveRow(row)
     self:UpdateRows()
 end
 
-function CK:FocusChannels() self:SetActiveRow("channels") end
+-- The channel row: the channel in use is noted, for the Quests chip
+function CK:FocusChannels()
+    if self.state.activeRow ~= "channels" then
+        local attrs = self.chatAttrs or snapshotAttrs(self.editBox)
+        local from = {}
+        for k, v in pairs(attrs) do from[k] = v end
+        self.channelsFrom = from
+    end
+    self:SetActiveRow("channels")
+end
 function CK:FocusSuggestions() self:SetActiveRow("suggestions") end
 
 -- Right stick click (or flick up): on the channel row, confirm the channel
@@ -680,6 +698,7 @@ function CK:Open(eb)
     end
     self.standalone = false
     self.chatAttrs = nil
+    self.channelsFrom = nil
     self.whisperTarget = nil
     self.editBox = eb
     self.lastEditBox = eb
@@ -714,6 +733,7 @@ function CK:Close(reason)
     self.standalone = false
     self.buffer = nil
     self.chatAttrs = nil
+    self.channelsFrom = nil
     self.editBox = nil
     self.state.aim = nil
     self.state.questList = nil
