@@ -22,6 +22,8 @@ without changing it:
   own, made with the gamepad.
 - **Consumables wheel**: one key opens a wheel of your food, drinks, potions, healthstone, bandages,
   elixirs...; point with the left stick, A uses. Works in combat.
+- **Wheels that fit**: every wheel is cut in as many sections as it holds, in the style of the game's
+  own radial menu: two items, two halves; five items, five sections.
 - **Better items**: a green arrow on the items of your bags that are better than what you wear,
   judged by their stats for your class.
 - **At merchants**: grey items sold and equipment repaired by themselves, if you want it.
