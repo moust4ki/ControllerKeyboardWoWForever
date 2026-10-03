@@ -7,34 +7,26 @@ Every feature you don't need can be turned off to save even more resources.
 
 **WoW Forever's gamepad play, made easy. No keyboard needed.**
 
-Easy Controller - Forever (formerly Controller Keyboard) fills the gaps of WoW Forever's gamepad UI,
-without changing it:
+## What's new in 1.7.0
+- **OLED friendly**: the gamepad UI's centre dot in a colour of your choice, changing colour every 5 minutes, or hidden, so it doesn't burn into an OLED screen (Steam Deck OLED, handhelds).
+- **Nintendo Switch button icons**, with the game's own Switch glyphs.
 
-- **Chat keyboard**: type in the chat with the gamepad, with smartphone-style word prediction that
-  learns the way you write.
-- **Gamepad mapping**: your whole controller in one window; fill the gamepad bar's slots, and put the
-  missing game functions (run / walk, game menu, map...) on the free buttons and the **back paddles**
-  (Steam Deck, Elite, Edge...).
-- **Quests**: the items your quests ask for (meat, cloth...) get an orange quest border in your
-  bags and a "do not sell" line naming the quest; quest links in the chat.
-- **Vibrations**: the controller vibrates on the events you pick (interrupted, whisper, invite,
-  level up, bags full...), each with its own pattern.
-- **Supplies**: a button per resource (bag space, ammo, soul shards, reagents, any item) that glows
-  when you run low.
-- **Your own wheels**: up to 8 wheels of the spells, items and macros you choose, each on a key of its
-  own, made with the gamepad.
-- **Consumables wheel**: one key opens a wheel of your food, drinks, potions, healthstone, bandages,
-  elixirs...; point with the left stick, A uses. Works in combat.
-- **Wheels that fit**: every wheel is cut in as many sections as it holds, in the style of the game's
-  own radial menu: two items, two halves; five items, five sections.
-- **Better items**: a green arrow on the items of your bags that are better than what you wear,
-  judged by their stats for your class.
-- **At merchants**: grey items sold and equipment repaired by themselves, if you want it.
-- **OLED friendly**: the gamepad UI's centre dot in a colour of your choice, changing colour every 5
-  minutes, or hidden, so it doesn't burn into an OLED screen (Steam Deck OLED, handhelds).
+## Features
+- **Chat keyboard** with smartphone-style word prediction
+- **Gamepad mapping** and **back paddles** (Steam Deck, Elite, Edge…)
+- **Quest items** marked in your bags, quest links in the chat
+- **Vibrations** on the events you pick
+- **Supplies** tracker that glows when you run low
+- **Your own wheels** of spells, items and macros
+- **Consumables wheel**, usable in combat
+- **Wheels that fit**: as many sections as items
+- **Better items** arrows in your bags
+- **At merchants**: auto-sell junk and auto-repair
+- **OLED friendly** centre dot
+- **Xbox / PlayStation / Switch** button icons
 
 Everything is driven with the gamepad (RB + D-pad down opens the configuration panel), every function
-can be turned off, and the look matches WoW Forever's gamepad UI.
+can be turned off, and the look matches WoW Forever's gamepad UI. The details of each part follow.
 
 ## Chat keyboard
 
