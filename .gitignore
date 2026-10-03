@@ -1,3 +1,6 @@
 .claude/
 __pycache__/
 dist/
+
+# The game's own radial art, extracted for reference only (Blizzard's)
+design/radial/gamepad-radial-menu-*.png

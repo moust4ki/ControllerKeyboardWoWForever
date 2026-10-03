@@ -2,10 +2,10 @@ local _, CK = ...
 local L = CK.L
 
 -- Module "consumables wheel": a key of its own (Gamepad tab, or the game's key
--- bindings) opens a wheel of consumables from the bags, drawn like the game's
--- own radial menu (its wheel, its highlight, its veil), the aimed item and the
--- help in its middle: 8 per page, LB / RB
--- turn the pages (up to 3). Food, drink,
+-- bindings) opens a wheel of consumables from the bags, drawn in the style of
+-- the game's own radial menu (Claude Design): as many sections as the page
+-- holds items (2 items: two halves, 5: five sections), up to 8 a page, LB /
+-- RB turn the pages (up to 3). Food, drink,
 -- health and mana potions, healthstone, mana gem, bandages, buff food,
 -- elixirs and flasks, scrolls. Its key opens it, the left stick chooses (the
 -- choice stays when it goes back to the middle; the right stick is the
@@ -37,20 +37,34 @@ local SEGMENTS, PAGES = 8, 3
 W.MY_MAX = 8
 local MAX = SEGMENTS * PAGES
 local AIM = 0.5     -- the stick aims past half its course
--- The game's radial menu: its segments' centers (150 from the middle), the
--- icons drawn a little closer in, the names further out
-local DISTANCE, ICON_RADIUS, SLOT = 150, 110, 46
--- The names, further out than the icons ({ distance from the middle, width }):
--- beside the icon for the left and right segments, above / below otherwise
-local LABEL = {
-    { 180, 70 }, { 178, 92 }, { 180, 112 }, { 178, 92 }, { 180, 70 }, { 178, 92 }, { 180, 112 }, { 178, 92 },
+-- The wheel's art (Claude Design, design/radial/wheel/geometry.json): 512 x
+-- 512, its crown from 75 to 213 from the middle, the icons at 144; the names
+-- just outside it, turned outwards
+local WHEEL_SIZE, ICON_RADIUS, LABEL_RADIUS, LABEL_W, SLOT = 512, 144, 232, 120, 46
+-- The section overlays (highlight, veil) cut to their section: { width,
+-- height, x, y } with x, y their centre from the wheel's (y up), for section
+-- 1 (tools/wheel_textures.py)
+local OVERLAY = {
+    [1] = { 512, 512, 0, 0 },
+    [2] = { 512, 256, 0, 110 },
+    [3] = { 512, 256, 0, 130 },
+    [4] = { 512, 256, 0, 137 },
+    [5] = { 256, 256, 0, 140 },
+    [6] = { 256, 256, 0, 142 },
+    [7] = { 256, 256, 0, 142 },
+    [8] = { 256, 256, 0, 143 },
 }
 -- The banner under the wheel, sized for its two lines
 local BANNER_W, BANNER_H = 360, 64
--- Our slots go clockwise from the top; the game numbers its segments
--- anticlockwise from the right (1 east, 3 north)
-local function segmentOf(slot) return (3 - slot) % SEGMENTS + 1 end
-local function angleOf(slot) return math.rad((segmentOf(slot) - 1) * 45) end
+local TEX = "Interface\\AddOns\\EasyController\\textures\\"
+-- Slot `i` of a page of `n`: clockwise from the top, its angle (radians,
+-- clockwise from 12 o'clock) and its direction (x right, y up)
+local function slotAngle(i, n) return (i - 1) * 2 * math.pi / n end
+local function slotDir(i, n)
+    local a = slotAngle(i, n)
+    return math.sin(a), math.cos(a)
+end
+W.slotDir = slotDir
 
 -- The wheel's kinds, in its order
 W.CATEGORIES = { "food", "drink", "healthPotion", "manaPotion", "healthstone", "manaGem", "bandage",
@@ -280,8 +294,12 @@ local PREFIXES = ",SHIFT-,CTRL-,ALT-,CTRL-SHIFT-,ALT-SHIFT-,ALT-CTRL-,ALT-CTRL-S
 -- A page of the open wheel into the 8 slots' buttons, from the wheel's
 -- attributes: "ck-c-2-5" is the consumables wheel ("c"; the player's: "1"
 -- to "8"), page 2, slot 5; "-t" its kind (item, spell, macro), "-u" its unit
+-- "-n": how many the page holds; the slots' buttons go around the wheel in
+-- as many sections ("ck-x5-2": slot 2 of 5's direction)
 local APPLY_PAGE = [[
     local key = "ck-" .. (owner:GetAttribute("wheel") or "c") .. "-" .. (owner:GetAttribute("page") or 1) .. "-"
+    local n = owner:GetAttribute(key .. "n") or 0
+    local radius = owner:GetAttribute("ck-radius")
     for i = 1, 8 do
         local b = owner:GetFrameRef("slot" .. i)
         local kind, value = owner:GetAttribute(key .. i .. "-t"), owner:GetAttribute(key .. i)
@@ -290,7 +308,14 @@ local APPLY_PAGE = [[
         b:SetAttribute("spell", kind == "spell" and value or nil)
         b:SetAttribute("macro", kind == "macro" and value or nil)
         b:SetAttribute("unit", owner:GetAttribute(key .. i .. "-u"))
-        if kind then b:Show() else b:Hide() end
+        if kind and i <= n then
+            b:ClearAllPoints()
+            b:SetPoint("CENTER", owner, "CENTER", radius * owner:GetAttribute("ck-x" .. n .. "-" .. i),
+                radius * owner:GetAttribute("ck-y" .. n .. "-" .. i))
+            b:Show()
+        else
+            b:Hide()
+        end
     end
 ]]
 
@@ -309,10 +334,11 @@ local AIMED = [[
     local slot = 0
     local state = GetGamePadState()
     local stick = state and state.sticks and state.sticks[owner:GetAttribute("ck-stick") or 1]
-    if stick and stick.len and stick.len > ]] .. AIM .. [[ then
+    local n = owner:GetAttribute("ck-" .. (owner:GetAttribute("wheel") or "c") .. "-" .. (owner:GetAttribute("page") or 1) .. "-n") or 0
+    if n > 0 and stick and stick.len and stick.len > ]] .. AIM .. [[ then
         local bestDot = -2
-        for i = 1, 8 do
-            local dot = stick.x * (owner:GetAttribute("ck-x" .. i) or 0) + stick.y * (owner:GetAttribute("ck-y" .. i) or 0)
+        for i = 1, n do
+            local dot = stick.x * owner:GetAttribute("ck-x" .. n .. "-" .. i) + stick.y * owner:GetAttribute("ck-y" .. n .. "-" .. i)
             if dot > bestDot then slot, bestDot = i, dot end
         end
     end
@@ -396,7 +422,7 @@ end
 function W:Build()
     if self.frame then return end
     local wheel = CK.NewFrame("Frame", "ControllerKeyboardWheel", UIParent, "SecureHandlerBaseTemplate")
-    wheel:SetSize(480, 600)
+    wheel:SetSize(WHEEL_SIZE, 600)
     wheel:SetFrameStrata("DIALOG")
     wheel:Hide()
     wheel:SetAttribute("wheel", "c")
@@ -413,11 +439,15 @@ function W:Build()
         W:SavePosition()
     end)
     wheel:SetAttribute("ck-prefixes", PREFIXES)
-    -- Each slot's direction, from the middle
-    for i = 1, SEGMENTS do
-        wheel:SetAttribute("ck-x" .. i, math.cos(angleOf(i)))
-        wheel:SetAttribute("ck-y" .. i, math.sin(angleOf(i)))
+    -- Each slot's direction from the middle, for each number of sections
+    for n = 1, SEGMENTS do
+        for i = 1, n do
+            local x, y = slotDir(i, n)
+            wheel:SetAttribute("ck-x" .. n .. "-" .. i, x)
+            wheel:SetAttribute("ck-y" .. n .. "-" .. i, y)
+        end
     end
+    wheel:SetAttribute("ck-radius", ICON_RADIUS)
     self.frame = wheel
     self:Place()
 
@@ -450,26 +480,19 @@ function W:Build()
     -- don't move (and food can be eaten: not while moving). Turned on each
     -- time it shows; its stick script is needed for the game to give it them.
     view:SetScript("OnGamePadStick", function() W:Track() end)
+    -- The wheel in as many sections as the page holds (set when drawn)
     local bg = view:CreateTexture(nil, "BACKGROUND")
     bg:SetPoint("CENTER")
-    atlas(bg, "gamepad-radial-menu-wheelbg", function(t)
-        t:SetSize(440, 440)
-        t:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
-        t:SetVertexColor(0, 0, 0, 0.7)
-    end)
+    bg:SetSize(WHEEL_SIZE, WHEEL_SIZE)
+    bg:SetTexture(TEX .. "ck_wheel_bg_8")
     view.bg = bg
-    -- The aimed segment
+    -- The aimed section
     view.highlight = view:CreateTexture(nil, "BORDER")
-    atlas(view.highlight, "gamepad-radial-menu-selected", function(t)
-        t:SetSize(SLOT * 1.6, SLOT * 1.6)
-        t:SetTexture(CK.UIKit.TEX .. "ck_slot_glow")
-        t:SetBlendMode("ADD")
-    end)
     view.highlight:Hide()
     -- Under the wheel, the game's banner: the aimed item (or what to do);
     -- below it, the pages and the help
     view.bottom = view:CreateTexture(nil, "BACKGROUND")
-    view.bottom:SetPoint("TOP", bg, "BOTTOM", 0, 8)
+    view.bottom:SetPoint("TOP", bg, "BOTTOM", 0, -26)
     atlas(view.bottom, "gamepad-radial-menu-bottomtext", function(t)
         t:SetColorTexture(0, 0, 0, 0.5)
     end)
@@ -500,26 +523,24 @@ function W:Build()
 
     self.segments, self.buttons = {}, {}
     for i = 1, SEGMENTS do
-        local angle = angleOf(i)
-        local cx, cy = DISTANCE * math.cos(angle), DISTANCE * math.sin(angle)
+        local ix, iy = slotDir(i, SEGMENTS)
+        ix, iy = ICON_RADIUS * ix, ICON_RADIUS * iy
         local seg = {}
-        -- The game's grey veil over a segment that can't be used
+        -- The grey veil over a section that can't be used
         seg.disabled = view:CreateTexture(nil, "ARTWORK", nil, 2)
-        seg.disabled:SetPoint("CENTER", bg, "CENTER", cx, cy)
-        atlas(seg.disabled, "gamepad-radial-menu-disabled")
-        seg.disabled:SetRotation(angle - math.rad(270))
         seg.disabled:Hide()
-        seg.highlightPoint = { cx, cy, angle - math.rad(270) }
         -- The item: a round slot of the gamepad bar's, its name further out
-        local ix, iy = ICON_RADIUS * math.cos(angle), ICON_RADIUS * math.sin(angle)
+        -- (both placed for the page's count when drawn)
         seg.slot = CK.Paddles:CreateSlot(view, SLOT)
         seg.slot:SetPoint("CENTER", bg, "CENTER", ix, iy)
         seg.slot:Hide()
-        local label = LABEL[segmentOf(i)]
         seg.label = view:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        seg.label:SetSize(label[2], 36)
+        -- Over the game's world: outlined
+        local font, size = seg.label:GetFont()
+        if font then seg.label:SetFont(font, size or 11, "OUTLINE") end
+        seg.label:SetWidth(LABEL_W)
         seg.label:SetWordWrap(true)
-        seg.label:SetPoint("CENTER", bg, "CENTER", label[1] * math.cos(angle), label[1] * math.sin(angle))
+        if seg.label.SetMaxLines then seg.label:SetMaxLines(2) end
         self.segments[i] = seg
         -- The slot's own secure button: clicked by a stick, A, the key ("s3"),
         -- or the mouse
@@ -574,6 +595,7 @@ local function store(wheel, wid, pages, unitOf)
     local total = 0
     for page = 1, PAGES do
         local list = pages[page] or {}
+        wheel:SetAttribute("ck-" .. wid .. "-" .. page .. "-n", #list)
         for i = 1, SEGMENTS do
             local e = list[i]
             local key = "ck-" .. wid .. "-" .. page .. "-" .. i
@@ -628,7 +650,13 @@ function W:Fill()
     self.lists.c = pages
     -- The player's own: one page, each slot where it was put
     for n = 1, W.MY_MAX do
-        local own = { [1] = CK.MyWheels and CK.MyWheels:Entries(n) or {} }
+        -- Its filled slots in their order, one after the other: the wheel has
+        -- as many sections
+        local entries, list = CK.MyWheels and CK.MyWheels:Entries(n) or {}, {}
+        for slot = 1, SEGMENTS do
+            if entries[slot] then list[#list + 1] = entries[slot] end
+        end
+        local own = { [1] = list }
         for _, e in pairs(own[1]) do
             if e.kind == "item" and not e.cat then
                 local ok, cat = pcall(W.Category, e.id)
@@ -717,11 +745,15 @@ function W:Paint()
     local page = self.frame:GetAttribute("page") or 1
     self.painted, self.paintedWheel = page, self.frame:GetAttribute("wheel") or "c"
     local list = self:PageItems()
+    local n = math.max(1, math.min(SEGMENTS, #list))
+    self.view.bg:SetTexture(TEX .. format("ck_wheel_bg_%d", n))
+    self.paintedCount = n
     for i, seg in ipairs(self.segments) do
         local item = list[i]
         seg.slot:SetShown(item ~= nil)
         seg.label:SetShown(item ~= nil)
         if item then
+            W:PlaceSection(seg, i, n)
             CK.Paddles.SetIcon(seg.slot.icon, W.EntryIcon(item))
             seg.slot.count:SetText(item.kind == "item" and (C_Item.GetItemCount and C_Item.GetItemCount(item.id) or 0) or "")
             seg.label:SetText(W.EntryName(item) or "")
@@ -759,15 +791,49 @@ function W:Paint()
     self:Track()
 end
 
+-- An overlay (highlight, veil) on section `i` of `n`: cut to section 1, so
+-- turned about its own centre, then put where that centre goes
+function W:PlaceOverlay(texture, kind, i, n)
+    local o = OVERLAY[n]
+    local a = slotAngle(i, n)
+    local x, y = o[3] * math.cos(a) + o[4] * math.sin(a), -o[3] * math.sin(a) + o[4] * math.cos(a)
+    texture:SetTexture(TEX .. format("ck_wheel_%s_%d", kind, n))
+    texture:SetSize(o[1], o[2])
+    texture:ClearAllPoints()
+    texture:SetPoint("CENTER", self.view.bg, "CENTER", x, y)
+    texture:SetRotation(-a)
+end
+
+-- A section's icon and name, for a page of `n`
+function W:PlaceSection(seg, i, n)
+    local dx, dy = slotDir(i, n)
+    seg.slot:ClearAllPoints()
+    seg.slot:SetPoint("CENTER", self.view.bg, "CENTER", ICON_RADIUS * dx, ICON_RADIUS * dy)
+    -- The name outside the wheel: above the top one, under the bottom one,
+    -- beside the others (aligned outwards)
+    local label, x, y = seg.label, LABEL_RADIUS * dx, LABEL_RADIUS * dy
+    label:ClearAllPoints()
+    if math.abs(dx) < 0.3 then
+        label:SetPoint(dy > 0 and "BOTTOM" or "TOP", self.view.bg, "CENTER", x, y)
+        label:SetJustifyH("CENTER")
+    else
+        label:SetPoint(dx > 0 and "LEFT" or "RIGHT", self.view.bg, "CENTER", x, y)
+        label:SetJustifyH(dx > 0 and "LEFT" or "RIGHT")
+    end
+    self:PlaceOverlay(seg.disabled, "off", i, n)
+end
+
 function W:Aimed()
     local wheel = self.frame
     local list = self:PageItems()
+    local n = math.min(SEGMENTS, #list)
     local state = C_GamePad and C_GamePad.GetDeviceMappedState and C_GamePad.GetDeviceMappedState()
     local stick = state and state.sticks and state.sticks[wheel:GetAttribute("ck-stick") or 1]
-    if stick and stick.len and stick.len > AIM then
+    if n > 0 and stick and stick.len and stick.len > AIM then
         local best, bestDot = nil, -2
-        for i = 1, SEGMENTS do
-            local dot = stick.x * wheel:GetAttribute("ck-x" .. i) + stick.y * wheel:GetAttribute("ck-y" .. i)
+        for i = 1, n do
+            local x, y = slotDir(i, n)
+            local dot = stick.x * x + stick.y * y
             if dot > bestDot then best, bestDot = i, dot end
         end
         return best and list[best] and best or nil
@@ -796,10 +862,7 @@ function W:Track()
         view.count:SetText(mine and L.MYWHEEL_NOTHING_HINT or L.WHEEL_NOTHING_HINT)
         return
     end
-    local point = self.segments[i].highlightPoint
-    view.highlight:ClearAllPoints()
-    view.highlight:SetPoint("CENTER", view.bg, "CENTER", point[1], point[2])
-    view.highlight:SetRotation(point[3])
+    self:PlaceOverlay(view.highlight, "sel", i, self.paintedCount or SEGMENTS)
     view.name:SetText(W.EntryName(item) or "")
     if item.kind == "item" then
         local count = C_Item.GetItemCount and C_Item.GetItemCount(item.id) or 0

@@ -1,0 +1,13 @@
+{
+  "canvas": 512,
+  "center": [256, 256],
+  "crownInnerRadius": 75.4,
+  "crownOuterRadius": 213.1,
+  "iconRadius": 144.2,
+  "ringRadius": [58.3, 75.9],
+  "frameRadius": [213.1, 226.2],
+  "separatorWidth": 19.2,
+  "shadowMaxRadius": 254,
+  "section1": "centered at 12 o'clock, sections clockwise; section k center angle = (k-1) * 360 / N degrees",
+  "overlays": "wheel_sel_N / wheel_off_N cover section 1; rotate by (k-1) * 360 / N degrees clockwise around (256,256) for section k"
+}
