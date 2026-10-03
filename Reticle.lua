@@ -19,6 +19,10 @@ R.COLORS = {
     { key = "green", rgb = { 0.35, 0.85, 0.35 } },
     { key = "magenta", rgb = { 0.85, 0.35, 0.80 } },
     { key = "blue", rgb = { 0.40, 0.55, 0.95 } },
+    -- For the fixed colour only (not in the changing cycle): grey, half lit;
+    -- black, its pixels off (the least wear, seen on light ground only)
+    { key = "grey", rgb = { 0.50, 0.50, 0.50 }, fixed = true },
+    { key = "black", rgb = { 0.00, 0.00, 0.00 }, fixed = true },
 }
 R.MODES = { "game", "color", "cycle", "hidden" }
 local CYCLE_TIME = 300
@@ -57,7 +61,9 @@ function R:UpdateTicker()
     if cycling and not self.ticker then
         self.cycleIndex = self.cycleIndex or 1
         self.ticker = C_Timer.NewTicker(CYCLE_TIME, function()
-            R.cycleIndex = R.cycleIndex % #R.COLORS + 1
+            repeat
+                R.cycleIndex = R.cycleIndex % #R.COLORS + 1
+            until not R.COLORS[R.cycleIndex].fixed
             R:Apply()
         end)
     elseif not cycling and self.ticker then
