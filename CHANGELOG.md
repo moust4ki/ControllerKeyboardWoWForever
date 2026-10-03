@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.6.0
+
+- **A new look for the chat keyboard** (Claude Design), in the style of the wheels and the game's
+  radial menu: a dark window with a bronze edge, dark rows, copper pills for the chosen word, channel
+  and mode.
+- **Daisywheel**: drawn on the 8-section wheel; the petal picked with the left stick lights up in
+  copper and the others dim, a gold pastille marks the character aimed with the right stick, which
+  the centre shows in large. New option (Keyboard › Input › Daisywheel look): **groups circled** (a
+  ring around each group of 4 characters) or **characters only**.
+- **Split keyboard**: new keys, columns aligned across all rows (Shift and 123 one key wide, Backspace
+  two, Space across both halves), the left target in copper and the right one in amber, a short
+  flash on the key typed with LT / RT, a divider between the halves, new cursors.
+- **Quests chip**: moving along the channel row to the "!" no longer leaves you on the last channel
+  passed; the channel you were on comes back, and the quest link goes there.
+
 ## 1.5.0
 
 - **Wheels that fit what they hold** (Claude Design): the consumables wheel and your own wheels are cut

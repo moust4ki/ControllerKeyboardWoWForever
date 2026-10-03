@@ -62,6 +62,10 @@ Choose the input method in the options or with `/ec mode wheel|stick`.
             [q r s t]
 ```
 
+Drawn on the 8-section wheel: the petal picked lights up, the others dim, a gold pastille marks the
+aimed character and the centre shows it in large. Option **Daisywheel look**: groups circled (a ring
+around each group of 4) or characters only.
+
 - **Left stick**: pick a petal.
 - **Right stick**: flick toward the letter to type (left / top / right / bottom of the petal).
 - **Left stick centered**: the right stick moves in the active row (← →), ↑ inserts the suggestion,
@@ -83,7 +87,9 @@ the left half (columns 1-5), the **right stick** on the right half (columns 6-10
 **tilt is its cursor's position** around the center of its half: released, the cursor is at the
 center; push fully to reach an edge or a corner. The keys near the middle of the keyboard are at the
 edge of their half, so they are easy to hit. A line links each center to its cursor; a magnet keeps
-the highlight from flickering. Keys over the middle (Space) belong to both halves.
+the highlight from flickering. Keys over the middle (Space) belong to both halves. The columns are
+aligned in every row (Shift and 123 one key wide, Backspace two); the left target is copper, the right
+one amber, and the key typed flashes.
 
 | Button | Action |
 |---|---|

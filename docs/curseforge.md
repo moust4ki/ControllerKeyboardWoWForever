@@ -40,14 +40,16 @@ clickable with the mouse or the Steam Controller trackpad.
 ## Two input methods
 
 **Daisywheel**
-A wheel of 8 petals with 4 characters each. The left stick picks a petal, the right stick flicks
-toward the letter. Two gestures per letter, thumbs never leave the sticks.
+A wheel of 8 petals with 4 characters each, drawn like the game's radial menu. The left stick picks a
+petal (it lights up), the right stick flicks toward the letter. Two gestures per letter, thumbs never
+leave the sticks. Groups circled or characters only, as you like.
 
 **Split keyboard**
 A full AZERTY, QWERTY, QWERTZ, Spanish or Italian keyboard cut in two halves. The left stick moves a cursor on the left half,
 the right stick on the right half: each stick's tilt is its cursor's position, released = center.
-LT types the left key, RT the right one. Large keys, a magnet so the highlight never flickers, and
-a linear stick response with an optional gentle or fast curve.
+LT types the left key, RT the right one. Large keys with aligned columns, a copper (left) and amber
+(right) target, a magnet so the highlight never flickers, and a linear stick response with an optional
+gentle or fast curve.
 
 Both methods have a numbers / accents / symbols layer whose accents follow the language
 (é è à ç… / ä ö ü ß / á é í ó ú ñ ¿ ¡ / à è é ì ò ù), and can be switched at any time in the options.
