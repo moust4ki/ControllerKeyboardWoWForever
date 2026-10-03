@@ -31,6 +31,24 @@ local ATLAS = {
         DPAD_RIGHT = { "Gamepad_Gen_Right_64", "Gamepad_Ltr_Right_64" },
         DPAD_DOWN = { "Gamepad_Gen_Down_64", "Gamepad_Ltr_Down_64" },
     },
+    switch = {
+        A = { "gamepad-switch-128x-face-b-normal" },
+        B = { "gamepad-switch-128x-face-a-normal" },
+        X = { "gamepad-switch-128x-face-y-normal" },
+        Y = { "gamepad-switch-128x-face-x-normal" },
+        LB = { "gamepad-switch-128x-shoulder-l-normal" },
+        RB = { "gamepad-switch-128x-shoulder-r-normal" },
+        LT = { "gamepad-switch-128x-zl-normal" },
+        RT = { "gamepad-switch-128x-zr-normal" },
+        LS = { "gamepad-switch-128x-stick-l3-normal", "gamepad-switch-128x-stick-l-normal" },
+        RS = { "gamepad-switch-128x-stick-r3-normal", "gamepad-switch-128x-stick-r-normal" },
+        DPAD = { "gamepad-switch-128x-dpad-all-normal" },
+        DPAD_LR = { "gamepad-switch-128x-dpad-leftright-normal" },
+        DPAD_UP = { "gamepad-switch-128x-dpad-up-normal" },
+        DPAD_LEFT = { "gamepad-switch-128x-dpad-left-normal" },
+        DPAD_RIGHT = { "gamepad-switch-128x-dpad-right-normal" },
+        DPAD_DOWN = { "gamepad-switch-128x-dpad-down-normal" },
+    },
     playstation = {
         A = { "Gamepad_Shp_Cross_64", "Gamepad_Shp_Cross_32" },
         B = { "Gamepad_Shp_Circle_64", "Gamepad_Shp_Circle_32" },
@@ -49,6 +67,12 @@ local ATLAS = {
     },
 }
 
+-- Without the game's icons, Switch shows our letters where Nintendo puts them
+local SWITCH_FALLBACK = { A = "ck_g_b", B = "ck_g_a", X = "ck_g_y", Y = "ck_g_x" }
+local function fallback(style, key)
+    return (style == "switch" and SWITCH_FALLBACK[key]) or FALLBACK[key] or "ck_g_a"
+end
+
 local function atlasExists(name)
     return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) ~= nil
 end
@@ -63,7 +87,7 @@ function CK:SetGlyph(tex, key)
             end
         end
     end
-    tex:SetTexture(TEX .. (FALLBACK[key] or "ck_g_a"))
+    tex:SetTexture(TEX .. fallback(style, key))
     tex:SetTexCoord(0, 1, 0, 1)
 end
 
@@ -76,7 +100,7 @@ function CK:GlyphMarkup(key, size)
             if atlasExists(name) then return format("|A:%s:%d:%d|a", name, size, size) end
         end
     end
-    return format("|T%s%s:%d:%d|t", TEX, FALLBACK[key] or "ck_g_a", size, size)
+    return format("|T%s%s:%d:%d|t", TEX, fallback(style, key), size, size)
 end
 
 -- /ec glyphs: print the gamepad atlases found in this client

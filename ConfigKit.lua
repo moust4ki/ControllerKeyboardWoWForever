@@ -185,9 +185,12 @@ K.INPUT_GLYPH = {
 }
 local CHIP_TEXT = { SELECT = "Select", START = "Start" }
 local CHIP_PS = { SELECT = "Create", START = "Options" }
+local CHIP_SWITCH = { SELECT = "-", START = "+" }
 
 function K.ChipText(key)
-    if CK.db and CK.db.settings.glyphStyle == "playstation" and CHIP_PS[key] then return CHIP_PS[key] end
+    local style = CK.db and CK.db.settings.glyphStyle
+    if style == "playstation" and CHIP_PS[key] then return CHIP_PS[key] end
+    if style == "switch" and CHIP_SWITCH[key] then return CHIP_SWITCH[key] end
     return CHIP_TEXT[key] or key
 end
 

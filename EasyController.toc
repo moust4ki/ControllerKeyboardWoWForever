@@ -19,6 +19,7 @@ Dict_itIT.lua
 Dict_WoW.lua
 Predict.lua
 Glyphs.lua
+Reticle.lua
 Message.lua
 UI.lua
 Wheel.lua

@@ -30,6 +30,7 @@ local Config = CK.Config
 local GLYPH_STYLES = {
     { key = "xbox", name = "Xbox" },
     { key = "playstation", name = "PlayStation" },
+    { key = "switch", name = "Nintendo Switch" },
 }
 
 local function indexOf(list, key)
@@ -184,6 +185,29 @@ local function lookRows(b)
         CK:UpdateMethod()
     end)
     b.choice({ id = "font", label = L.OPT_FONT, text = text, step = step, tip = L.TIP_FONT })
+    -- The gamepad UI's centre dot (OLED screens)
+    local r = s.reticle
+    local modes = {
+        { key = "game", name = L.RET_GAME }, { key = "color", name = L.RET_COLOR },
+        { key = "cycle", name = L.RET_CYCLE }, { key = "hidden", name = L.RET_HIDDEN },
+    }
+    b.choice({ id = "ret_mode", label = L.LBL_RETICLE, tip = L.TIP_RETICLE,
+        text = function() return modes[indexOf(modes, r.mode)].name end,
+        step = function(d)
+            local i = (indexOf(modes, r.mode) - 1 + d) % #modes + 1
+            CK.Reticle:SetMode(modes[i].key)
+        end })
+    b.choice({ id = "ret_color", label = L.LBL_RETICLE_COLOR, indent = true, disabled = r.mode ~= "color",
+        tip = L.TIP_RETICLE_COLOR,
+        text = function()
+            local c = CK.Reticle.COLORS[r.color] or CK.Reticle.COLORS[1]
+            return format("|cff%02x%02x%02x%s|r", c.rgb[1] * 255, c.rgb[2] * 255, c.rgb[3] * 255,
+                L["RET_C_" .. c.key:upper()])
+        end,
+        step = function(d)
+            r.color = ((r.color or 1) - 1 + d) % #CK.Reticle.COLORS + 1
+            CK.Reticle:Apply()
+        end })
 end
 
 -- At merchants (Automation.lua)
