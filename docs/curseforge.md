@@ -7,9 +7,12 @@ Every feature you don't need can be turned off to save even more resources.
 
 **WoW Forever's gamepad play, made easy. No keyboard needed.**
 
-## What's new in 1.7.0
-- **OLED burn-in prevention**: the gamepad UI's centre dot in a colour of your choice, changing colour every 5 minutes, or hidden, so it doesn't burn into an OLED screen (Steam Deck OLED, handhelds).
-- **Nintendo Switch button icons**, with the game's own Switch glyphs.
+## What's new in 1.8.0
+- **Extra buttons**: up to 8 more buttons, for controllers with more buttons (Vader Pro…) or touchpads set as buttons (Steam Deck, Steam Controller), working like the back paddles.
+- **Red when out of range**: the whole spell turns red on the gamepad bar, not just the small dot (too far, or too close for a hunter).
+- **Free placement** of the extra buttons next to the gamepad bar.
+- **Gamepad options in Home › Gamepad**, under the Gamepad extras switch.
+- **Keyboard suggestions** always show whole words.
 
 ## Features
 - **Chat keyboard** with smartphone-style word prediction

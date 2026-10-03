@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.8.0 (not released yet)
+## 1.8.0
 
 - **Extra buttons** (Home › Gamepad): up to 8 more buttons, 4 a side, for both controllers with
   more buttons (Vader Pro...) and touchpads set as buttons (Steam Deck, Steam Controller). Make each
@@ -15,6 +15,8 @@
 - "Place bar" is now **Move buttons**, and the Gamepad tab's Display options are in **Home › Gamepad**,
   with the Gamepad extras switch at the top (it turns on the functions on the free buttons, paddles
   and extra buttons; the options that need it are greyed while it is off).
+- **Keyboard suggestions** are never cut with "...": each one is as wide as its word, and the ones
+  that don't fit whole are left out (the daisywheel's row is narrow).
 
 ## 1.7.0
 
