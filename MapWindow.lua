@@ -481,7 +481,7 @@ function W:Render()
     local none = M:ReplacedCount() == 0
     for i, b in ipairs(f.actions) do
         b.label:SetText(labels[i])
-        b:SetState({ focus = self.zone == "actions" and self.act == i and not self.picker:IsOpen(),
+        b:SetState({ focus = self.zone == "actions" and self.act == i and not self.picker:IsOpen() and not self.wizard,
             armed = i == 4 and C:IsArmed("restore"), disabled = i == 4 and none })
     end
     -- The right panel
@@ -541,7 +541,7 @@ function W:Detail(layer)
     local replaceable = M:Replaceable(input, layer)
     local replaceHint = replaceable and (M:CanOwnKeys() and L.MAP_REPLACE_HINT or L.MAP_REPLACE_NO_MOD)
     if st == "native" then
-        body = replaceHint or L.MAP_NATIVE_HINT
+        body = input.layer and L.MAP_TRIGGER_HINT or replaceHint or L.MAP_NATIVE_HINT
     elseif st == "slot" then
         local kept = M:SlotKept(cell.slot)
         body = kept and (kept .. (replaceHint and ("\n\n" .. replaceHint) or ""))
@@ -597,12 +597,15 @@ function W:Help()
     local input = self:Focused()
     local cell = input and self:Cell(input, self:ViewLayer()) or { state = "off" }
     local hints = { H({ "DPAD" }, L.V_MOVE) }
-    if cell.state ~= "off" or cell.pick then
+    local layer = self:ViewLayer()
+    local state = input and M:State(input, layer)
+    if cell.pick or (cell.state ~= "off" and input
+        and (state == "slot" or state == "free" or M:Replaceable(input, layer))) then
         hints[#hints + 1] = H({ "A" }, cell.state == "free" and L.V_ASSIGN or L.V_CHANGE, "A")
     end
     if cell.replaced then
         hints[#hints + 1] = H({ "X" }, L.V_GIVE_BACK, "X")
-    elseif cell.state == "slot" and not cell.empty then
+    elseif cell.state == "slot" and not cell.empty and not M:SlotKept(cell.slot) then
         hints[#hints + 1] = H({ "X" }, L.V_EMPTY, "X")
     elseif cell.action then
         hints[#hints + 1] = H({ "X" }, L.V_REMOVE, "X")
@@ -806,8 +809,9 @@ end
 -- From a wheel's editor: the next button chosen takes the wheel
 function W:StartAssign(id)
     C:SetTab("gamepad")
+    self.picker:Close()
     self.assign = id
-    self.zone = "pad"
+    self.zone, self.node, self.layer = "pad", "A", ""
     C:Render()
 end
 
@@ -825,7 +829,8 @@ function W:AssignWheel()
         self.assign = nil
         C:Toast(format(L.TOAST_ON, CK.MyWheels:Name(id) or "", K.ComboMarkup(input.id, layer, 14)))
     elseif UIErrorsFrame then
-        UIErrorsFrame:AddMessage(M:Enabled() and L.MAP_REPLACE_NO_MOD or L.MAP_MODULE_OFF, 1, 0.1, 0.1)
+        local why = not M:Enabled() and L.MAP_MODULE_OFF or input.layer and L.MAP_TRIGGER_FIXED or L.MAP_REPLACE_NO_MOD
+        UIErrorsFrame:AddMessage(why, 1, 0.1, 0.1)
     end
     C:Render()
 end

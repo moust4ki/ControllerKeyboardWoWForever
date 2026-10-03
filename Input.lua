@@ -165,6 +165,13 @@ local function bindingButtonName(key)
     return "ControllerKeyboardPad" .. key
 end
 
+-- A trigger held may add a modifier to the keys (the gamepad UI's LT / RT
+-- act as Shift, Ctrl or Alt): LT then RT typed quickly is still RT
+local PREFIXES = { "", "SHIFT-", "CTRL-", "ALT-", "CTRL-SHIFT-", "ALT-SHIFT-", "ALT-CTRL-", "ALT-CTRL-SHIFT-" }
+local function bind(f, key, button)
+    for _, prefix in ipairs(PREFIXES) do SetOverrideBindingClick(f, true, prefix .. key, button) end
+end
+
 local SEND_BUTTON = "ControllerKeyboardSendButton"
 -- A in a prompt (a name for one of ours): confirms, nothing is sent
 local PROMPT_BUTTON = "ControllerKeyboardPromptButton"
@@ -305,23 +312,17 @@ function CK:EnableButtons()
     if InCombatLockdown() then return end
     ClearOverrideBindings(f)
     self.cancelBound = false
-    for key in pairs(COMMON_ACTIONS) do
-        SetOverrideBindingClick(f, true, key, bindingButtonName(key))
-    end
-    for key in pairs(self:GetMethod().buttons) do
-        SetOverrideBindingClick(f, true, key, bindingButtonName(key))
-    end
-    if self.standalone then
-        SetOverrideBindingClick(f, true, "PAD2", bindingButtonName("PAD2"))
-    end
+    for key in pairs(COMMON_ACTIONS) do bind(f, key, bindingButtonName(key)) end
+    for key in pairs(self:GetMethod().buttons) do bind(f, key, bindingButtonName(key)) end
+    if self.standalone then bind(f, "PAD2", bindingButtonName("PAD2")) end
     self.bindingsActive = true
     -- A prompt: A confirms, nothing goes to the chat
     if self.prompt then
-        SetOverrideBindingClick(f, true, "PAD1", PROMPT_BUTTON)
+        bind(f, "PAD1", PROMPT_BUTTON)
         return
     end
     -- A sends the keyboard's buffer (the chat edit box stays empty)
-    SetOverrideBindingClick(f, true, "PAD1", SEND_BUTTON)
+    bind(f, "PAD1", SEND_BUTTON)
     self:UpdateCancelBinding()
     self:PositionSendButton()
     self.sendButton:Show()
@@ -336,9 +337,9 @@ function CK:UpdateCancelBinding()
     local want = self:GetText() ~= "" or self:InQuestList()
     if want == self.cancelBound then return end
     if want then
-        SetOverrideBindingClick(self.frame, true, "PAD2", bindingButtonName("PAD2"))
+        bind(self.frame, "PAD2", bindingButtonName("PAD2"))
     else
-        SetOverrideBinding(self.frame, true, "PAD2", nil)
+        for _, prefix in ipairs(PREFIXES) do SetOverrideBinding(self.frame, true, prefix .. "PAD2", nil) end
     end
     self.cancelBound = want
 end

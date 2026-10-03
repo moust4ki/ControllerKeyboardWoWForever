@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.4.2
+
+Fixes found by end-to-end tests of the whole addon.
+
+- **Chat keyboard**: a command typed while on a whisper (/g, /dance...) is run, never whispered to the
+  person; Enter on an empty chat box no longer wipes the message typed with the pad; Battle.net
+  whispers are sent; text typed on a physical keyboard and sent with A is not taken again; B always
+  empties the message; LT then RT typed quickly no longer loses a letter; /ec in the chat opens the
+  keyboard with the IM chat style; /r works without the game's deprecated functions; a draft only
+  comes back in a whisper to the same person; the combat message follows the keyboard's settings.
+- **Wheels**: no more vibration while a wheel is closed; A always uses the item drawn, even when the
+  bags change with the wheel open; the wheels work after a /reload in combat; two wheel keys held
+  together no longer close the wheel; food and drink greyed in combat in your own wheels too; a
+  wheel's name is cut at 40 letters, never inside one; editor fixes (Delete disarmed by the mouse, A
+  on a slot opens its list on what it holds).
+- **Configuration panel**: closing the panel or entering combat while placing something no longer
+  breaks the panel's shortcut; B while placing the supplies or the wheel puts them back, A saves;
+  the panel reopens on the last tab after a reload; a held direction never repeats forever; lists
+  scroll back when they shrink; a single list has no tab row; the shortcut's buttons, still held
+  after it is learned, no longer act on the panel.
+- **Gamepad**: two paddles can no longer end up on the same key (they swap); LB / RB given their own
+  function back while the panel is open; X and B work while a paddle is awaited; the help bar only
+  offers what works; B while moving an extra button puts every button back.
+- **Bindings**: replaced buttons no longer take the chat keyboard's or an open wheel's keys.
+- **Better items**: arrows in the reagent bag; a one-hand weapon compared with the weapon only when
+  you carry a shield; plain armor and empty slots judged by item level; the status says when the
+  game gives no stats.
+- **At merchants**: the repair waits for the grey items' money; never in combat; bags excluded from
+  junk selling are left alone; quest items stay protected with their module off.
+- **Supplies**: the bar grows from its first button; an unticked resource no longer vibrates.
+- **Quest items**: borders in the reagent bag; turned off, they go at once.
+- A damaged saved settings file no longer stops the addon; help texts brought up to date.
+
 ## 1.4.1
 
 - **Better items** (Alerts › Inventory, on): a green arrow at the bottom right of a bag item better

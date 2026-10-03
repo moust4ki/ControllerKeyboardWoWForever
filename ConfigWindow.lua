@@ -369,6 +369,7 @@ end
 
 function RailPage:SetSection(i, zone)
     if not self.def.sections[i] then return end
+    C:StopChordCapture(nil)
     if i ~= self.section then C:Disarm() end
     self.section = i
     if zone then self.zone = zone end
@@ -671,12 +672,13 @@ function RailPage:ClickRow(r, delta)
     if not (r and r.index) then return end
     local row = self.rows[r.index]
     if not focusable(row) then return end
+    if C:IsCapturingChord() and row.id ~= "sc_combo" then C:StopChordCapture(nil) end
     -- Another row clicked: an armed button lets go
     if C.armed and C.armed ~= row.id then C:Disarm() end
     self.zone = "list"
     self:SetFocus(r.index)
     if delta and not (row.kind == "choice" or row.kind == "event" or row.kind == "slider") then delta = nil end
-    if delta and row.kind == "choice" and r.left then
+    if delta and (row.kind == "choice" or row.kind == "event") and r.left then
         local a = delta < 0 and r.left or r.right
         a.pressed = true
         C_Timer.After(0.1, function()
@@ -722,6 +724,7 @@ function RailPage:Press(name)
             self:SetSection(i)
         elseif name == "A" or name == "RIGHT" then
             self.zone = "list"
+            C.repeatName = nil
             C:Render()
         elseif name == "B" then
             -- A sub-screen goes back to its parent; a tab closes the panel
@@ -903,6 +906,13 @@ function C:SetTab(key, section)
     local alias = C.ALIASES[key]
     if alias then key, section = alias[1], section or alias[2] end
     if not self.pages[key] then return end
+    -- A click elsewhere ends the shortcut's capture
+    self:StopChordCapture(nil)
+    if key == self.tab and not section and self.frame and self.frame:IsShown() then
+        local page = self:Page()
+        if page.def and page.zone == "rail" then page.zone = "list" end
+        return self:Render()
+    end
     self:Disarm()
     local old = self:Page()
     if old and self.tab ~= key then old:Hide() end
@@ -1365,5 +1375,9 @@ function ControllerKeyboard_OpenConfig()
 end
 
 function ControllerKeyboard_OpenMap()
-    C:Toggle("gamepad")
+    if C:IsOpen() and C.tab ~= "gamepad" and not C.placing then
+        C:SetTab("gamepad")
+    else
+        C:Toggle("gamepad")
+    end
 end

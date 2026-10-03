@@ -11,3 +11,4 @@ ignore:
   - dist
   - .claude
   - .gitignore
+  - ROADMAP.md

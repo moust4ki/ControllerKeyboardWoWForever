@@ -592,6 +592,9 @@ function K.Picker(parent, width)
             t:SetShown(n > 1 and i <= n)
             if i <= n then
                 t:SetWidth(tw)
+                -- A long name is cut, never over its neighbour
+                t.label:SetWidth(tw - 6)
+                t.label:SetWordWrap(false)
                 t:ClearAllPoints()
                 t:SetPoint("TOPLEFT", self, "TOPLEFT", 12 + (i - 1) * (tw + 4), -54)
                 t.label:SetText(def.lists[i].label)
