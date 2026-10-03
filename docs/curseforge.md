@@ -30,6 +30,8 @@ without changing it:
 - **Better items**: a green arrow on the items of your bags that are better than what you wear,
   judged by their stats for your class.
 - **At merchants**: grey items sold and equipment repaired by themselves, if you want it.
+- **OLED friendly**: the gamepad UI's centre dot in a colour of your choice, changing colour every 5
+  minutes, or hidden, so it doesn't burn into an OLED screen (Steam Deck OLED, handhelds).
 
 Everything is driven with the gamepad (RB + D-pad down opens the configuration panel), every function
 can be turned off, and the look matches WoW Forever's gamepad UI.
@@ -79,7 +81,7 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
 - **Safe with WoW Forever's gamepad UI**: the addon never types text into the game's chat box and is
   disabled in combat, so it cannot cause blocked actions or freezes.
 - **Options panel**: input method, keyboard layout, stick dead zone and response, magnet, 4 window
-  sizes, Blizzard fonts, Xbox / PlayStation button icons, suggestion language, and more.
+  sizes, Blizzard fonts, Xbox / PlayStation / Nintendo Switch button icons, suggestion language, and more.
 
 ## Modules
 

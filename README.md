@@ -154,7 +154,8 @@ left it. Forgetting the learned words, restoring the game's buttons and deleting
 second A.
 
 - **Home**: every module with its state, Y on one jumps to its settings; the panel's shortcut;
-  button glyphs (Xbox / PlayStation), the game's button icons, font; automation at merchants.
+  button glyphs (Xbox / PlayStation / Nintendo Switch), the game's button icons, font, the centre dot for
+  OLED screens; automation at merchants.
 - **Gamepad**: the mapping below.
 - **Wheels**: your own wheels, the consumables wheel, where they open.
 - **Keyboard**: opening, input method and layout, size, sticks, prediction, position.
@@ -361,7 +362,9 @@ In the configuration panel (RB + D-pad down, `/ec config`):
 - keyboard size: small (80 %), normal, large (125 %), extra large (150 %) — `/ec scale` for any
   other value; invert the sticks vertical axis, show / hide the mouse buttons row;
 - font (Blizzard fonts: Friz Quadrata, Morpheus, Skurri, Arial Narrow, or the chat font);
-- button style (Xbox / PlayStation) and the game's button icons;
+- button style (Xbox / PlayStation / Nintendo Switch) and the game's button icons;
+- the gamepad UI's centre dot, for OLED screens: the game's, a colour, a colour changing every 5
+  minutes, or hidden;
 - suggestion language (French, English, German, Spanish, Italian, or French + English), learning;
 - reset position, forget learned words.
 

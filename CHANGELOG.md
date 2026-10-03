@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.0
+
+- **OLED screens** (Home › Look › Centre dot): the gamepad UI's dot in the middle of the screen, always
+  lit at the same place, can burn into an OLED screen. Keep the game's white dot, give it a colour
+  (amber, cyan, red, green, magenta, blue, grey, black), let it change colour every 5 minutes, or hide
+  the reticle completely.
+- **Nintendo Switch button glyphs** (Home › Look › Button glyphs), with the game's own Switch icons:
+  B at the bottom, A on the right, L / R, ZL / ZR, + and -.
+
 ## 1.6.2
 
 - **Consumables wheel**: raw fish and the other trade goods the game lets you eat or drink now
