@@ -8,22 +8,22 @@ Every feature you don't need can be turned off to save even more resources.
 **WoW Forever's gamepad play, made easy. No keyboard needed.**
 
 ## What's new in 1.7.0
-- **OLED friendly**: the gamepad UI's centre dot in a colour of your choice, changing colour every 5 minutes, or hidden, so it doesn't burn into an OLED screen (Steam Deck OLED, handhelds).
+- **OLED burn-in prevention**: the gamepad UI's centre dot in a colour of your choice, changing colour every 5 minutes, or hidden, so it doesn't burn into an OLED screen (Steam Deck OLED, handhelds).
 - **Nintendo Switch button icons**, with the game's own Switch glyphs.
 
 ## Features
 - **Chat keyboard** with smartphone-style word prediction
-- **Gamepad mapping** and **back paddles** (Steam Deck, Elite, Edge…)
+- **Gamepad mapping** and **back paddles** (Steam Deck, Xbox Elite, DualSense Edge…)
 - **Quest items** marked in your bags, quest links in the chat
 - **Vibrations** on the events you pick
-- **Supplies** tracker that glows when you run low
+- **Supplies** tracker (arrows, soul shards, reagents, bag space…) that glows when you run low
 - **Your own wheels** of spells, items and macros
 - **Consumables wheel**, usable in combat
 - **Wheels that fit**: as many sections as items
-- **Better items** arrows in your bags
+- **Better items**: highlights upgrade items in your bags
 - **At merchants**: auto-sell junk and auto-repair
-- **OLED friendly** centre dot
-- **Xbox / PlayStation / Switch** button icons
+- **OLED burn-in prevention** for the centre dot
+- **Xbox / PlayStation (DualSense) / Nintendo Switch** button icons
 
 Everything is driven with the gamepad (RB + D-pad down opens the configuration panel), every function
 can be turned off, and the look matches WoW Forever's gamepad UI. The details of each part follow.
