@@ -349,8 +349,12 @@ end
 function G:Help()
     local H = K.H
     local cell = self:Cells()[self.cell]
-    return { H({ "DPAD" }, L.V_MOVE), H({ "A" }, cell and cell.new and L.V_CREATE or L.V_EDIT, "A"),
-        H({ "LB", "RB" }, L.V_TAB, "RB"), H({ "B" }, L.V_BACK, "B") }
+    local full = cell and cell.new and #MW:List() >= CK.ConsumableWheel.MY_MAX
+    local list = { H({ "DPAD" }, L.V_MOVE) }
+    if not full then list[#list + 1] = H({ "A" }, cell and cell.new and L.V_CREATE or L.V_EDIT, "A") end
+    list[#list + 1] = H({ "LB", "RB" }, L.V_TAB, "RB")
+    list[#list + 1] = H({ "B" }, L.V_BACK, "B")
+    return list
 end
 
 -- The card of a wheel
@@ -386,6 +390,7 @@ function MW:TabPage(rail)
         if MW.open then
             MW:FinishRename(nil)
             MW.open = false
+            G:Focus(E.id)
         end
         rail:Hide()
         E:Hide()
@@ -474,6 +479,7 @@ function E:Build(parent)
         s:SetPoint("CENTER", zone, "TOPLEFT", x, -y)
         s:SetScript("OnClick", function(_, button)
             if MW.renaming then return end
+            C:Disarm()
             E.slot = i
             if button == "RightButton" then
                 E:Empty()
@@ -537,6 +543,7 @@ function E:Build(parent)
         local b = K.Button(row, 15)
         b:SetScript("OnClick", function()
             if MW.renaming then return end
+            if i ~= 3 then C:Disarm() end
             E.zone, E.btn = "buttons", i
             E:Button(i)
         end)
@@ -628,7 +635,10 @@ function E:Open(id, toPicker)
             end
             return false
         end,
-        onChoose = function(e) E:Fill(e) end,
+        onChoose = function(e)
+            if MW.renaming then return end
+            E:Fill(e)
+        end,
         onBack = function()
             E.zone = "slots"
             C:Render()
@@ -643,14 +653,12 @@ function E:Aim()
     if not w then return end
     self.zone = "picker"
     local current = w.slots[self.slot]
-    if current then
-        for i, e in ipairs(self.picker.entries or {}) do
-            if e.action == current then
-                self.picker.index = i
-                self.picker:Move(0)
-                break
-            end
-        end
+    local def = self.picker.def
+    if def then
+        def.current = current
+        local kind = current and current:match("^(%a+):")
+        local list = kind and ({ spell = 1, item = 2, macro = 3 })[kind]
+        if current then self.picker:SetList(list or self.picker.list) end
     end
     C:Render()
 end
@@ -893,6 +901,7 @@ function MW:Init()
         if MW.open then
             MW.open = false
             MW.Editor:Hide()
+            G:Focus(MW.Editor.id)
         end
     end)
 end

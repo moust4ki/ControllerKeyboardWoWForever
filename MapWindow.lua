@@ -816,12 +816,16 @@ function W:AssignWheel()
     local id = self.assign
     if not (input and id) then return end
     local layer = self:ViewLayer()
-    if self:Cell(input, layer).state == "off" then return end
+    local cell = self:Cell(input, layer)
+    if cell.state == "off" and not cell.pick then
+        if cell.why and UIErrorsFrame then UIErrorsFrame:AddMessage(cell.why, 1, 0.1, 0.1) end
+        return
+    end
     if self:Put(input, layer, "wheel:" .. id) then
         self.assign = nil
         C:Toast(format(L.TOAST_ON, CK.MyWheels:Name(id) or "", K.ComboMarkup(input.id, layer, 14)))
     elseif UIErrorsFrame then
-        UIErrorsFrame:AddMessage(L.MAP_REPLACE_NO_MOD, 1, 0.1, 0.1)
+        UIErrorsFrame:AddMessage(M:Enabled() and L.MAP_REPLACE_NO_MOD or L.MAP_MODULE_OFF, 1, 0.1, 0.1)
     end
     C:Render()
 end

@@ -346,11 +346,11 @@ local HIDE = [[
 -- paddle key sends one click, no press: that click counts). Another wheel
 -- open: this one takes its place.
 local TOGGLE = [[
-    if not down and owner:GetAttribute("ck-down") then
-        owner:SetAttribute("ck-down", false)
+    if not down and self:GetAttribute("ck-down") then
+        self:SetAttribute("ck-down", false)
         return false
     end
-    owner:SetAttribute("ck-down", down and true or false)
+    self:SetAttribute("ck-down", down and true or false)
     local wid = self:GetAttribute("ck-wheel") or "c"
     if owner:IsShown() and owner:GetAttribute("wheel") == wid then
         ]] .. HIDE .. [[
@@ -629,6 +629,12 @@ function W:Fill()
     -- The player's own: one page, each slot where it was put
     for n = 1, W.MY_MAX do
         local own = { [1] = CK.MyWheels and CK.MyWheels:Entries(n) or {} }
+        for _, e in pairs(own[1]) do
+            if e.kind == "item" and not e.cat then
+                local ok, cat = pcall(W.Category, e.id)
+                e.cat = ok and cat or nil
+            end
+        end
         store(wheel, tostring(n), own)
         self.lists[tostring(n)] = own
     end
@@ -639,10 +645,13 @@ function W:Fill()
         wheel:Hide()
         ClearOverrideBindings(wheel)
     end
-    if not wheel:IsShown() then
+    if wheel:IsShown() then
+        local pages = wheel:GetAttribute("ck-" .. open .. "-pages") or 1
+        if (wheel:GetAttribute("page") or 1) > pages then wheel:SetAttribute("page", pages) end
+    else
         wheel:SetAttribute("page", 1)
-        self:ApplyPage()
     end
+    self:ApplyPage()
     self.items = items
     self:Paint()
 end
@@ -767,6 +776,7 @@ end
 
 function W:Track()
     if not self.frame then return end
+    if not self.frame:IsShown() then self.ticked = nil end
     -- A page turned (LB / RB, secure), another wheel's key: draw it
     if (self.frame:GetAttribute("page") or 1) ~= self.painted
         or (self.frame:GetAttribute("wheel") or "c") ~= self.paintedWheel then
@@ -780,6 +790,7 @@ function W:Track()
     view.highlight:SetShown(item ~= nil)
     local mine = tonumber(self.paintedWheel)
     if not item then
+        self.ticked = nil
         -- A wheel of the player's: its name
         view.name:SetText(mine and CK.MyWheels and CK.MyWheels:Name(mine) or L.WHEEL_NOTHING)
         view.count:SetText(mine and L.MYWHEEL_NOTHING_HINT or L.WHEEL_NOTHING_HINT)
@@ -796,7 +807,10 @@ function W:Track()
     else
         view.count:SetText(item.kind == "spell" and L.WHEEL_KIND_SPELL or L.WHEEL_KIND_MACRO)
     end
-    if CK.Vibration then CK.Vibration:Fire("wheelTick") end
+    if CK.Vibration and self.frame:IsShown() and i ~= self.ticked then
+        self.ticked = i
+        CK.Vibration:Fire("wheelTick")
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -922,7 +936,9 @@ end
 ---------------------------------------------------------------------------
 function W:Init()
     self:RestoreSettings()
-    self:Build()
+    -- In combat (a /reload there) the game would block their setup: made
+    -- when it ends (Fill waits for it)
+    if not InCombatLockdown() then self:Build() end
     local f = CreateFrame("Frame")
     for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "BAG_UPDATE_DELAYED", "PLAYER_REGEN_ENABLED", "PLAYER_LEVEL_UP",
         "PLAYER_REGEN_DISABLED", "BAG_UPDATE_COOLDOWN", "GET_ITEM_INFO_RECEIVED", "SPELLS_CHANGED", "UPDATE_MACROS",
