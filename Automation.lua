@@ -16,7 +16,9 @@ local SELL_GAP = 0.15
 local function settings() return CK.db.settings end
 
 local function money(amount)
-    if GetCoinTextureString then return GetCoinTextureString(amount) end
+    local coins = C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString or GetCoinTextureString
+    if coins then return coins(amount) end
+    if GetMoneyString then return GetMoneyString(amount) end
     return format("%dg %ds %dc", math.floor(amount / 10000), math.floor(amount / 100) % 100, amount % 100)
 end
 
@@ -25,11 +27,28 @@ local function itemPrice(item)
     return get and select(11, get(item)) or 0
 end
 
+local function excluded(bag)
+    local ok, flagged = pcall(function()
+        if bag == 0 then
+            return C_Container.GetBackpackSellJunkDisabled and C_Container.GetBackpackSellJunkDisabled()
+        end
+        local flag = Enum and Enum.BagSlotFlags and Enum.BagSlotFlags.ExcludeJunkSell
+        return flag and C_Container.GetBagSlotFlag and C_Container.GetBagSlotFlag(bag, flag)
+    end)
+    return ok and flagged or false
+end
+
 -- The grey items of the bags a merchant buys: { bag, slot, link, value }
 function A:Junk()
     local list = {}
-    for bag = 0, NUM_BAG_SLOTS or 4 do
-        for slot = 1, C_Container.GetContainerNumSlots(bag) or 0 do
+    -- The quest items known even with their module off: never sold
+    local QI = CK.QuestItems
+    if QI and not settings().modules.questItems then
+        pcall(QI.ScanBags, QI)
+        pcall(QI.ScanQuests, QI)
+    end
+    for bag = 0, NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4 do
+        for slot = 1, (not excluded(bag)) and C_Container.GetContainerNumSlots(bag) or 0 do
             local info = C_Container.GetContainerItemInfo and C_Container.GetContainerItemInfo(bag, slot)
             if info and info.quality == POOR and not info.hasNoValue and not info.isLocked
                 and not (CK.QuestItems and CK.QuestItems:IsQuestItem(info.itemID)) then
@@ -43,20 +62,29 @@ end
 
 -- Sold one after the other; then onDone
 function A:SellJunk(onDone)
+    if self.selling then return end
     local list = self:Junk()
-    if #list == 0 or self.selling then
+    if #list == 0 then
         if onDone then onDone() end
         return
     end
     self.selling = true
     local sold, total, i = 0, 0, 0
+    local start = GetMoney()
     local function step()
         i = i + 1
         local item = list[i]
         if not item or not self.atMerchant or InCombatLockdown() then
             self.selling = false
             if sold > 0 then CK:Print(L.MSG_JUNK_SOLD, sold, money(total)) end
-            if onDone and self.atMerchant then onDone() end
+            local tries = 0
+            local function paid()
+                if not onDone or not self.atMerchant or InCombatLockdown() then return end
+                tries = tries + 1
+                if GetMoney() < start + total and tries < 20 then return C_Timer.After(0.1, paid) end
+                onDone()
+            end
+            paid()
             return
         end
         -- Still that item there (nothing moved meanwhile)

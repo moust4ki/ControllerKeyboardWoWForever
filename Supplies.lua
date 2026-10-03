@@ -278,6 +278,18 @@ function S:Place()
     end
 end
 
+-- The bar held by one of its edges (UIParent's same point), where it is now
+function S:HoldEdge(point)
+    local bar = self.bar
+    if bar:GetPoint(1) == point or not bar:GetLeft() then return end
+    local l, b, w, h = bar:GetLeft(), bar:GetBottom(), bar:GetWidth(), bar:GetHeight()
+    local fx = point == "LEFT" and 0 or point == "RIGHT" and 1 or 0.5
+    local fy = point == "BOTTOM" and 0 or point == "TOP" and 1 or 0.5
+    bar:ClearAllPoints()
+    bar:SetPoint(point, UIParent, point, l + w * fx - UIParent:GetWidth() * fx, b + h * fy - UIParent:GetHeight() * fy)
+    self:SavePosition()
+end
+
 function S:SavePosition()
     local point, _, _, x, y = self.bar:GetPoint(1)
     settings().pos = { point = point, x = math.floor(x + 0.5), y = math.floor(y + 0.5) }
@@ -310,7 +322,7 @@ function S:Refresh()
         local level = severity >= 1 and 2 or (severity > 0 and 1 or 0)
         -- Worse than before: a vibration (not when the addon starts)
         local before = self.levels[r.key]
-        if before and level > before and CK.Vibration then
+        if before and level > before and CK.Vibration and r.cfg.on then
             CK.Vibration:Fire(r.kind == "bags" and "lowSpace" or "lowStock")
         end
         self.levels[r.key] = level
@@ -354,6 +366,7 @@ function S:Refresh()
         bar.buttons[i].click:Hide()
     end
     local length = math.max(1, #list * (size + 8) - 8)
+    self:HoldEdge(d.anchor)
     if d.x ~= 0 then bar:SetSize(length, size) else bar:SetSize(size, length) end
     bar:SetShown(#list > 0 or self.moving or false)
     self.layout = layout

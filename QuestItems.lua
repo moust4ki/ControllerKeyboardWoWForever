@@ -63,7 +63,8 @@ end
 ---------------------------------------------------------------------------
 -- Bags: items the game knows are for a quest
 ---------------------------------------------------------------------------
-local NUM_BAGS = NUM_BAG_SLOTS or 4
+-- The bags worn, the reagent bag included
+local NUM_BAGS = NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4
 
 function QI:ScanBags()
     -- At a merchant the list only grows: a sold item must still be known
@@ -212,8 +213,10 @@ function QI:RefreshBorders()
 end
 
 function QI:HookBags()
+    -- Every bag's frame: the backpack's, the bags', the reagent bag's
     local frames = { ContainerFrameCombinedBags }
-    for i = 1, NUM_TOTAL_BAG_FRAMES or 13 do frames[#frames + 1] = _G["ContainerFrame" .. i] end
+    local count = NUM_CONTAINER_FRAMES or ((NUM_TOTAL_BAG_FRAMES or 12) + 1)
+    for i = 1, count do frames[#frames + 1] = _G["ContainerFrame" .. i] end
     for _, frame in ipairs(frames) do
         if frame and frame.UpdateItems then
             bagFrames[#bagFrames + 1] = frame

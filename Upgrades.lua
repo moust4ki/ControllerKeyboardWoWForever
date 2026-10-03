@@ -247,10 +247,17 @@ function U:IsUpgrade(bag, slot, link)
     if not slots then return false end
     if (reqLevel or 0) > (UnitLevel("player") or 1) then return false end
     if equipLoc == "INVTYPE_WEAPON" and not (CanDualWield and CanDualWield()) then slots = { 16 } end
+    local getInstant = C_Item and C_Item.GetItemInfoInstant or GetItemInfoInstant
+    -- A shield or an off-hand item worn: a one-hand weapon is weighed
+    -- against the weapon only
+    if equipLoc == "INVTYPE_WEAPON" and #slots == 2 and getInstant then
+        local off = GetInventoryItemLink("player", 17)
+        local offLoc = off and select(4, getInstant(off))
+        if offLoc == "INVTYPE_SHIELD" or offLoc == "INVTYPE_HOLDABLE" then slots = { 16 } end
+    end
     -- A two-hand weapon worn holds both hands: a one-hand weapon, a shield or
     -- an off-hand item has to beat it whole (the off hand is not empty)
     local mainHand = GetInventoryItemLink("player", 16)
-    local getInstant = C_Item and C_Item.GetItemInfoInstant or GetItemInfoInstant
     if mainHand and getInstant and select(4, getInstant(mainHand)) == "INVTYPE_2HWEAPON" and ONE_HAND[equipLoc] then
         slots = { 16 }
     end
@@ -280,7 +287,11 @@ function U:IsUpgrade(bag, slot, link)
     -- Clearly better: a score above by a little more than nothing
     local new, old = measure(link), weakest or 0
     if byScore then
-        if new <= old + math.max(0.5, old * 0.02) then return false end
+        local margin = math.max(0.5, old * 0.02)
+        if new <= old + margin then
+            if new < old - margin then return false end
+            if itemLevel(link) <= (worn and itemLevel(worn) or 0) then return false end
+        end
     elseif new <= old then
         return false
     end
@@ -313,8 +324,14 @@ local function arrowFor(button)
     return arrow
 end
 
+local waitingFrames = {}
+
 function U:UpdateArrows(frame)
-    if not (frame and frame.EnumerateValidItems and frame:IsShown()) then return end
+    if not (frame and frame.EnumerateValidItems and frame:IsShown()) then
+        if frame then waitingFrames[frame] = nil end
+        self.waiting = next(waitingFrames) ~= nil
+        return
+    end
     local on = enabled()
     local waiting = false
     for _, button in frame:EnumerateValidItems() do
@@ -329,7 +346,8 @@ function U:UpdateArrows(frame)
             arrows[button]:Hide()
         end
     end
-    self.waiting = waiting
+    waitingFrames[frame] = waiting or nil
+    self.waiting = next(waitingFrames) ~= nil
 end
 
 function U:Refresh()
@@ -337,8 +355,10 @@ function U:Refresh()
 end
 
 function U:HookBags()
+    -- Every bag's frame: the backpack's, the bags', the reagent bag's
     local frames = { ContainerFrameCombinedBags }
-    for i = 1, NUM_TOTAL_BAG_FRAMES or 13 do frames[#frames + 1] = _G["ContainerFrame" .. i] end
+    local count = NUM_CONTAINER_FRAMES or ((NUM_TOTAL_BAG_FRAMES or 12) + 1)
+    for i = 1, count do frames[#frames + 1] = _G["ContainerFrame" .. i] end
     for _, frame in ipairs(frames) do
         if frame and frame.UpdateItems then
             bagFrames[#bagFrames + 1] = frame
@@ -358,5 +378,7 @@ function U:Init()
         -- An item's data arrived: only when one was missing
         if event == "GET_ITEM_INFO_RECEIVED" and not U.waiting then return end
         U:Refresh()
+        -- A level gained: the game may still give the old one right now
+        if event == "PLAYER_LEVEL_UP" then C_Timer.After(1, function() U:Refresh() end) end
     end)
 end

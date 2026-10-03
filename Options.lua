@@ -77,7 +77,10 @@ local function moduleRows(b)
         onY = function() Config:SetTab("keyboard", 1) end, yVerb = L.V_SETTINGS })
     b.check({ id = "m_qi", label = L.SEC_QUESTITEMS, tip = L.MOD_QUEST_ITEMS,
         get = function() return mods.questItems end,
-        set = function(v) mods.questItems = v end,
+        set = function(v)
+            mods.questItems = v
+            CK.QuestItems:RefreshBorders()
+        end,
         onY = function() Config:SetTab("alerts", 3) end, yVerb = L.V_SETTINGS })
     b.check({ id = "m_up", label = L.LBL_UPGRADES, status = function() return CK.Upgrades:ByStats() and L.STATUS_CLASS_STATS or L.STATUS_ITEM_LEVEL end, tip = L.TIP_UPGRADES,
         extra = function() return CK.Upgrades:ScaleText() end,
@@ -533,7 +536,11 @@ local function questRows(b)
     local mods, f = s.modules, s.features
     b.header(L.SEC_QUESTITEMS)
     b.check({ id = "q_on", label = L.SEC_QUESTITEMS, tip = L.MOD_QUEST_ITEMS,
-        get = function() return mods.questItems end, set = function(v) mods.questItems = v end })
+        get = function() return mods.questItems end,
+        set = function(v)
+            mods.questItems = v
+            CK.QuestItems:RefreshBorders()
+        end })
     if not mods.questItems then return end
     b.check({ id = "q_tip", label = L.LBL_QI_TOOLTIP, indent = true, tip = L.FEAT_QUEST_TOOLTIP,
         get = function() return f.questTooltip end, set = function(v) f.questTooltip = v end })

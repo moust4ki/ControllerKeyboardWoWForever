@@ -141,7 +141,8 @@ function V:Fire(key, strength)
     local cfg = s.events[key]
     if not (s.enabled and cfg and cfg.on) then return end
     local now = GetTime()
-    if last[key] and now - last[key] < 0.4 then return end
+    local gap = (key == "wheelTick" or key == "keyPress") and 0.03 or 0.4
+    if last[key] and now - last[key] < gap then return end
     last[key] = now
     self:Play(cfg.pattern, strength)
 end
@@ -216,7 +217,9 @@ local HANDLERS = {
     PLAYER_DEAD = function() V:Fire("death") end,
     UNIT_SPELLCAST_INTERRUPTED = function(unit, _, _, interruptedBy)
         -- Interrupted by someone (moving also cancels a cast: no interrupter)
-        if unit == "player" and interruptedBy ~= nil then V:Fire("interrupted") end
+        if unit == "player" and interruptedBy ~= nil and (secret(interruptedBy) or interruptedBy ~= "") then
+            V:Fire("interrupted")
+        end
     end,
     LOSS_OF_CONTROL_ADDED = function(unit)
         if unit == nil or unit == "player" then V:Fire("lossOfControl") end
@@ -265,7 +268,7 @@ local HANDLERS = {
 -- /ec vibe [pattern]: what this client allows, then a pattern
 function V:Diagnose(key)
     local L = CK.L
-    local api = C_GamePad and C_GamePad.SetVibration ~= nil
+    local api = (C_GamePad and C_GamePad.SetVibration ~= nil) or false
     local device = C_GamePad and C_GamePad.GetActiveDeviceID and C_GamePad.GetActiveDeviceID()
     CK:Print(L.VIB_DIAG, tostring(api), tostring(device), tostring(self:Settings().enabled))
     local names = {}
