@@ -220,6 +220,7 @@ function P:Capture(id, onDone)
         f:SetPoint("CENTER")
         f:SetScript("OnKeyDown", function(_, key)
             if IGNORED_KEYS[key] then return end
+            if key == "ESCAPE" then CK.Config:Swallow({ ESCAPE = true }) end
             P:StopCapture(key ~= "ESCAPE" and key or nil)
         end)
         if f.EnableGamePadButton then
@@ -572,7 +573,7 @@ end
 function P:Position(id)
     local nearestPlace = P.NearestPlace
     local pos = settings().extraPos[id]
-    if type(pos) ~= "table" then pos = P.DEFAULT_POS[id] end
+    if type(pos) ~= "table" or type(pos.x) ~= "number" or type(pos.y) ~= "number" then pos = P.DEFAULT_POS[id] end
     return nearestPlace(SIDE[id], pos.x, pos.y)
 end
 
@@ -916,9 +917,12 @@ function P:Grab()
         local x, y = self:BarOffset()
         self.grabbed = { bar = true, x = x, y = y }
     else
-        local x, y = self:Position(id)
-        local px, py = self:Position(PARTNER[id])
-        self.grabbed = { x = x, y = y, px = px, py = py, symmetric = settings().extraSymmetric }
+        local all = {}
+        for _, other in ipairs(P.EXTRA) do
+            local ox, oy = self:Position(other)
+            all[other] = { x = ox, y = oy }
+        end
+        self.grabbed = { all = all, symmetric = settings().extraSymmetric }
     end
     self:RenderPlacementRings()
     self:RenderPlacement()
@@ -932,8 +936,7 @@ function P:CancelGrab()
         settings().barOffset = { x = g.x, y = g.y }
         self:ApplyBarOffset()
     else
-        settings().extraPos[id] = { x = g.x, y = g.y }
-        settings().extraPos[PARTNER[id]] = { x = g.px, y = g.py }
+        for other, pos in pairs(g.all) do settings().extraPos[other] = { x = pos.x, y = pos.y } end
         settings().extraSymmetric = g.symmetric
     end
     self.grabbed = nil
@@ -1094,7 +1097,11 @@ function P:PlacementPress(name)
         self:Step(id, name)
     elseif name == "Y" then
         settings().extraSymmetric = not settings().extraSymmetric
-        if settings().extraSymmetric then self:SetPosition(id, self:Position(id)) end
+        if settings().extraSymmetric then
+            for _, other in ipairs(P.EXTRA) do
+                if SIDE[other] == SIDE[id] then self:SetPosition(other, self:Position(other)) end
+            end
+        end
     elseif name == "X" then
         local pos = P.DEFAULT_POS[id]
         self:MoveTo(id, pos.x, pos.y)
@@ -1156,6 +1163,7 @@ function CK:DetectKeys()
                     frame.seen[button] = true
                     CK:Print(L.DETECT_PAD, button)
                 end
+                return true
             end)
         end
         self.detectFrame = f
@@ -1167,7 +1175,10 @@ function CK:DetectKeys()
     self:Print(L.DETECT_START, DETECT_TIME)
     self:Print("Shift = %s, Ctrl = %s, Alt = %s", tostring(GetCVar("GamePadEmulateShift")),
         tostring(GetCVar("GamePadEmulateCtrl")), tostring(GetCVar("GamePadEmulateAlt")))
+    local token = {}
+    f.token = token
     C_Timer.After(DETECT_TIME, function()
+        if f.token ~= token then return end
         f:Hide()
         if f.EnableGamePadButton and not InCombatLockdown() then f:EnableGamePadButton(false) end
         CK:Print(L.DETECT_END)

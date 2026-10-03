@@ -1084,6 +1084,11 @@ end
 
 function C:OnUpdate(elapsed)
     self:BindReleasedKeys()
+    if self.swallow and IsKeyDown then
+        for key in pairs(self.swallow) do
+            if not IsKeyDown(key) then self.swallow[key] = nil end
+        end
+    end
     local page = self:Page()
     if page and page.OnUpdate then page:OnUpdate(elapsed) end
     -- Its release went elsewhere (the game rebound the pad): over
@@ -1310,7 +1315,10 @@ function C:CaptureChord(onDone)
         f:SetSize(1, 1)
         f:SetPoint("CENTER")
         f:SetScript("OnKeyDown", function(_, key)
-            if key == "ESCAPE" then C:StopChordCapture(nil) end
+            if key == "ESCAPE" then
+                C:StopChordCapture(nil)
+                C:Swallow({ ESCAPE = true })
+            end
         end)
         if f.EnableGamePadButton then
             -- The buttons stop here (false: not passed on to the game)

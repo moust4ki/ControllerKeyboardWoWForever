@@ -944,6 +944,9 @@ end
 function M:CoreActive()
     local manager = GamepadMode and GamepadMode.FrameControlsManager
     if manager and manager.GetActiveFrame and manager:GetActiveFrame() then return false end
+    -- The chat keyboard or a wheel open: their keys stay theirs
+    if CK.IsOpen and CK:IsOpen() then return false end
+    if ControllerKeyboardWheel and ControllerKeyboardWheel:IsShown() then return false end
     return not (CK.Config and CK.Config:IsOpen())
 end
 
@@ -1179,11 +1182,21 @@ function M:Init()
     -- after a change that isn't ours, check ours a moment later. Never more
     -- than a few times in a row, should the game answer each of ours.
     local recent = {}
-    local function changed()
+    local changed
+    function changed()
         if M.applying or M.repairQueued or InCombatLockdown() then return end
         local now = GetTime()
         while recent[1] and recent[1] < now - 3 do table.remove(recent, 1) end
-        if #recent >= 6 then return end
+        if #recent >= 6 then
+            if not M.repairLater then
+                M.repairLater = true
+                C_Timer.After(3, function()
+                    M.repairLater = false
+                    changed()
+                end)
+            end
+            return
+        end
         M.repairQueued = true
         C_Timer.After(0.15, function()
             M.repairQueued = false
