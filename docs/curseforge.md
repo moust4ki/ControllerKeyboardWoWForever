@@ -51,7 +51,7 @@ gentle or fast curve.
 Both methods have a numbers / accents / symbols layer whose accents follow the language
 (é è à ç… / ä ö ü ß / á é í ó ú ñ ¿ ¡ / à è é ì ò ù), and can be switched at any time in the options.
 
-## Features
+## Keyboard features
 
 - **Smartphone-style prediction**
   - word completion in English, French, German, Spanish and Italian (12,000 words each, client
@@ -73,7 +73,7 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
 - **Safe with WoW Forever's gamepad UI**: the addon never types text into the game's chat box and is
   disabled in combat, so it cannot cause blocked actions or freezes.
 - **Options panel**: input method, keyboard layout, stick dead zone and response, magnet, 4 window
-  sizes, Blizzard fonts, Xbox / PlayStation / Nintendo Switch button icons, suggestion language, and more.
+  sizes, Blizzard fonts, Xbox / PlayStation (DualSense) / Nintendo Switch button icons, suggestion language, and more.
 
 ## Modules
 
