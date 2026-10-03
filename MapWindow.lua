@@ -7,8 +7,8 @@ local L = CK.L
 -- states: the game's function, a slot of the game's gamepad bar, yours
 -- (added, or replacing the game's), free, unavailable. A on a button opens
 -- the lists picker on the right. Under the controller: identify the back
--- paddles, place the bar, the Display options (a sub-screen), every
--- replaced button given back to the game.
+-- paddles, move the buttons, every replaced button given back to the game.
+-- What shows next to the bar (W.DisplayRows) is set in Home > Gamepad.
 local W = {}
 CK.MapPage = W
 CK.Config.pages.gamepad = W
@@ -324,22 +324,22 @@ function W:Build(parent)
     f.nodes = {}
     for _, n in ipairs(NODES) do f.nodes[n[1]] = self:BuildNode(area, n) end
 
-    -- Under it: identify the paddles, place the bar, display, restore
+    -- Under it: identify the paddles, move the buttons, restore
     local actionsRow = CK.NewFrame("Frame", nil, zone)
     actionsRow:SetPoint("TOPLEFT", 0, -(PAD_TOP + PAD_H + 8))
     actionsRow:SetSize(ZONE_W, 32)
     f.actions = {}
-    for i = 1, 4 do
+    for i = 1, 3 do
         local b = K.Button(actionsRow, 13)
         b:SetScript("OnClick", function()
             if W.wizard or P:IsCapturing() then return end
-            if i ~= 4 then C:Disarm() end
+            if i ~= 3 then C:Disarm() end
             W.zone, W.act = "actions", i
             W:Act(i)
         end)
         f.actions[i] = b
     end
-    K.LayoutRow(actionsRow, f.actions, { 1.2, 1, 0.9, 1 }, 6)
+    K.LayoutRow(actionsRow, f.actions, { 1.2, 1, 1 }, 6)
 
     -- Right: the detail panel, the picker or the paddles wizard in its place
     self.detail = K.Detail(f, PANEL_W, 26)
@@ -350,9 +350,6 @@ function W:Build(parent)
     self.picker:SetPoint("TOPRIGHT")
     self.picker:SetHeight(BODY_H)
     self:BuildWizard(f)
-
-    -- Display, a sub-screen of its own
-    self.display:Build(parent)
 end
 
 -- Identify the back paddles: one step after the other, in the right panel
@@ -410,25 +407,18 @@ slotEvents:SetScript("OnEvent", function() W.slotsChanged = true end)
 function W:Show(resume)
     if not resume then
         self.zone, self.node, self.layer, self.act = "pad", "A", "", 1
-        self.sub, self.wizard, self.assign = nil, nil, nil
+        self.wizard, self.assign = nil, nil
         if P:IsCapturing() then P:StopCapture(nil) end
         self.picker:Close()
     end
     self.heldLayer = ""
-    if self.sub == "display" then
-        self.frame:Hide()
-        self.display:Show()
-    else
-        self.display:Hide()
-        self.frame:Show()
-    end
+    self.frame:Show()
 end
 
 function W:Hide()
     self.wizard = nil
     if P:IsCapturing() then P:StopCapture(nil) end
     self.picker:Close()
-    self.display:Hide()
     self.frame:Hide()
 end
 
@@ -484,17 +474,11 @@ end
 
 function W:ActionLabels()
     local n = M:ReplacedCount()
-    return { L.LBL_IDENTIFY, L.LBL_PLACE_BAR, L.SEC_DISPLAY,
+    return { L.LBL_IDENTIFY, L.LBL_PLACE_BAR,
         C:IsArmed("restore") and L.LBL_PRESS_AGAIN or (n > 0 and format(L.LBL_RESTORE_N, n) or L.LBL_RESTORE) }
 end
 
 function W:Render()
-    if self.sub == "display" then
-        self.frame:Hide()
-        self.display.frame:Show()
-        return self.display:Render()
-    end
-    self.display.frame:Hide()
     self.frame:Show()
     local f = self.frame
     local layer = self:ViewLayer()
@@ -520,7 +504,7 @@ function W:Render()
     for i, b in ipairs(f.actions) do
         b.label:SetText(labels[i])
         b:SetState({ focus = self.zone == "actions" and self.act == i and not self.picker:IsOpen() and not self.wizard,
-            armed = i == 4 and C:IsArmed("restore"), disabled = i == 4 and none })
+            armed = i == 3 and C:IsArmed("restore"), disabled = i == 3 and none })
     end
     -- The right panel
     local w = self.wizardFrame
@@ -567,7 +551,6 @@ function W:Detail(layer)
         local list = {
             { title = L.MAP_IDENTIFY, body = L.MAP_IDENTIFY_HINT },
             { title = L.MAP_PLACE, body = L.MAP_PLACE_HINT },
-            { title = L.SEC_DISPLAY, body = L.TIP_ACT_DISPLAY },
             { title = n > 0 and format(L.MAP_RESTORE, n) or L.MAP_RESTORE_NONE, body = L.TIP_RESTORE },
         }
         return list[self.act]
@@ -614,7 +597,6 @@ function W:Detail(layer)
 end
 
 function W:Crumb()
-    if self.sub == "display" then return self.display:Crumb() end
     if self.assign then return format(L.CRUMB_ASSIGN, CK.MyWheels:Name(self.assign) or "") end
     local layer = self:ViewLayer()
     local name = layer == "" and L.MAP_ALONE
@@ -623,7 +605,6 @@ function W:Crumb()
 end
 
 function W:Help()
-    if self.sub == "display" then return self.display:Help() end
     local H = K.H
     if self.wizard then return { H({ "X" }, L.V_SKIP, "X"), H({ "B" }, L.V_CANCEL, "B") } end
     if P:IsCapturing() then return { H({ "B" }, L.V_CANCEL, "B") } end
@@ -837,8 +818,6 @@ function W:Act(i)
         C:BeginPlacement()
         P:StartPlacement()
     elseif i == 3 then
-        self:OpenDisplay()
-    elseif i == 4 then
         if M:ReplacedCount() == 0 or CK:BlockedByCombat() then return end
         if C:IsArmed("restore") then
             C:Disarm()
@@ -848,7 +827,7 @@ function W:Act(i)
             C:Arm("restore")
         end
         C:Render()
-        if C:IsArmed("restore") and UIFrameFadeIn then UIFrameFadeIn(self.frame.actions[4], 0.15, 0.3, 1) end
+        if C:IsArmed("restore") and UIFrameFadeIn then UIFrameFadeIn(self.frame.actions[3], 0.15, 0.3, 1) end
     end
 end
 
@@ -881,28 +860,12 @@ function W:AssignWheel()
     C:Render()
 end
 
-function W:OpenDisplay()
-    self.picker:Close()
-    self.sub = "display"
-    self.frame:Hide()
-    self.display:Show()
-    C:Render()
-end
-
-function W:CloseDisplay()
-    self.sub = nil
-    self.display:Hide()
-    self.zone, self.act = "actions", 3
-    C:Render()
-end
-
 ---------------------------------------------------------------------------
 -- The pad (the panel handles LB / RB and B when we don't)
 ---------------------------------------------------------------------------
 local DIRS = { UP = true, DOWN = true, LEFT = true, RIGHT = true }
 
 function W:Press(name)
-    if self.sub == "display" then return self.display:Press(name) end
     -- Identifying the paddles: X skips one, B stops
     if self.wizard then
         if name == "X" then
@@ -948,7 +911,7 @@ function W:Press(name)
     end
     if self.zone == "actions" then
         if name == "LEFT" or name == "RIGHT" then
-            self.act = math.max(1, math.min(4, self.act + (name == "LEFT" and -1 or 1)))
+            self.act = math.max(1, math.min(#self.frame.actions, self.act + (name == "LEFT" and -1 or 1)))
         elseif name == "UP" or name == "B" then
             self.zone = "pad"
         elseif name == "A" then
@@ -992,7 +955,6 @@ function W:Press(name)
 end
 
 function W:OnUpdate()
-    if self.sub == "display" then return end
     -- A slot changed (placed from here, or by the game): drawn again
     if self.slotsChanged then
         self.slotsChanged = false
@@ -1007,11 +969,27 @@ function W:OnUpdate()
 end
 
 ---------------------------------------------------------------------------
--- Display: what shows next to the game's gamepad bar, RT as a modifier
+-- Home > Gamepad: the gamepad bar, what shows next to it, RT as a modifier,
+-- the touchpad buttons
 ---------------------------------------------------------------------------
 local function displayRows(b)
     local s = settings()
     local f = s.features
+    -- The module: the free buttons' functions, the paddles, the extra
+    -- buttons and what shows next to the bar (the rows it turns on are
+    -- greyed while it is off)
+    local yours = 0
+    for _ in pairs(s.mapping) do yours = yours + 1 end
+    for _ in pairs(s.replaced) do yours = yours + 1 end
+    b.check({ id = "m_map", label = L.LBL_GAMEPAD_EXTRAS, status = format(L.STATUS_YOURS, yours), tip = L.MOD_MAPPING,
+        get = function() return s.modules.mapping end,
+        set = function(v)
+            s.modules.mapping = v
+            M:Apply()
+            P:Apply()
+        end,
+        onY = function() C:SetTab("gamepad") end, yVerb = L.V_SETTINGS })
+    local on = s.modules.mapping and true or false
     b.header(L.HDR_GAMEPAD_BAR)
     b.check({ id = "d_range", label = L.LBL_RANGE_TINT, tip = L.TIP_RANGE_TINT,
         get = function() return f.rangeTint == true end,
@@ -1020,19 +998,19 @@ local function displayRows(b)
             CK.Range:Apply()
         end })
     b.header(L.HDR_NEXT_TO_BAR)
-    b.check({ id = "d_extra", label = L.LBL_EXTRA_BUTTONS, tip = L.FEAT_EXTRA_DISPLAY,
+    b.check({ id = "d_extra", label = L.LBL_EXTRA_BUTTONS, disabled = not on, tip = L.FEAT_EXTRA_DISPLAY,
         get = function() return f.extraDisplay end,
         set = function(v)
             f.extraDisplay = v
             P:Apply()
         end })
-    b.check({ id = "d_sticks", label = L.LBL_L3_R3, indent = true, disabled = not f.extraDisplay, tip = L.FEAT_SHOW_STICKS,
+    b.check({ id = "d_sticks", label = L.LBL_L3_R3, indent = true, disabled = not (on and f.extraDisplay), tip = L.FEAT_SHOW_STICKS,
         get = function() return f.showSticks end,
         set = function(v)
             f.showSticks = v
             P:Apply()
         end })
-    b.check({ id = "d_free", label = L.LBL_FREE_PLACE, indent = true, disabled = not f.extraDisplay, tip = L.TIP_FREE_PLACE,
+    b.check({ id = "d_free", label = L.LBL_FREE_PLACE, indent = true, disabled = not (on and f.extraDisplay), tip = L.TIP_FREE_PLACE,
         get = function() return s.extraFree end,
         set = function(v)
             -- Leaving it: each button on its nearest fixed place
@@ -1040,7 +1018,7 @@ local function displayRows(b)
             if not v then P:SnapAll() end
             P:Apply()
         end })
-    b.choice({ id = "d_badge", label = L.LBL_BUTTON_NAMES, indent = true, disabled = not f.extraDisplay, tip = L.OPT_BADGE,
+    b.choice({ id = "d_badge", label = L.LBL_BUTTON_NAMES, indent = true, disabled = not (on and f.extraDisplay), tip = L.OPT_BADGE,
         text = function() return L["BADGE_" .. (s.badgePlace or "outer"):upper()] end,
         step = function(d)
             local list, index = P.BADGE_PLACES, 1
@@ -1058,16 +1036,17 @@ local function displayRows(b)
     end
 end
 
--- Touchpads set as buttons: each one turned on here
+-- Extra buttons (more buttons, or touchpads set as buttons): each one turned on here
 local function touchRows(b)
     local s = settings()
     s.touchButtons = s.touchButtons or {}
+    b.header(L.SEC_TOUCH)
     b.info(L.TIP_SEC_TOUCH)
     for _, side in ipairs({ "L", "R" }) do
         b.header(L["HDR_TOUCH_" .. side])
         for n = 1, 4 do
             local id = "T" .. side .. n
-            b.check({ id = "t_" .. id, label = format("%s  %s", id, L["TOUCH_DIR_" .. n]), tip = L.TIP_SEC_TOUCH,
+            b.check({ id = "t_" .. id, label = id, disabled = not s.modules.mapping, tip = L.TIP_SEC_TOUCH,
                 get = function() return s.touchButtons[id] == true end,
                 set = function(v)
                     s.touchButtons[id] = v or nil
@@ -1078,11 +1057,7 @@ local function touchRows(b)
     end
 end
 
-W.display = C.NewRailPage({
-    key = "gpdisplay", crumb = L.TAB_GAMEPAD,
-    onBack = function() W:CloseDisplay() end,
-    sections = {
-        { key = "display", label = L.SEC_DISPLAY, tip = L.TIP_SEC_DISPLAY, rows = displayRows },
-        { key = "touch", label = L.SEC_TOUCH, tip = L.TIP_SEC_TOUCH, rows = touchRows },
-    },
-})
+function W.DisplayRows(b)
+    displayRows(b)
+    touchRows(b)
+end

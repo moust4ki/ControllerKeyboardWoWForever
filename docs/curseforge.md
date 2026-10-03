@@ -14,7 +14,7 @@ Every feature you don't need can be turned off to save even more resources.
 ## Features
 - **Chat keyboard** with smartphone-style word prediction
 - **Gamepad mapping** and **back paddles** (Steam Deck, Xbox Elite, DualSense Edge…)
-- **Touchpads as buttons** (Steam Deck, Steam Controller, Vader Pro): up to 8 more buttons
+- **Extra buttons**: up to 8 more, for controllers with more buttons or touchpads (Steam Deck, Steam Controller)
 - **Red when out of range**: the whole spell, not just a dot
 - **Quest items** marked in your bags, quest links in the chat
 - **Vibrations** on the events you pick
@@ -81,7 +81,7 @@ Both methods have a numbers / accents / symbols layer whose accents follow the l
 
 **Configuration panel**
 RB + D-pad down (or `/ec config`) opens the addon's own panel, driven with the gamepad or the mouse:
-Home (every module and its state, the panel's shortcut, the look, automation at merchants), Gamepad
+Home (every module and its state, the panel's shortcut, the look, the gamepad bar and extra buttons, automation at merchants), Gamepad
 (your controller drawn button by button), Wheels, Keyboard and Alerts (vibrations, supplies, quest
 items, better items). Sections on the left, settings in the middle, what the selected one does on the
 right, and a help bar showing only the buttons that work there.
@@ -128,16 +128,16 @@ Select) can be replaced too, its menus keeping their buttons; one button gives t
 Steam Deck and other controllers: set each paddle to a keyboard key in Steam Input (F13 to F16 for
 example), then "Identify paddles" asks for each one in turn. Each paddle has the four trigger layers
 (alone, LT, RT, LT + RT) for spells, items and macros, even when RT is no modifier; game functions
-too once "RT as a modifier" is on (Gamepad › Display). The extra buttons (back
+too once "RT as a modifier" is on (Home › Gamepad). The extra buttons (back
 paddles, L3, R3) are shown around the gamepad action bar, in its own round slot style, with the
 action's icon, count and cooldown, and press down like the game's buttons. Place each one where you
 want among fixed places around the bar's controls, with the D-pad or the mouse, mirrored left / right,
 or anywhere with Free placement.
 
-**Touchpads as buttons**
-Steam Deck, Steam Controller, Vader Pro: set each touchpad as 4 buttons in Steam Input (each sending a
-keyboard key), turn on the ones you use in Gamepad › Display, and "Identify paddles" learns them. Up
-to 8 more buttons, working like the back paddles.
+**Extra buttons**
+For both controllers with more buttons (Vader Pro...) and touchpads set as buttons (Steam Deck, Steam
+Controller): make each button send a keyboard key in Steam Input, turn on the ones you use in Home ›
+Gamepad, and "Identify paddles" learns them. Up to 8 more buttons, working like the back paddles.
 
 **Quest items**
 The items a quest asks to collect (cloth, ore, meat...), which the game does not mark, get the game's

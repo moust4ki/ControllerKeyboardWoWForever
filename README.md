@@ -216,9 +216,9 @@ in the game's gamepad settings (RT, by default) doesn't change the key a paddle 
 same key as L4. The addon then reads the triggers when the paddle is pressed, from the game's
 secure code, and runs that layer's **spell, item or macro**. A game function (run / walk, map...) is
 a key binding and needs a key of its own: on such a layer, turn on **RT as a modifier**
-(Gamepad › Display), or the layers share it.
+(Home › Gamepad), or the layers share it.
 
-L3 / R3 can be shown too (Gamepad › Display), with what the game does with them (autorun, ping...) or what
+L3 / R3 can be shown too (Home › Gamepad), with what the game does with them (autorun, ping...) or what
 you put on them. Spells are listed with their rank.
 
 The extra buttons that do something (back paddles, L3, R3) appear around the gamepad action bar, in
@@ -230,21 +230,22 @@ on one of the fixed places around the bar's controls (two columns on the outer s
 two below): the D-pad chooses the bar or a button (LB / RB too), A picks it up, then the D-pad moves it
 (a button goes from place to place, onto a taken place the two buttons swap), A puts it down and B puts
 it back; the mouse clicks a button then a place; the right side mirrors the left (Y turns it
-off), X puts a button back. Places follow the compact layout. With **Free placement** on (Gamepad ›
-Display), the buttons go anywhere: a few pixels at a time with the D-pad, or dragged with the mouse.
+off), X puts a button back. Places follow the compact layout. With **Free placement** on (Home ›
+Gamepad), the buttons go anywhere: a few pixels at a time with the D-pad, or dragged with the mouse.
 
-### Touchpads as buttons
+### Extra buttons
 
-For the Steam Deck, the Steam Controller, the Vader Pro and other controllers whose touchpads can act
-as buttons: in Steam Input, set each touchpad as 4 buttons, each sending a keyboard key (F17 to F24
-for example). Turn on the ones you use in Gamepad › Display › Touchpads (TL1-TL4 for the left touchpad,
-up / right / down / left, TR1-TR4 for the right one), then **Identify paddles** asks for them after the
-back paddles. They work like the paddles (the four layers, spells, items, macros, game functions) and
-show next to the gamepad bar; the Gamepad tab lists them under the controller.
+Up to 8 more buttons, 4 a side, for both: controllers with more buttons (Vader Pro...) and touchpads
+set as buttons (Steam Deck, Steam Controller: 4 buttons a touchpad, 1 up, 2 right, 3 down, 4 left).
+In Steam Input, make each button send a keyboard key (F17 to F24 for example). Turn on the ones you
+use in Home › Gamepad › Extra buttons (TL1-TL4 on the left, TR1-TR4 on the right), then **Identify
+paddles** asks for them after the back paddles. They work like the paddles (the four layers, spells,
+items, macros, game functions) and show next to the gamepad bar; the Gamepad tab lists them under the
+controller.
 
 ### Red when out of range
 
-Gamepad › Display › Red when out of range: the whole spell turns red on the gamepad bar and on the
+Home › Gamepad › Red when out of range: the whole spell turns red on the gamepad bar and on the
 extra buttons when the target is out of range (too far, or too close for a hunter's shots), instead of
 the game's small red dot only.
 
@@ -370,7 +371,8 @@ Home › Automation (both off until you turn them on):
 
 In the configuration panel (RB + D-pad down, `/ec config`):
 
-- every module on or off (Home › Modules), each one's settings in its own tab;
+- every module on or off (Home › Modules; Gamepad extras at the top of Home › Gamepad), each one's
+  settings in its own tab;
 - input method (daisywheel / split keyboard), daisywheel look (groups circled / characters only),
   keyboard layout (AZERTY, QWERTY, QWERTZ, Spanish, Italian), stick dead zone, stick response
   (linear, gentle, fast), magnet, cursor lines;

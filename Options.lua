@@ -95,17 +95,6 @@ local function moduleRows(b)
             CK.Upgrades:Refresh()
         end,
         onY = function() Config:SetTab("alerts", 4) end, yVerb = L.V_SETTINGS })
-    local yours = 0
-    for _ in pairs(s.mapping) do yours = yours + 1 end
-    for _ in pairs(s.replaced) do yours = yours + 1 end
-    b.check({ id = "m_map", label = L.LBL_GAMEPAD_EXTRAS, status = format(L.STATUS_YOURS, yours), tip = L.MOD_MAPPING,
-        get = function() return mods.mapping end,
-        set = function(v)
-            mods.mapping = v
-            CK.Mapping:Apply()
-            CK.Paddles:Apply()
-        end,
-        onY = function() Config:SetTab("gamepad") end, yVerb = L.V_SETTINGS })
     local tracked = 0
     for _, r in ipairs(CK.Supplies:Resources()) do
         if r.cfg.on then tracked = tracked + 1 end
@@ -230,6 +219,7 @@ Config.pages.home = Config.NewRailPage({
         { key = "modules", label = L.SEC_MODULES, tip = L.TIP_SEC_MODULES, rows = moduleRows },
         { key = "shortcut", label = L.SEC_SHORTCUT, tip = L.TIP_SEC_SHORTCUT, rows = shortcutRows },
         { key = "look", label = L.SEC_LOOK, tip = L.TIP_SEC_LOOK, rows = lookRows },
+        { key = "gamepad", label = L.TAB_GAMEPAD, tip = L.TIP_SEC_DISPLAY, rows = function(b) CK.MapPage.DisplayRows(b) end },
         { key = "automation", label = L.SEC_AUTOMATION, tip = L.TIP_SEC_AUTOMATION, rows = automationRows },
     },
 })
