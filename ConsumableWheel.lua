@@ -123,6 +123,10 @@ function W.Category(id)
     local n = names()
     -- Bandages: by their First Aid spell, whatever class the client gives them
     if (spell and spell == n.firstAid) or (classID == 0 and subClassID == 7) then return "bandage" end
+    -- Raw fish and the like: trade goods the game lets you eat or drink
+    if classID ~= 0 and spell and (spell == n.food or spell == n.drink) then
+        return spell == n.drink and "drink" or "food"
+    end
     if classID ~= 0 then return nil end
     if not spell then return nil end
     if subClassID == 4 then return "scroll" end
