@@ -115,7 +115,7 @@ function MW:Rename(id, name)
     local w = self:Get(id)
     name = name and name:gsub("^%s+", ""):gsub("%s+$", "") or ""
     if not w or name == "" then return end
-    w.name = name:sub(1, 40)
+    w.name = CK.Utf8Sub(name, 40)
     changed()
 end
 
@@ -844,6 +844,13 @@ end
 function MW:StartRename(id)
     local w = self:Get(id)
     if not w or CK:BlockedByCombat() then return end
+    -- The chat being typed in: our field would take its focus, closing it
+    -- from addon code (never done)
+    local chat = CK.ActiveChatWindow and CK.ActiveChatWindow()
+    if chat and chat:HasFocus() then
+        C:Toast(L.TOAST_CLOSE_CHAT, true)
+        return
+    end
     self.renaming = id
     E.zone = "rename"
     local edit = E.box.edit

@@ -14,7 +14,7 @@ local L = {
     SPACE = "Space",
     BACKSPACE = "Delete",
     SEND = "Send",
-    SEND_COMBAT = "Keyboard opened in combat: press Enter to send.",
+    SEND_COMBAT = "Press A on the gamepad to send.",
     DRAG_HINT = "Drag to move the keyboard (/ec lock to lock)",
     LOCKED = "Position locked: %s",
     TEXTURES_MISSING = "|cffff4040Textures not found|r: quit and restart the game (/reload is not enough for new files).",
@@ -79,6 +79,7 @@ local L = {
     OPT_FORGET = "Forget learned words",
     OPT_FORGET_CONFIRM = "Click again to confirm",
     LOADED = "v%s loaded. /ec for help.",
+    TOAST_CLOSE_CHAT = "Close the chat first",
     STATUS_ITEM_LEVEL = "Based on item level",
     TOAST_POS_SAVED = "Position saved",
     TIP_WHEEL_CAT = "In the wheel when your bags hold some: the best first, the other variants after it when All variants is on.",
@@ -266,7 +267,7 @@ local L = {
     VIBS_KEYPRESS = "Keyboard: key typed",
     TIP_RESOURCE = "Left: %d. Low: %d, critical: %d.",
     TIP_LOW = "Under it, the button glows.",
-    TIP_CRITICAL = "Under it, the button turns red.",
+    TIP_CRITICAL = "At or under it, the button turns red.",
     TIP_REMOVE = "Stop tracking this item.",
     TOAST_REMOVED = "%s removed",
     LBL_ADD_BAGS = "Add from your bags",
@@ -354,7 +355,7 @@ local L = {
     CAT_GAMEPAD = "Gamepad functions (the game's own)",
     MAP_HOLD = " (hold)",
     WHEEL_DIAG = "Wheel: %d items, %d page(s); on: %s, in combat: %s, waiting for the end of combat: %s",
-    WHEEL_DIAG_OFF = "kind turned off (Wheel tab)",
+    WHEEL_DIAG_OFF = "kind turned off (Wheels › Consumables)",
     WHEEL_DIAG_LEVEL = "needs level %d",
     WHEEL_NOTHING = "Choose an item",
     WHEEL_NOTHING_HINT = "Point at an item with the left stick, then A",
@@ -589,7 +590,7 @@ local L = {
     QUEST_ITEM_SOLD_SHORT = "Quest item sold! See the Buyback tab",
     NO_QUESTS = "No quest in progress",
     QUESTS_TIP = "Quests: insert a quest link",
-    KEYBOARD_OFF = "The keyboard is turned off (Options > AddOns > Easy Controller - Forever > Modules).",
+    KEYBOARD_OFF = "The keyboard is turned off (Home › Modules in the panel: RB + D-pad down or /ec config).",
     MOD_KEYBOARD = "Keyboard (daisywheel / split keyboard)",
     MOD_QUEST_ITEMS = "Quest items: \"do not sell\" in tooltips, warning at merchants",
     MOD_QUEST_LINKS = "Quest links in the keyboard (and Shift+click links)",
@@ -603,7 +604,7 @@ LOCALES.frFR = {
     SPACE = "Espace",
     BACKSPACE = "Effacer",
     SEND = "Envoyer",
-    SEND_COMBAT = "Clavier ouvert en combat : appuyez sur Entrée pour envoyer.",
+    SEND_COMBAT = "Appuyez sur A (manette) pour envoyer.",
     DRAG_HINT = "Glisser pour déplacer le clavier (/ec lock pour verrouiller)",
     LOCKED = "Position verrouillée : %s",
     TEXTURES_MISSING = "|cffff4040Textures introuvables|r : quittez et relancez le jeu (un /reload ne suffit pas pour de nouveaux fichiers).",
@@ -667,6 +668,7 @@ LOCALES.frFR = {
     OPT_FORGET = "Oublier les mots appris",
     OPT_FORGET_CONFIRM = "Cliquer pour confirmer",
     LOADED = "v%s chargé. /ec pour l'aide.",
+    TOAST_CLOSE_CHAT = "Fermez d'abord le chat",
     STATUS_ITEM_LEVEL = "Selon le niveau d'objet",
     TOAST_POS_SAVED = "Position enregistrée",
     TIP_WHEEL_CAT = "Dans la roue quand vos sacs en contiennent : le meilleur d'abord, les autres variantes ensuite si Toutes les variantes est coché.",
@@ -854,7 +856,7 @@ LOCALES.frFR = {
     VIBS_KEYPRESS = "Clavier : touche tapée",
     TIP_RESOURCE = "Restant : %d. Bas : %d, critique : %d.",
     TIP_LOW = "En dessous, le bouton s'illumine.",
-    TIP_CRITICAL = "En dessous, le bouton devient rouge.",
+    TIP_CRITICAL = "À ce seuil ou en dessous, le bouton devient rouge.",
     TIP_REMOVE = "Ne plus suivre cet objet.",
     TOAST_REMOVED = "%s retiré",
     LBL_ADD_BAGS = "Ajouter depuis vos sacs",
@@ -942,7 +944,7 @@ LOCALES.frFR = {
     CAT_GAMEPAD = "Fonctions de la manette (celles du jeu)",
     MAP_HOLD = " (maintenir)",
     WHEEL_DIAG = "Roue : %d objets, %d page(s) ; activée : %s, en combat : %s, en attente de fin de combat : %s",
-    WHEEL_DIAG_OFF = "type désactivé (onglet Roue)",
+    WHEEL_DIAG_OFF = "type désactivé (Roues › Consommables)",
     WHEEL_DIAG_LEVEL = "niveau %d requis",
     WHEEL_NOTHING = "Choisissez un objet",
     WHEEL_NOTHING_HINT = "Pointez un objet avec le stick gauche, puis A",
@@ -1177,7 +1179,7 @@ LOCALES.frFR = {
     QUEST_ITEM_SOLD_SHORT = "Objet de quête vendu ! Voir l'onglet Rachat",
     NO_QUESTS = "Aucune quête en cours",
     QUESTS_TIP = "Quêtes : insérer un lien de quête",
-    KEYBOARD_OFF = "Le clavier est désactivé (Options > AddOns > Easy Controller - Forever > Modules).",
+    KEYBOARD_OFF = "Le clavier est désactivé (Accueil › Modules dans le panneau : RB + croix bas ou /ec config).",
     MOD_KEYBOARD = "Clavier (daisywheel / clavier 2 sticks)",
     MOD_QUEST_ITEMS = "Objets de quête : « ne pas vendre » dans les info-bulles, alerte chez le marchand",
     MOD_QUEST_LINKS = "Liens de quête dans le clavier (et liens par Maj+clic)",
@@ -1188,7 +1190,7 @@ LOCALES.deDE = {
     SPACE = "Leertaste",
     BACKSPACE = "Löschen",
     SEND = "Senden",
-    SEND_COMBAT = "Tastatur im Kampf geöffnet: zum Senden Enter drücken.",
+    SEND_COMBAT = "Zum Senden A auf dem Controller drücken.",
     DRAG_HINT = "Ziehen, um die Tastatur zu verschieben (/ec lock zum Sperren)",
     LOCKED = "Position gesperrt: %s",
     TEXTURES_MISSING = "|cffff4040Texturen nicht gefunden|r: Spiel beenden und neu starten (/reload reicht für neue Dateien nicht).",
@@ -1252,6 +1254,7 @@ LOCALES.deDE = {
     OPT_FORGET = "Gelernte Wörter vergessen",
     OPT_FORGET_CONFIRM = "Zum Bestätigen erneut klicken",
     LOADED = "v%s geladen. /ec für Hilfe.",
+    TOAST_CLOSE_CHAT = "Zuerst den Chat schließen",
     STATUS_ITEM_LEVEL = "Nach Gegenstandsstufe",
     TOAST_POS_SAVED = "Position gespeichert",
     TIP_WHEEL_CAT = "Im Rad, wenn deine Taschen welche enthalten: das Beste zuerst, die anderen Varianten danach, wenn Alle Varianten an ist.",
@@ -1269,7 +1272,7 @@ LOCALES.deDE = {
     ST_SP = "Zaubermacht",
     ST_HEAL = "Heilung",
     ST_ARMOR = "Rüstung",
-    STATUS_CLASS_STATS = "Nach den Werten deiner Klasse",
+    STATUS_CLASS_STATS = "Nach Klassenwerten",
     SEC_AUTOMATION = "Automatik",
     TIP_SEC_AUTOMATION = "Was das Addon beim Händler von selbst erledigt.",
     LBL_SELL_JUNK = "Graue Gegenstände verkaufen",
@@ -1439,7 +1442,7 @@ LOCALES.deDE = {
     VIBS_KEYPRESS = "Tastatur: Taste getippt",
     TIP_RESOURCE = "Übrig: %d. Niedrig: %d, kritisch: %d.",
     TIP_LOW = "Darunter leuchtet die Taste.",
-    TIP_CRITICAL = "Darunter wird die Taste rot.",
+    TIP_CRITICAL = "Ab dieser Schwelle und darunter wird die Taste rot.",
     TIP_REMOVE = "Diesen Gegenstand nicht mehr verfolgen.",
     TOAST_REMOVED = "%s entfernt",
     LBL_ADD_BAGS = "Aus den Taschen hinzufügen",
@@ -1497,7 +1500,7 @@ LOCALES.deDE = {
     MAP_RESTORE_NONE = "Tasten des Spiels: Originalbelegung",
     MAP_P_RESTORE = "Wiederherstellen",
     MYWHEEL_H = "Meine Räder",
-    MYWHEEL_INFO = "Bis zu 8 eigene Räder mit je 8 Feldern: Zauber, Gegenstände und Makros deiner Wahl. Die Taste eines Rads: Reiter Gamepad, Liste Items (oder die Tastenbelegung des Spiels).",
+    MYWHEEL_INFO = "Bis zu 8 eigene Räder mit je 8 Feldern: Zauber, Gegenstände und Makros deiner Wahl. Die Taste eines Rads: Reiter Controller, Liste Items (oder die Tastenbelegung des Spiels).",
     MYWHEEL_NEW = "Neues Rad",
     MYWHEEL_DEFAULT = "Rad %d",
     MYWHEEL_RENAME = "Umbenennen",
@@ -1527,7 +1530,7 @@ LOCALES.deDE = {
     CAT_GAMEPAD = "Gamepad-Funktionen (die des Spiels)",
     MAP_HOLD = " (halten)",
     WHEEL_DIAG = "Rad: %d Gegenstände, %d Seite(n); an: %s, im Kampf: %s, wartet auf Kampfende: %s",
-    WHEEL_DIAG_OFF = "Art ausgeschaltet (Reiter Rad)",
+    WHEEL_DIAG_OFF = "Art ausgeschaltet (Räder › Verbrauchsgüter)",
     WHEEL_DIAG_LEVEL = "benötigt Stufe %d",
     WHEEL_NOTHING = "Wähle einen Gegenstand",
     WHEEL_NOTHING_HINT = "Mit dem linken Stick auf einen Gegenstand zeigen, dann A",
@@ -1537,7 +1540,7 @@ LOCALES.deDE = {
     CFG_TAB_WHEEL = "Räder",
     WHEEL_NAME = "Verbrauchsgüter-Rad",
     WHEEL_ENABLE = "Verbrauchsgüter-Rad verwenden",
-    WHEEL_INFO = "Gib ihm eine Taste: Reiter Gamepad, Liste Gegenstände (jede freie Taste oder jedes Paddle, in jeder Ebene) oder Esc > Tastenbelegung > AddOns.",
+    WHEEL_INFO = "Gib ihm eine Taste: Reiter Controller, Liste Items (jede freie Taste oder jedes Paddle, in jeder Ebene) oder Esc > Tastenbelegung > AddOns.",
     WHEEL_INFO2 = "Offen: mit dem linken Stick auf einen Gegenstand zeigen und A drücken, um ihn zu benutzen (Stick in der Mitte: nichts). B bricht ab; LB / RB blättern; die Maus geht auch. Kamera und Figur bleiben still, solange es offen ist. Funktioniert im Kampf (Essen und Trinken ausgegraut).",
     WHEEL_VARIANTS = "Jede getragene Variante nach der besten jeder Art (8 pro Seite, bis zu 3 Seiten)",
     WHEEL_H_CATEGORIES = "Im Rad",
@@ -1762,7 +1765,7 @@ LOCALES.deDE = {
     QUEST_ITEM_SOLD_SHORT = "Questgegenstand verkauft! Siehe Rückkauf",
     NO_QUESTS = "Keine laufende Quest",
     QUESTS_TIP = "Quests: Questlink einfügen",
-    KEYBOARD_OFF = "Die Tastatur ist ausgeschaltet (Optionen > AddOns > Easy Controller - Forever > Module).",
+    KEYBOARD_OFF = "Die Tastatur ist ausgeschaltet (Start › Module im Fenster: RB + Steuerkreuz unten oder /ec config).",
     MOD_KEYBOARD = "Tastatur (Daisywheel / geteilte Tastatur)",
     MOD_QUEST_ITEMS = "Questgegenstände: „nicht verkaufen“ im Tooltip, Warnung beim Händler",
     MOD_QUEST_LINKS = "Questlinks in der Tastatur (und Links per Umschalt+Klick)",
@@ -1773,7 +1776,7 @@ LOCALES.esES = {
     SPACE = "Espacio",
     BACKSPACE = "Borrar",
     SEND = "Enviar",
-    SEND_COMBAT = "Teclado abierto en combate: pulsa Intro para enviar.",
+    SEND_COMBAT = "Pulsa A en el mando para enviar.",
     DRAG_HINT = "Arrastra para mover el teclado (/ec lock para bloquearlo)",
     LOCKED = "Posición bloqueada: %s",
     TEXTURES_MISSING = "|cffff4040Texturas no encontradas|r: cierra y reinicia el juego (/reload no basta para archivos nuevos).",
@@ -1837,6 +1840,7 @@ LOCALES.esES = {
     OPT_FORGET = "Olvidar las palabras aprendidas",
     OPT_FORGET_CONFIRM = "Pulsa otra vez para confirmar",
     LOADED = "v%s cargado. /ec para la ayuda.",
+    TOAST_CLOSE_CHAT = "Cierra el chat primero",
     STATUS_ITEM_LEVEL = "Según el nivel de objeto",
     TOAST_POS_SAVED = "Posición guardada",
     TIP_WHEEL_CAT = "En la rueda cuando tus bolsas tienen alguno: el mejor primero, las demás variantes después si Todas las variantes está activado.",
@@ -1854,7 +1858,7 @@ LOCALES.esES = {
     ST_SP = "Poder con hechizos",
     ST_HEAL = "Sanación",
     ST_ARMOR = "Armadura",
-    STATUS_CLASS_STATS = "Según las estadísticas de tu clase",
+    STATUS_CLASS_STATS = "Por estadísticas de clase",
     SEC_AUTOMATION = "Automatización",
     TIP_SEC_AUTOMATION = "Lo que el addon hace solo en los mercaderes.",
     LBL_SELL_JUNK = "Vender objetos grises",
@@ -2024,7 +2028,7 @@ LOCALES.esES = {
     VIBS_KEYPRESS = "Teclado: tecla pulsada",
     TIP_RESOURCE = "Quedan: %d. Bajo: %d, crítico: %d.",
     TIP_LOW = "Por debajo, el botón brilla.",
-    TIP_CRITICAL = "Por debajo, el botón se vuelve rojo.",
+    TIP_CRITICAL = "En el umbral o por debajo, el botón se vuelve rojo.",
     TIP_REMOVE = "Dejar de seguir este objeto.",
     TOAST_REMOVED = "%s quitado",
     LBL_ADD_BAGS = "Añadir de tus bolsas",
@@ -2112,7 +2116,7 @@ LOCALES.esES = {
     CAT_GAMEPAD = "Funciones del mando (las del juego)",
     MAP_HOLD = " (mantener)",
     WHEEL_DIAG = "Rueda: %d objetos, %d página(s); activada: %s, en combate: %s, esperando el fin del combate: %s",
-    WHEEL_DIAG_OFF = "tipo desactivado (pestaña Rueda)",
+    WHEEL_DIAG_OFF = "tipo desactivado (Ruedas › Consumibles)",
     WHEEL_DIAG_LEVEL = "requiere nivel %d",
     WHEEL_NOTHING = "Elige un objeto",
     WHEEL_NOTHING_HINT = "Apunta a un objeto con el stick izquierdo, luego A",
@@ -2347,7 +2351,7 @@ LOCALES.esES = {
     QUEST_ITEM_SOLD_SHORT = "¡Objeto de misión vendido! Mira la pestaña Recomprar",
     NO_QUESTS = "Ninguna misión en curso",
     QUESTS_TIP = "Misiones: insertar un enlace de misión",
-    KEYBOARD_OFF = "El teclado está desactivado (Opciones > AddOns > Easy Controller - Forever > Módulos).",
+    KEYBOARD_OFF = "El teclado está desactivado (Inicio › Módulos en el panel: RB + cruceta abajo o /ec config).",
     MOD_KEYBOARD = "Teclado (daisywheel / teclado dividido)",
     MOD_QUEST_ITEMS = "Objetos de misión: «no vender» en las descripciones, aviso en el vendedor",
     MOD_QUEST_LINKS = "Enlaces de misión en el teclado (y enlaces con Mayús+clic)",
@@ -2359,7 +2363,7 @@ LOCALES.itIT = {
     SPACE = "Spazio",
     BACKSPACE = "Cancella",
     SEND = "Invia",
-    SEND_COMBAT = "Tastiera aperta in combattimento: premi Invio per inviare.",
+    SEND_COMBAT = "Premi A sul controller per inviare.",
     DRAG_HINT = "Trascina per spostare la tastiera (/ec lock per bloccarla)",
     LOCKED = "Posizione bloccata: %s",
     TEXTURES_MISSING = "|cffff4040Texture non trovate|r: chiudi e riavvia il gioco (/reload non basta per i nuovi file).",
@@ -2423,6 +2427,7 @@ LOCALES.itIT = {
     OPT_FORGET = "Dimentica le parole apprese",
     OPT_FORGET_CONFIRM = "Clicca di nuovo per confermare",
     LOADED = "v%s caricato. /ec per l'aiuto.",
+    TOAST_CLOSE_CHAT = "Chiudi prima la chat",
     STATUS_ITEM_LEVEL = "In base al livello oggetto",
     TOAST_POS_SAVED = "Posizione salvata",
     TIP_WHEEL_CAT = "Nella ruota quando le tue borse ne contengono: prima il migliore, poi le altre varianti se Tutte le varianti è attivo.",
@@ -2440,7 +2445,7 @@ LOCALES.itIT = {
     ST_SP = "Potere magico",
     ST_HEAL = "Cure",
     ST_ARMOR = "Armatura",
-    STATUS_CLASS_STATS = "In base alle statistiche della classe",
+    STATUS_CLASS_STATS = "Per statistiche di classe",
     SEC_AUTOMATION = "Automazione",
     TIP_SEC_AUTOMATION = "Cosa fa l'addon da solo dai mercanti.",
     LBL_SELL_JUNK = "Vendi gli oggetti grigi",
@@ -2610,7 +2615,7 @@ LOCALES.itIT = {
     VIBS_KEYPRESS = "Tastiera: tasto premuto",
     TIP_RESOURCE = "Rimasti: %d. Basso: %d, critico: %d.",
     TIP_LOW = "Sotto, il pulsante si illumina.",
-    TIP_CRITICAL = "Sotto, il pulsante diventa rosso.",
+    TIP_CRITICAL = "Alla soglia o sotto, il pulsante diventa rosso.",
     TIP_REMOVE = "Smetti di seguire questo oggetto.",
     TOAST_REMOVED = "%s rimosso",
     LBL_ADD_BAGS = "Aggiungi dalle borse",
@@ -2698,7 +2703,7 @@ LOCALES.itIT = {
     CAT_GAMEPAD = "Funzioni del controller (quelle del gioco)",
     MAP_HOLD = " (tenere)",
     WHEEL_DIAG = "Ruota: %d oggetti, %d pagina/e; attiva: %s, in combattimento: %s, in attesa della fine del combattimento: %s",
-    WHEEL_DIAG_OFF = "tipo disattivato (scheda Ruota)",
+    WHEEL_DIAG_OFF = "tipo disattivato (Ruote › Consumabili)",
     WHEEL_DIAG_LEVEL = "richiede il livello %d",
     WHEEL_NOTHING = "Scegli un oggetto",
     WHEEL_NOTHING_HINT = "Punta un oggetto con lo stick sinistro, poi A",
@@ -2933,7 +2938,7 @@ LOCALES.itIT = {
     QUEST_ITEM_SOLD_SHORT = "Oggetto di missione venduto! Vedi Riacquista",
     NO_QUESTS = "Nessuna missione in corso",
     QUESTS_TIP = "Missioni: inserisci un link di missione",
-    KEYBOARD_OFF = "La tastiera è disattivata (Opzioni > AddOns > Easy Controller - Forever > Moduli).",
+    KEYBOARD_OFF = "La tastiera è disattivata (Home › Moduli nel pannello: RB + croce giù o /ec config).",
     MOD_KEYBOARD = "Tastiera (daisywheel / tastiera divisa)",
     MOD_QUEST_ITEMS = "Oggetti di missione: «non vendere» nei tooltip, avviso dal mercante",
     MOD_QUEST_LINKS = "Link di missione nella tastiera (e link con Maiusc+clic)",
@@ -3024,16 +3029,19 @@ local function copyDefaults(src, dst)
         if type(v) == "table" then
             if type(dst[k]) ~= "table" then dst[k] = {} end
             copyDefaults(v, dst[k])
-        elseif dst[k] == nil then
+        elseif dst[k] == nil or type(dst[k]) ~= type(v) then
             dst[k] = v
         end
     end
 end
 
 function CK:InitDB()
-    ControllerKeyboardDB = ControllerKeyboardDB or {}
+    if type(ControllerKeyboardDB) ~= "table" then ControllerKeyboardDB = {} end
     local db = ControllerKeyboardDB
-    db.settings = db.settings or {}
+    if type(db.settings) ~= "table" then db.settings = {} end
+    if db.settings.configSection ~= nil and type(db.settings.configSection) ~= "table" then
+        db.settings.configSection = nil
+    end
     -- Before 0.4.2: dicts = { frFR = bool, enUS = bool } instead of a language
     if db.settings.lang == nil and type(db.settings.dicts) == "table" then
         local d = db.settings.dicts
@@ -3041,18 +3049,16 @@ function CK:InitDB()
     end
     copyDefaults(DEFAULTS, db.settings)
     -- v2: auto-open no longer requires the gamepad to be the active input
-    if (db.version or 1) < 2 then
+    if (tonumber(db.version) or 1) < 2 then
         db.settings.onlyWithGamepad = false
         db.pos = nil
         db.version = 2
     end
     self.db = db
     self:ApplyLanguage()
-    db.words = db.words or {}
-    db.commands = db.commands or {}
-    db.trigrams = db.trigrams or {}
-    db.starts = db.starts or {}
-    db.bigrams = db.bigrams or {}
+    for _, key in ipairs({ "words", "commands", "trigrams", "starts", "bigrams" }) do
+        if type(db[key]) ~= "table" then db[key] = {} end
+    end
     self.db = db
 end
 
@@ -3065,6 +3071,18 @@ end
 -- UTF-8 helpers (French accents)
 ---------------------------------------------------------------------------
 local UTF8_2 = "[\195\197][\128-\191]"
+
+-- The first n characters of a UTF-8 text (never half a letter)
+function CK.Utf8Sub(text, n)
+    local count, i = 0, 1
+    while i <= #text do
+        local b = text:byte(i)
+        count = count + 1
+        if count > n then return text:sub(1, i - 1) end
+        i = i + (b >= 240 and 4 or b >= 224 and 3 or b >= 192 and 2 or 1)
+    end
+    return text
+end
 
 local LOWER = {
     ["À"] = "à", ["Â"] = "â", ["Ä"] = "ä", ["Á"] = "á", ["Ç"] = "ç", ["É"] = "é", ["È"] = "è",

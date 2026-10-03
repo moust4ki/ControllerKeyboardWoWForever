@@ -234,16 +234,29 @@ end
 -- event and the game's chat box is not touched.
 function CK:SendWhisper()
     local target = self:GetChatAttr("tellTarget")
-    if self:GetChatAttr("chatType") ~= "WHISPER" or self:GetChatAttr("reply")
+    local chatType = self:GetChatAttr("chatType")
+    if (chatType ~= "WHISPER" and chatType ~= "BN_WHISPER") or self:GetChatAttr("reply")
         or not target or target == "" then
         return
     end
     local text = self:GetText():gsub("[\r\n]", " ")
     if text:match("^[ \t\r\n]*$") then return end
+    -- A command (/g, /dance...): the macro runs it, nothing is whispered
+    if text:sub(1, 1) == "/" then return end
     -- PreClick runs on both press and release: send once
     local now = GetTime()
     if self.lastWhisper == text and now - (self.lastWhisperTime or 0) < 0.5 then return end
     self.lastWhisper, self.lastWhisperTime = text, now
+    if chatType == "BN_WHISPER" then
+        -- A Battle.net friend, as the game's chat box sends it
+        local account = BNet_GetBNetIDAccount and BNet_GetBNetIDAccount(target)
+        local send = C_BattleNet and C_BattleNet.SendWhisper or BNSendWhisper
+        if not (account and send) then return end
+        send(account, text)
+        self.justSent = true
+        CK.Predict:LearnMessage(text)
+        return
+    end
     local send = C_ChatInfo and C_ChatInfo.SendChatMessage or SendChatMessage
     send(text, "WHISPER", nil, target)
 end
@@ -252,8 +265,9 @@ end
 -- (the chat stays open for the next message; B closes it)
 function CK:FinishSend(down)
     local text = self:GetText()
-    -- /w without a recipient yet: A confirms the typed name
-    if self:WhisperNameMode() then
+    -- /w without a recipient yet: A confirms the typed name (a command typed
+    -- there is run, not taken for a name)
+    if self:WhisperNameMode() and text:sub(1, 1) ~= "/" then
         if down ~= true then self:ConfirmWhisperTarget(text) end
         return
     end
@@ -264,6 +278,8 @@ function CK:FinishSend(down)
             self.sendButton:SetAttribute("macrotext", "")
         end
         if slashCommand then CK.Predict:LearnCommand(text) end
+        local box = self.editBox and self.editBox:GetText()
+        self.sentBoxText = (box and box ~= "") and box or nil
         self:SetText("")
         if self.standalone then self:Close("sent") end
     end
@@ -328,6 +344,7 @@ function CK:UpdateCancelBinding()
 end
 
 function CK:DisableButtons()
+    self.padDown = nil
     if not self.bindingsActive or InCombatLockdown() then return end
     ClearOverrideBindings(self.frame)
     self.cancelBound = false
@@ -346,7 +363,7 @@ end
 function CK:OnCombatEnded()
     local eb = self.reopenAfterCombat
     self.reopenAfterCombat = nil
-    if not eb then
+    if not eb and self:WantsKeyboard() then
         local active = CK.ActiveChatWindow()
         if active and active:HasFocus() then eb = active end
     end

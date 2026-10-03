@@ -24,22 +24,22 @@ function CK:IsGamepadActive()
         and GetCVar("GamePadEnable") == "1"
 end
 
+function CK:WantsKeyboard(forced)
+    local s = self.db.settings
+    if not s.modules.keyboard then return false end
+    return forced or (s.autoOpen and (not s.onlyWithGamepad or self:IsGamepadActive())) or false
+end
+
 -- With the "IM" chat style the edit box stays visible and is "activated"
 -- without being typed in: only open when it really has the keyboard focus.
 function CK:OnChatActivated(eb)
     local forced = self.forceOpen
     C_Timer.After(0, function()
         if not eb:HasFocus() then return end
-        if InCombatLockdown() then
-            CK:BlockedByCombat()
-            return
-        end
         if CK:IsOpen() and CK.editBox == eb then return end
-        local s = CK.db.settings
-        if not s.modules.keyboard then return end
-        if forced or (s.autoOpen and (not s.onlyWithGamepad or CK:IsGamepadActive())) then
-            CK:Open(eb)
-        end
+        if not CK:WantsKeyboard(forced) then return end
+        if CK:BlockedByCombat() then return end
+        CK:Open(eb)
     end)
 end
 
@@ -61,7 +61,10 @@ function CK:HookChat()
         local text = lastTyped[eb]
         lastTyped[eb] = nil
         -- Sent with Enter on a physical keyboard: the keyboard's copy is sent too
-        if eb == CK.editBox and CK:IsOpen() then CK:SetText("") end
+        local boxText = eb.GetText and eb:GetText()
+        if eb == CK.editBox and CK:IsOpen() and boxText and boxText:find("[^ \t\r\n]") then
+            CK:SetText("")
+        end
         if text and text:sub(1, 1) == "/" then CK.Predict:LearnCommand(text) end
     end
     -- The edit box's SendText announces itself (listening taints nothing)
@@ -93,9 +96,10 @@ function CK:HookChat()
         CK.justSent = true
         CK.Predict:LearnMessage(msg)
     end
-    if SendChatMessage then hooksecurefunc("SendChatMessage", learn) end
     if C_ChatInfo and C_ChatInfo.SendChatMessage then
         hooksecurefunc(C_ChatInfo, "SendChatMessage", learn)
+    elseif SendChatMessage then
+        hooksecurefunc("SendChatMessage", learn)
     end
 end
 
@@ -137,9 +141,14 @@ local function slash(msg)
         end
         -- The chat edit box is still sending this command: open once it is closed
         C_Timer.After(0, function()
-            if CK:BlockedByCombat() then return end
+            if CK:IsOpen() or CK:BlockedByCombat() then return end
             CK.forceOpen = true
-            openChat("")
+            local active = CK.ActiveChatWindow()
+            if active and active:HasFocus() then
+                CK:Open(active)
+            else
+                openChat("")
+            end
             CK.forceOpen = false
         end)
     elseif cmd == "auto" then
@@ -259,8 +268,8 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
     if event == "ADDON_LOADED" and arg1 == ADDON then
         CK:InitDB()
     elseif event == "PLAYER_LOGIN" then
-        CK.Predict:Load()
         local function safe(fn) xpcall(fn, geterrorhandler()) end
+        safe(function() CK.Predict:Load() end)
         safe(function() CK:HookChat() end)
         safe(function() CK:HookLinks() end)
         safe(function() CK.QuestItems:Init() end)
@@ -274,8 +283,8 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2)
         safe(function() CK.Upgrades:Init() end)
         safe(function() CK.Automation:Init() end)
         -- Build the frames now, never while the chat is open (see Input.lua)
-        if InCombatLockdown() then CK.buildPending = true else CK:BuildUI() end
-        CK:RegisterOptions()
+        if InCombatLockdown() then CK.buildPending = true else safe(function() CK:BuildUI() end) end
+        safe(function() CK:RegisterOptions() end)
         local version = (C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata)(ADDON, "Version")
         CK:Print(L.LOADED, version or "?")
         -- The folder was ControllerKeyboard before 1.1: an old copy left

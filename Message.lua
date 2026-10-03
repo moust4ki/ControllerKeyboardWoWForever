@@ -52,8 +52,13 @@ end
 -- Text typed on a physical keyboard (links inserted by the game are caught
 -- by the Shift+click hook instead, see QuestLinks.lua)
 function CK:OnChatTextChanged(eb, userInput)
-    if eb ~= self.editBox or not userInput then return end
-    self.buffer = eb:GetText() or ""
+    if eb ~= self.editBox then return end
+    local text = eb:GetText() or ""
+    local sent = self.sentBoxText
+    if sent and text:sub(1, #sent) ~= sent then self.sentBoxText, sent = nil, nil end
+    if not userInput then return end
+    if sent then text = text:sub(#sent + 1):gsub("^ +", "") end
+    self.buffer = text
     self:Refresh()
 end
 
@@ -145,6 +150,7 @@ local WORD_TAIL = "(" .. CK.WORD_CHARS .. "*)$"
 
 -- The word being typed, without a leading Spanish ¿ or ¡ (they stay in the text)
 local function wordTail(text)
+    if text:find("|r$") then return "" end
     return ((text:match(WORD_TAIL) or ""):gsub("^\194[\161\191]", ""))
 end
 
@@ -266,7 +272,9 @@ function CK:AcceptSuggestion(index)
     local prefix = wordTail(text)
     -- No space after an elision: "j'" + "ai"
     local sep = word:sub(-1) == "'" and "" or " "
-    self:SetText(text:sub(1, #text - #prefix) .. word .. sep)
+    -- A link just before: a space between
+    local lead = (prefix == "" and text:find("|r$")) and " " or ""
+    self:SetText(text:sub(1, #text - #prefix) .. lead .. word .. sep)
     return true
 end
 
@@ -303,11 +311,13 @@ end
 -- Channel row: the keyboard keeps its own channel (the game's chat box is
 -- never touched) and A sends with the matching command
 local function lastTellTarget()
-    return ChatEdit_GetLastTellTarget and ChatEdit_GetLastTellTarget() or nil
+    local get = ChatFrameUtil and ChatFrameUtil.GetLastTellTarget or ChatEdit_GetLastTellTarget
+    return get and (get()) or nil
 end
 
 local function lastToldTarget()
-    return ChatEdit_GetLastToldTarget and ChatEdit_GetLastToldTarget() or nil
+    local get = ChatFrameUtil and ChatFrameUtil.GetLastToldTarget or ChatEdit_GetLastToldTarget
+    return get and (get()) or nil
 end
 
 local function nonEmpty(v)
@@ -640,10 +650,16 @@ local KEEP_DRAFT = {
     ["chat deactivated"] = true, ["focus lost (OnUpdate)"] = true, combat = true, toggle = true,
 }
 
-function CK:TakeDraft(chatText)
+function CK:TakeDraft(chatText, eb)
     local draft = self.draft
+    if not draft then return chatText end
+    local chatType = eb and eb:GetAttribute("chatType")
+    if (chatType == "WHISPER" or chatType == "BN_WHISPER")
+        and not (draft.chatType == chatType and draft.target == eb:GetAttribute("tellTarget")) then
+        return chatText
+    end
     self.draft = nil
-    if not draft or GetTime() - draft.time > DRAFT_TIME then return chatText end
+    if GetTime() - draft.time > DRAFT_TIME then return chatText end
     -- The chat opened on a command (/w, reply...), or already holds the text
     if chatText:sub(1, 1) == "/" or chatText:sub(1, #draft.text) == draft.text then return chatText end
     if chatText == "" then return draft.text end
@@ -655,11 +671,12 @@ function CK:Open(eb)
     if not self.db.settings.modules.keyboard then return end
     if self:BlockedByCombat() then return end
     if not self.frame then self:BuildUI() end
+    if self.prompt then self:FinishPrompt(false) end
     -- Keep a message typed with the mouse when the chat is reopened;
     -- otherwise start from the draft and what the chat holds (physical
     -- keyboard, a link the game opened the chat with)
     if not (self.standalone and self.buffer and self.buffer ~= "") then
-        self.buffer = self:TakeDraft(eb:GetText() or "")
+        self.buffer = self:TakeDraft(eb:GetText() or "", eb)
     end
     self.standalone = false
     self.chatAttrs = nil
@@ -691,7 +708,8 @@ function CK:Close(reason)
     self.closing = false
     if not prompt and KEEP_DRAFT[reason] and self.db.settings.features.drafts
         and self.buffer and self.buffer:find("[^ \t\r\n]") then
-        self.draft = { text = self.buffer, time = GetTime() }
+        self.draft = { text = self.buffer, time = GetTime(),
+            chatType = self:GetChatAttr("chatType"), target = self:GetChatAttr("tellTarget") }
     end
     self.standalone = false
     self.buffer = nil
