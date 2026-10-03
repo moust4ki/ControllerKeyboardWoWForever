@@ -38,9 +38,11 @@ W.MY_MAX = 8
 local MAX = SEGMENTS * PAGES
 local AIM = 0.5     -- the stick aims past half its course
 -- The wheel's art (Claude Design, design/radial/wheel/geometry.json): 512 x
--- 512, its crown from 75 to 213 from the middle, the icons at 144; the names
--- just outside it, turned outwards
-local WHEEL_SIZE, ICON_RADIUS, LABEL_RADIUS, LABEL_W, SLOT = 512, 144, 232, 120, 46
+-- 512, its crown from 75 to 213 from the middle. Like the game's radial
+-- menu: the icons a little inside the crown's middle, each name beside its
+-- icon on the outer side (GameFontNormal, 80 x 40)
+local WHEEL_SIZE, ICON_RADIUS, SLOT = 512, 128, 46
+local LABEL_W, LABEL_H, LABEL_GAP = 80, 40, 60
 -- The section overlays (highlight, veil) cut to their section: { width,
 -- height, x, y } with x, y their centre from the wheel's (y up), for section
 -- 1 (tools/wheel_textures.py)
@@ -492,7 +494,7 @@ function W:Build()
     -- Under the wheel, the game's banner: the aimed item (or what to do);
     -- below it, the pages and the help
     view.bottom = view:CreateTexture(nil, "BACKGROUND")
-    view.bottom:SetPoint("TOP", bg, "BOTTOM", 0, -26)
+    view.bottom:SetPoint("TOP", bg, "BOTTOM", 0, 8)
     atlas(view.bottom, "gamepad-radial-menu-bottomtext", function(t)
         t:SetColorTexture(0, 0, 0, 0.5)
     end)
@@ -534,13 +536,11 @@ function W:Build()
         seg.slot = CK.Paddles:CreateSlot(view, SLOT)
         seg.slot:SetPoint("CENTER", bg, "CENTER", ix, iy)
         seg.slot:Hide()
-        seg.label = view:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        -- Over the game's world: outlined
-        local font, size = seg.label:GetFont()
-        if font then seg.label:SetFont(font, size or 11, "OUTLINE") end
-        seg.label:SetWidth(LABEL_W)
+        seg.label = view:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        seg.label:SetSize(LABEL_W, LABEL_H)
+        seg.label:SetJustifyH("CENTER")
+        seg.label:SetJustifyV("MIDDLE")
         seg.label:SetWordWrap(true)
-        if seg.label.SetMaxLines then seg.label:SetMaxLines(2) end
         self.segments[i] = seg
         -- The slot's own secure button: clicked by a stick, A, the key ("s3"),
         -- or the mouse
@@ -760,6 +760,9 @@ function W:Paint()
             local unusable = entryUnusable(item, combat)
             seg.slot.icon:SetDesaturated(unusable)
             seg.disabled:SetShown(unusable)
+            -- Its name in the game's colours: gold, grey when it can't be used
+            local color = unusable and DISABLED_FONT_COLOR or NORMAL_FONT_COLOR
+            if color then seg.label:SetTextColor(color:GetRGB()) end
             pcall(function()
                 local start, duration = entryCooldown(item)
                 if start and duration and duration > 0 then
@@ -809,17 +812,19 @@ function W:PlaceSection(seg, i, n)
     local dx, dy = slotDir(i, n)
     seg.slot:ClearAllPoints()
     seg.slot:SetPoint("CENTER", self.view.bg, "CENTER", ICON_RADIUS * dx, ICON_RADIUS * dy)
-    -- The name outside the wheel: above the top one, under the bottom one,
-    -- beside the others (aligned outwards)
-    local label, x, y = seg.label, LABEL_RADIUS * dx, LABEL_RADIUS * dy
-    label:ClearAllPoints()
-    if math.abs(dx) < 0.3 then
-        label:SetPoint(dy > 0 and "BOTTOM" or "TOP", self.view.bg, "CENTER", x, y)
-        label:SetJustifyH("CENTER")
+    -- The name beside the icon, on the outer side, as the game's menu puts
+    -- it: beside it on the sides, above / below at the top and bottom, 30
+    -- across and 45 up / down on the diagonals
+    local ox, oy
+    if math.abs(dx) > 0.8 then
+        ox, oy = (dx > 0 and 1 or -1) * (LABEL_GAP + 4), 0
+    elseif math.abs(dx) < 0.3 then
+        ox, oy = 0, (dy > 0 and 1 or -1) * LABEL_GAP
     else
-        label:SetPoint(dx > 0 and "LEFT" or "RIGHT", self.view.bg, "CENTER", x, y)
-        label:SetJustifyH(dx > 0 and "LEFT" or "RIGHT")
+        ox, oy = (dx > 0 and 30 or -30), (dy > 0 and 45 or -45)
     end
+    seg.label:ClearAllPoints()
+    seg.label:SetPoint("CENTER", seg.slot, "CENTER", ox, oy)
     self:PlaceOverlay(seg.disabled, "off", i, n)
 end
 
