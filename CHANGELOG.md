@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.2
+
+- **Consumables wheel**: raw fish and the other trade goods the game lets you eat or drink now
+  show with the food and drinks.
+
 ## 1.6.1
 
 Fixes found by a second round of end-to-end tests.
